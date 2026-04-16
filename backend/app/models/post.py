@@ -9,12 +9,21 @@ class Post(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
     content = Column(Text, nullable=False)
-
-    # THÊM CỘT NÀY: Tự động lấy giờ hệ thống lúc đăng bài
     created_at = Column(DateTime, default=datetime.utcnow)
-    
-    # Khóa ngoại trỏ đến cột id của bảng users
     owner_id = Column(Integer, ForeignKey("users.id"))
 
-    # Thiết lập mối quan hệ 2 chiều với Model User
-    owner = relationship("User", back_populates="posts")
+    # Đã xóa dấu phẩy gây lỗi
+    owner = relationship("User", back_populates="posts") 
+
+    # --- BỔ SUNG ĐỂ SCHEMA ĐỌC ĐƯỢC ---
+    # Thiết lập mối quan hệ với bảng Like và Comment (nếu bạn đã có 2 bảng này)
+    likes = relationship("Like", viewonly=True)
+    comments = relationship("Comment", viewonly=True)
+
+    @property
+    def likes_count(self):
+        return len(self.likes) if self.likes else 0
+
+    @property
+    def comments_count(self):
+        return len(self.comments) if self.comments else 0

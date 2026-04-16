@@ -16,6 +16,7 @@ app = FastAPI(
 # Danh sách các tên miền được phép gọi API
 origins = [
     "http://localhost:3000",      # Cho phép Frontend chạy ở local gọi lên
+    "https://vnnet.onrender.com", # Thêm domain deploy của bạn
     # "https://domain-frontend-cua-ban.com", # Sau này deploy Frontend thì thêm link vào đây
 ]
 
