@@ -1,28 +1,29 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+# 1. Nhớ import thêm Request
+from fastapi import APIRouter, UploadFile, File, HTTPException, Request
 import shutil
 import os
 import uuid
 
 router = APIRouter(prefix="/upload", tags=["Upload"])
 
-# Đảm bảo thư mục uploads luôn tồn tại
 os.makedirs("uploads", exist_ok=True)
 
+# 2. Thêm request: Request vào hàm
 @router.post("/")
-async def upload_image(file: UploadFile = File(...)):
-    # 1. Kiểm tra xem có đúng là ảnh không
+async def upload_image(request: Request, file: UploadFile = File(...)):
     if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Chỉ hỗ trợ upload file ảnh (jpg, png, jpeg...)")
+        raise HTTPException(status_code=400, detail="Chỉ hỗ trợ upload file ảnh")
 
-    # 2. Đổi tên file ngẫu nhiên để tránh bị trùng tên đè lên nhau
     file_extension = file.filename.split(".")[-1]
     file_name = f"{uuid.uuid4()}.{file_extension}"
     file_path = f"uploads/{file_name}"
 
-    # 3. Lưu file vào ổ cứng
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # 4. Trả về link để Frontend gán vào <img src="...">
-    # LƯU Ý: Nếu chạy trên Render, đổi localhost thành link Render của em
-    return {"url": f"https://vnnet.onrender.com/uploads/{file_name}"}
+    # 3. THAY ĐỔI QUAN TRỌNG: Tự động lấy URL gốc của Server
+    base_url = str(request.base_url) 
+    # Nếu chạy ở dưới máy, nó tự hiểu là http://localhost:8000/
+    # Nếu chạy trên Render, nó tự hiểu là https://vnnet.onrender.com/
+    
+    return {"url": f"{base_url}uploads/{file_name}"}
