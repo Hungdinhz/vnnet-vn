@@ -6,6 +6,7 @@ from datetime import datetime
 class PostBase(BaseModel):
     title: str
     content: str
+    image_url: Optional[str] = None # Thêm dòng này
 
 # 2. Schema cho dữ liệu người dùng gửi lên khi tạo bài viết (có thể thêm các trường khác nếu cần)
 class PostCreate(PostBase):
@@ -15,6 +16,7 @@ class PostCreate(PostBase):
 class PostUpdate(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
+    image_url: Optional[str] = None # Thêm dòng này
 
 # 1. Định nghĩa khuôn mẫu lấy User (Thêm đoạn này vào)
 class UserOut(BaseModel):

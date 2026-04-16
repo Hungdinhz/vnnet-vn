@@ -1,7 +1,8 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from app.db.database import engine, Base
 from app.models import user, post, interaction, friend # Import để SQLAlchemy nhận diện được Model User
-from app.api import user as user_api, post as post_api, friend as friend_api # Import router của User, Post và Friend
+from app.api import user as user_api, post as post_api, friend as friend_api, upload, notification # Import router của User, Post và Friend
 from fastapi.middleware.cors import CORSMiddleware
 
 # Lệnh này sẽ yêu cầu SQLAlchemy kiểm tra DB, nếu chưa có bảng thì tự động tạo!
@@ -29,12 +30,21 @@ app.add_middleware(
 )
 # -------------------------------------
 
+# 1. MỞ ĐƯỜNG CHO THƯ MỤC UPLOADS
+import os
+os.makedirs("uploads", exist_ok=True)
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
+# 2. NHÚNG API UPLOAD VÀO HỆ THỐNG
+app.include_router(upload.router)
 # Nhúng router của User vào ứng dụng
 app.include_router(user_api.router)
 # Nhúng router của Post vào ứng dụng
 app.include_router(post_api.router)
 # Nhúng router của Friend vào ứng dụng
 app.include_router(friend_api.router)
+# Nhúng router của Notification vào ứng dụng
+app.include_router(notification.router)
 
 @app.get("/")
 def read_root():

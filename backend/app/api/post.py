@@ -11,12 +11,13 @@ from app.crud import post as crud_post, interaction as crud_interaction
 from app.crud import user as crud_user
 from app.api.user import get_current_user # Import hàm "soát vé" từ api user
 from app.models.user import User
+from app.crud import notification as crud_notif
 
 # Khởi tạo Router cho Post
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
 # 1. API Tạo bài viết (BẮT BUỘC ĐĂNG NHẬP)
-@router.post("/", response_model=PostResponse)
+@router.post("", response_model=PostResponse)
 def create_post(
     post: PostCreate, 
     db: Session = Depends(get_db),
@@ -26,7 +27,7 @@ def create_post(
     return crud_post.create_post(db=db, post=post, user_id=current_user.id)
 
 # 2. API Lấy danh sách bài viết (KHÔNG YÊU CẦU ĐĂNG NHẬP)
-@router.get("/", response_model=List[PostResponse])
+@router.get("", response_model=List[PostResponse])
 def read_posts(request: Request, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     # Thử lấy token Bearer (nếu có) để xác định current_user id
     auth: str | None = request.headers.get('authorization') or request.headers.get('Authorization')
@@ -98,7 +99,11 @@ def toggle_like_post(
     if db_post is None:
         raise HTTPException(status_code=404, detail="Không tìm thấy bài viết")
         
-    return crud_interaction.toggle_like(db=db, user_id=current_user.id, post_id=post_id)
+    result = crud_interaction.toggle_like(db=db, user_id=current_user.id, post_id=post_id)
+    # Nếu là hành động LIKE (không phải hủy like) thì tạo thông báo
+    if result["message"] == "Đã Like bài viết thành công":
+        crud_notif.create_notification(db, recipient_id=db_post.owner_id, sender_id=current_user.id, type="like", target_id=post_id)
+    return result
 
 # 7. API Viết bình luận (BẮT BUỘC ĐĂNG NHẬP)
 @router.post("/{post_id}/comments", response_model=CommentResponse)
@@ -112,7 +117,10 @@ def create_comment_on_post(
     if db_post is None:
         raise HTTPException(status_code=404, detail="Không tìm thấy bài viết")
         
-    return crud_interaction.create_comment(db=db, comment=comment, user_id=current_user.id, post_id=post_id)
+    new_comment = crud_interaction.create_comment(db=db, comment=comment, user_id=current_user.id, post_id=post_id)
+    # Tạo thông báo cho người viết bài khi có bình luận mới
+    crud_notif.create_notification(db, recipient_id=db_post.owner_id, sender_id=current_user.id, type="comment", target_id=post_id)
+    return new_comment
 
 # 8. API Xem danh sách bình luận (KHÔNG CẦN ĐĂNG NHẬP)
 @router.get("/{post_id}/comments", response_model=List[CommentResponse])

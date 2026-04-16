@@ -15,6 +15,9 @@ class Post(Base):
     # Đã xóa dấu phẩy gây lỗi
     owner = relationship("User", back_populates="posts") 
 
+    # THÊM CỘT NÀY CHO ẢNH BÀI VIẾT
+    image_url = Column(String, nullable=True)
+
     # --- BỔ SUNG ĐỂ SCHEMA ĐỌC ĐƯỢC ---
     # Thiết lập mối quan hệ với bảng Like và Comment (nếu bạn đã có 2 bảng này)
     likes = relationship("Like", viewonly=True)

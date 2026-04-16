@@ -9,6 +9,8 @@ class User(Base):
     username = Column(String(50), unique=True, index=True, nullable=False)
     email = Column(String(100), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
+    # THÊM CỘT NÀY CHO AVATAR
+    avatar_url = Column(String, nullable=True)
 
     # Thiết lập mối quan hệ 2 chiều với Model Post
     posts = relationship("Post", back_populates="owner")
