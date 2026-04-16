@@ -39,7 +39,7 @@ def get_posts(db: Session, skip: int = 0, limit: int = 100, current_user_id: Opt
     q = q.outerjoin(comments_subq, comments_subq.c.post_id == Post.id)
 
     if user_like_subq is not None:
-        q = q.add_columns(case([(user_like_subq.c.post_id != None, True)], else_=False).label('is_liked'))
+        q = q.add_columns(case((user_like_subq.c.post_id != None, True), else_=False).label('is_liked'))
         q = q.outerjoin(user_like_subq, user_like_subq.c.post_id == Post.id)
     else:
         q = q.add_columns(literal(False).label('is_liked'))
