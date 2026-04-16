@@ -30,6 +30,9 @@ class PostResponse(PostBase):
     owner_id: int
     created_at: datetime  # Thêm thời gian đăng bài
     owner: UserOut
+    likes_count: int = 0
+    comments_count: int = 0
+    is_liked: bool = False
 
     class Config:
         from_attributes = True # Giúp Pydantic đọc được dữ liệu từ SQLAlchemy Model

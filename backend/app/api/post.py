@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+import jwt
+from app.core.config import settings
 from sqlalchemy.orm import Session
 from typing import List # Dùng để khai báo kiểu dữ liệu là một Danh sách (List)
 
@@ -6,6 +8,7 @@ from app.db.database import get_db
 from app.schemas.post import PostCreate, PostResponse, PostUpdate
 from app.schemas.interaction import CommentCreate, CommentResponse
 from app.crud import post as crud_post, interaction as crud_interaction
+from app.crud import user as crud_user
 from app.api.user import get_current_user # Import hàm "soát vé" từ api user
 from app.models.user import User
 
@@ -24,8 +27,23 @@ def create_post(
 
 # 2. API Lấy danh sách bài viết (KHÔNG YÊU CẦU ĐĂNG NHẬP)
 @router.get("/", response_model=List[PostResponse])
-def read_posts(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    posts = crud_post.get_posts(db, skip=skip, limit=limit)
+def read_posts(request: Request, skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    # Thử lấy token Bearer (nếu có) để xác định current_user id
+    auth: str | None = request.headers.get('authorization') or request.headers.get('Authorization')
+    current_user_id = None
+    if auth and auth.lower().startswith('bearer '):
+        token = auth.split(' ')[1]
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+            email: str | None = payload.get('sub')
+            if email:
+                user = crud_user.get_user_by_email(db, email=email)
+                if user:
+                    current_user_id = user.id
+        except Exception:
+            current_user_id = None
+
+    posts = crud_post.get_posts(db, skip=skip, limit=limit, current_user_id=current_user_id)
     return posts
 
 # 3. API Lấy chi tiết bài viết theo ID
