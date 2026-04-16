@@ -8,7 +8,12 @@ from app.schemas.post import PostCreate, PostUpdate
 
 # Hàm tạo bài viết mới
 def create_post(db: Session, post: PostCreate, user_id: int):
-    db_post = Post(title=post.title, content=post.content, owner_id=user_id)
+    db_post = Post(
+        title=post.title,
+        content=post.content,
+        image_url=post.image_url,  # <--- KIỂM TRA NGAY XEM CÓ DÒNG NÀY CHƯA?
+        owner_id=user_id
+    )
     db.add(db_post)
     db.commit()
     db.refresh(db_post)
