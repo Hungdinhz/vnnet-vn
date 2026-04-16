@@ -4,7 +4,7 @@ import axios from 'axios';
 // Tạo một instance với cấu hình mặc định
 const api = axios.create({
   // Thay url này bằng domain backend FastAPI của bạn. Mặc định FastAPI chạy port 8000
-  baseURL: 'http://localhost:8000', 
+  baseURL: 'https://vnnet.onrender.com',
   headers: {
     'Content-Type': 'application/json',
   },
