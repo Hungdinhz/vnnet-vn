@@ -64,6 +64,7 @@ def get_posts(db: Session, skip: int = 0, limit: int = 100, current_user_id: Opt
         results.append({
             'id': post_obj.id,
             'title': post_obj.title,
+            'image_url': post_obj.image_url,
             'content': post_obj.content,
             'created_at': post_obj.created_at,
             'owner_id': post_obj.owner_id,
