@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException,  status
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 import jwt
 from sqlalchemy.orm import Session
+from typing import List
 from app.db.database import get_db
 from app.schemas.user import UserCreate, UserResponse
 from app.crud import user as crud_user
@@ -77,6 +78,25 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 def read_users_me(current_user = Depends(get_current_user)):
     # Trả về thẳng thông tin user, FastAPI sẽ tự động dùng UserResponse để lọc bỏ password
     return current_user
+
+
+# API: Lấy danh sách tất cả người dùng (public, ẩn hashed_password)
+@router.get("/", response_model=List[UserResponse])
+def list_users(db: Session = Depends(get_db)):
+    # Trả về tất cả user (có thể thêm phân trang sau này)
+    from app.models.user import User
+    users = db.query(User).all()
+    return users
+
+
+
+# API: Lấy thông tin user theo ID (public, không trả hashed_password)
+@router.get("/{user_id}", response_model=UserResponse)
+def get_user_by_id(user_id: int, db: Session = Depends(get_db)):
+    db_user = crud_user.get_user_by_id(db, user_id=user_id)
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return db_user
 
 
 

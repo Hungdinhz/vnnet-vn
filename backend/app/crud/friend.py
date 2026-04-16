@@ -45,3 +45,25 @@ def get_friends_list(db: Session, user_id: int):
         ((Friendship.user_id == user_id) | (Friendship.friend_id == user_id)),
         Friendship.status == "accepted"
     ).all()
+
+
+def get_pending_requests(db: Session, user_id: int):
+    # Lấy các lời mời mà user hiện tại là người nhận (friend_id) và đang ở trạng thái pending
+    from app.models.user import User
+
+    results = db.query(Friendship, User).join(User, Friendship.user_id == User.id).filter(
+        Friendship.friend_id == user_id,
+        Friendship.status == "pending"
+    ).all()
+
+    requests = []
+    for friendship, sender in results:
+        requests.append({
+            "id": friendship.id,
+            "user_id": friendship.user_id,
+            "friend_id": friendship.friend_id,
+            "status": friendship.status,
+            "sender_username": sender.username
+        })
+
+    return requests

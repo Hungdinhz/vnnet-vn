@@ -4,7 +4,7 @@ from typing import List
 from app.db.database import get_db
 from app.api.user import get_current_user
 from app.models.user import User
-from app.schemas.friend import FriendshipResponse
+from app.schemas.friend import FriendshipResponse, FriendRequestResponse
 from app.crud import friend as crud_friend
 
 router = APIRouter(prefix="/friends", tags=["Friends"])
@@ -23,3 +23,9 @@ def accept_request(request_id: int, db: Session = Depends(get_db), current_user:
 @router.get("/list", response_model=List[FriendshipResponse])
 def get_friends(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return crud_friend.get_friends_list(db, user_id=current_user.id)
+
+
+# API: Lấy danh sách lời mời đang chờ mà user hiện tại nhận được
+@router.get("/requests", response_model=List[FriendRequestResponse])
+def get_pending_requests(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return crud_friend.get_pending_requests(db, user_id=current_user.id)
