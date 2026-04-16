@@ -9,7 +9,7 @@ router = APIRouter(prefix="/upload", tags=["Upload"])
 os.makedirs("uploads", exist_ok=True)
 
 # 2. Thêm request: Request vào hàm
-@router.post("/")
+@router.post("")
 async def upload_image(request: Request, file: UploadFile = File(...)):
     if not file.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="Chỉ hỗ trợ upload file ảnh")
