@@ -1,0 +1,34 @@
+package com.example.backend_java.dto;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+
+@Data
+@Builder
+@NoArgsConstructor @AllArgsConstructor
+public class NotificationResponseDto {
+
+    private Long id;
+
+    @JsonProperty("recipient_id")
+    private Long recipientId;
+
+    @JsonProperty("sender_id")
+    private Long senderId;
+
+    private String type;
+
+    @JsonProperty("target_id")
+    private Long targetId;
+
+    @JsonProperty("is_read")
+    private Boolean isRead;
+
+    @JsonProperty("created_at")
+    private LocalDateTime createdAt;
+}
