@@ -17,6 +17,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.example.backend_java.repository.FriendshipRepository;
+
 @Service
 public class PostService {
 
@@ -25,15 +27,17 @@ public class PostService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final FriendshipRepository friendshipRepository;
 
     public PostService(PostRepository postRepository, LikeRepository likeRepository,
                        CommentRepository commentRepository, UserRepository userRepository,
-                       JwtTokenProvider jwtTokenProvider) {
+                       JwtTokenProvider jwtTokenProvider, FriendshipRepository friendshipRepository) {
         this.postRepository = postRepository;
         this.likeRepository = likeRepository;
         this.commentRepository = commentRepository;
         this.userRepository = userRepository;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.friendshipRepository = friendshipRepository;
     }
 
     // Tạo bài viết mới (tương đương crud_post.create_post)
@@ -62,14 +66,52 @@ public class PostService {
     public List<PostResponseDto> getPosts(int skip, int limit, Long currentUserId) {
         List<Post> posts = postRepository.findAllByOrderByIdDesc();
 
-        // Áp dụng phân trang thủ công (skip + limit)
-        int fromIndex = Math.min(skip, posts.size());
-        int toIndex = Math.min(skip + limit, posts.size());
-        posts = posts.subList(fromIndex, toIndex);
-
-        return posts.stream()
+        // Convert all to DTOs first so we can sort them using DTO metadata (likesCount, commentsCount)
+        List<PostResponseDto> dtos = posts.stream()
                 .map(post -> toResponseDto(post, currentUserId))
                 .collect(Collectors.toList());
+
+        if (currentUserId != null) {
+            // Get friend IDs
+            java.util.Set<Long> friendIds = friendshipRepository.findAcceptedFriendships(currentUserId).stream()
+                    .map(f -> f.getUserId().equals(currentUserId) ? f.getFriendId() : f.getUserId())
+                    .collect(Collectors.toSet());
+
+            // Sort
+            dtos.sort((a, b) -> {
+                boolean aIsFriend = friendIds.contains(a.getOwnerId()) || a.getOwnerId().equals(currentUserId);
+                boolean bIsFriend = friendIds.contains(b.getOwnerId()) || b.getOwnerId().equals(currentUserId);
+
+                if (aIsFriend != bIsFriend) {
+                    return aIsFriend ? -1 : 1; // Friend posts first
+                }
+
+                // Compare by interaction count (descending)
+                int aInteractions = a.getLikesCount() + a.getCommentsCount();
+                int bInteractions = b.getLikesCount() + b.getCommentsCount();
+                if (aInteractions != bInteractions) {
+                    return Integer.compare(bInteractions, aInteractions);
+                }
+
+                // Compare by ID (descending)
+                return Long.compare(b.getId(), a.getId());
+            });
+        } else {
+            // If not logged in, just sort by interactions descending, then ID descending
+            dtos.sort((a, b) -> {
+                int aInteractions = a.getLikesCount() + a.getCommentsCount();
+                int bInteractions = b.getLikesCount() + b.getCommentsCount();
+                if (aInteractions != bInteractions) {
+                    return Integer.compare(bInteractions, aInteractions);
+                }
+                return Long.compare(b.getId(), a.getId());
+            });
+        }
+
+        // Áp dụng phân trang thủ công (skip + limit)
+        int fromIndex = Math.min(skip, dtos.size());
+        int toIndex = Math.min(skip + limit, dtos.size());
+        return dtos.subList(fromIndex, toIndex);
     }
 
     // Lấy chi tiết bài viết theo ID

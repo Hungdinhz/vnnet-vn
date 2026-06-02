@@ -16,6 +16,7 @@ export default function ForgotPasswordPage() {
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [resetSuccess, setResetSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSendOtp = async (e: React.FormEvent) => {
@@ -38,7 +39,6 @@ export default function ForgotPasswordPage() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setSuccess('');
     setIsLoading(true);
 
     try {
@@ -48,6 +48,7 @@ export default function ForgotPasswordPage() {
         newPassword
       });
       setSuccess(response.data.message || 'Đặt lại mật khẩu thành công!');
+      setResetSuccess(true);
       setTimeout(() => {
         router.push('/login');
       }, 2000);
@@ -129,9 +130,9 @@ export default function ForgotPasswordPage() {
             </div>
             <button
               type="submit"
-              disabled={isLoading || success !== ''}
+              disabled={isLoading || resetSuccess}
               className={`w-full py-2 px-4 rounded-lg text-white font-semibold transition-colors ${
-                isLoading || success ? 'bg-blue-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
+                isLoading || resetSuccess ? 'bg-blue-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
               }`}
             >
               {isLoading ? 'Đang xử lý...' : 'Xác nhận đổi mật khẩu'}
