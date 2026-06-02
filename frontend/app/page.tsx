@@ -6,23 +6,21 @@ import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import api from '@/lib/axios';
+import PostCard from '@/components/PostCard';
 
 export default function Home() {
   const router = useRouter();
   
-  // State quản lý danh sách bài viết
   const [posts, setPosts] = useState<any[]>([]); 
   const [isLoading, setIsLoading] = useState(true);
 
-  // State quản lý Form đăng bài mới
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
+  const [file, setFile] = useState<File | null>(null); // Thêm state lưu file
   const [isPosting, setIsPosting] = useState(false);
 
-  // Hàm tải bài viết (được tách ra để có thể gọi lại sau khi đăng bài xong)
   const fetchPosts = async () => {
     try {
-      // TÙY CHỈNH: Đảm bảo đường dẫn này khớp với API lấy danh sách post của bạn
       const response = await api.get('/posts'); 
       setPosts(response.data); 
     } catch (error) {
@@ -41,22 +39,50 @@ export default function Home() {
     fetchPosts();
   }, [router]);
 
-  // Hàm xử lý Đăng bài
+  // Hàm xử lý Đăng bài MỚI (Có hỗ trợ ảnh)
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
+    // THÊM DÒNG NÀY ĐỂ CHECK XEM REACT CÓ NHẬN ĐƯỢC FILE KHÔNG
+    console.log("File đang được chọn là:", file);
     if (!newTitle.trim() || !newContent.trim()) return;
 
     setIsPosting(true);
     try {
-      // TÙY CHỈNH: Thay đổi URL nếu endpoint tạo bài viết của bạn khác
+      let uploadedImageUrl = null;
+
+      // Bước 1: Upload ảnh trước nếu người dùng có chọn file
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        
+        const uploadRes = await api.post("/upload", formData, {
+          headers: { "Content-Type": "multipart/form-data" }
+        });
+        // --- ĐẶT BẪY Ở ĐÂY ---
+        console.log("Toàn bộ dữ liệu Upload trả về:", uploadRes);
+        
+        // Đề phòng trường hợp file axios.ts của em đã cấu hình tự động trích xuất data
+        // Chỉ cần lấy đúng từ trong data ra là TypeScript sẽ im lặng
+          uploadedImageUrl = uploadRes.data.url;
+        
+        console.log("Link ảnh bóc tách được:", uploadedImageUrl);
+      }
+
+      // Bước 2: Tạo bài viết với link ảnh
       await api.post('/posts', {
         title: newTitle,
-        content: newContent
+        content: newContent,
+        image_url: uploadedImageUrl // Thêm trường này
       });
 
-      // Nếu thành công: Xóa rỗng form và gọi lại API để load bài viết mới nhất
+      // Nếu thành công: Xóa rỗng form
       setNewTitle('');
       setNewContent('');
+      setFile(null);
+      // Hack nhỏ: Đặt lại giá trị của input file
+      const fileInput = document.getElementById('file-upload') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
+      
       fetchPosts(); 
 
     } catch (error) {
@@ -95,11 +121,21 @@ export default function Home() {
                 className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
                 required
               />
-              <div className="flex justify-end">
+              
+              {/* KHU VỰC CHỌN ẢNH */}
+              <div className="flex items-center justify-between">
+                <input 
+                  id="file-upload"
+                  type="file" 
+                  accept="image/*"
+                  onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                />
+                
                 <button
                   type="submit"
                   disabled={isPosting}
-                  className={`px-6 py-2 rounded-lg text-white font-semibold transition-colors ${
+                  className={`px-6 py-2 rounded-lg text-white font-semibold transition-colors whitespace-nowrap ml-4 ${
                     isPosting ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
                   }`}
                 >
@@ -121,26 +157,8 @@ export default function Home() {
                   Chưa có bài viết nào. Hãy là người đầu tiên đăng bài!
                 </p>
               ) : (
-                // Đảo ngược mảng để bài viết mới nhất lên đầu (nếu Backend chưa sắp xếp)
-                [...posts].reverse().map((post, index) => (
-                  <div key={index} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="w-10 h-10 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full text-white flex items-center justify-center font-bold shadow-sm">
-                        {/* Lấy chữ cái đầu của tên làm Avatar */}
-                        {(post.owner?.username || post.author_name || 'U').charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        {/* TÙY CHỈNH: Sửa lại tên trường chứa Username dựa theo cấu trúc API của bạn */}
-                        <div className="font-bold text-gray-800">
-                          {post.owner?.username || post.author_name || `User #${post.owner_id}`}
-                        </div>
-                        <div className="text-xs text-gray-500">Vừa xong</div>
-                      </div>
-                    </div>
-                    
-                    <h2 className="text-lg font-bold text-gray-900 mb-1">{post.title}</h2>
-                    <p className="text-gray-700 whitespace-pre-line">{post.content}</p>
-                  </div>
+                [...posts].map((post, index) => (
+                  <PostCard key={post.id || index} post={post} /> 
                 ))
               )}
             </div>

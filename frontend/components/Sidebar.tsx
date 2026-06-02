@@ -5,6 +5,7 @@ export default function Sidebar() {
   const menuItems = [
     { name: '🏠 Bảng tin', path: '/' },
     { name: '👤 Hồ sơ', path: '/profile' },
+    { name: '👥 Bạn bè', path: '/friends' },
     { name: '⚙️ Cài đặt', path: '/settings' },
   ];
 
