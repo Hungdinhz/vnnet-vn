@@ -91,12 +91,41 @@ public class UserService {
         return toResponseDto(user);
     }
 
+    // Cập nhật thông tin profile
+    public UserResponseDto updateProfile(User currentUser, com.example.backend_java.dto.UserUpdateDto dto) {
+        User user = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (dto.getUsername() != null && !dto.getUsername().trim().isEmpty()) {
+            // Check username trùng lặp nếu đổi tên khác tên hiện tại
+            if (!user.getUsername().equals(dto.getUsername()) && userRepository.existsByUsername(dto.getUsername())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username này đã được sử dụng!");
+            }
+            user.setUsername(dto.getUsername());
+        }
+        if (dto.getAvatarUrl() != null) {
+            user.setAvatarUrl(dto.getAvatarUrl());
+        }
+        if (dto.getCoverUrl() != null) {
+            user.setCoverUrl(dto.getCoverUrl());
+        }
+        if (dto.getBio() != null) {
+            user.setBio(dto.getBio());
+        }
+
+        user = userRepository.save(user);
+        return toResponseDto(user);
+    }
+
     // Chuyển đổi Entity → DTO
     private UserResponseDto toResponseDto(User user) {
         return UserResponseDto.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .avatarUrl(user.getAvatarUrl())
+                .coverUrl(user.getCoverUrl())
+                .bio(user.getBio())
                 .build();
     }
 }

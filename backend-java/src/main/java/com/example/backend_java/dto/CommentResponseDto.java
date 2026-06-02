@@ -19,4 +19,17 @@ public class CommentResponseDto {
 
     @JsonProperty("post_id")
     private Long postId;
+
+    private UserOutDto owner;
+
+    @Data
+    @Builder
+    @NoArgsConstructor @AllArgsConstructor
+    public static class UserOutDto {
+        private Long id;
+        private String username;
+        
+        @JsonProperty("avatar_url")
+        private String avatarUrl;
+    }
 }

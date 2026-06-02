@@ -46,5 +46,8 @@ public class PostResponseDto {
     public static class UserOutDto {
         private Long id;
         private String username;
+
+        @JsonProperty("avatar_url")
+        private String avatarUrl;
     }
 }

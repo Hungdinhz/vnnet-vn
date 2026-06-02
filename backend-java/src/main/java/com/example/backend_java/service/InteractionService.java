@@ -6,8 +6,10 @@ import com.example.backend_java.dto.MessageDto;
 import com.example.backend_java.entity.Comment;
 import com.example.backend_java.entity.Like;
 import com.example.backend_java.entity.Post;
+import com.example.backend_java.entity.User;
 import com.example.backend_java.repository.CommentRepository;
 import com.example.backend_java.repository.LikeRepository;
+import com.example.backend_java.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,10 +22,12 @@ public class InteractionService {
 
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
+    private final UserRepository userRepository;
 
-    public InteractionService(LikeRepository likeRepository, CommentRepository commentRepository) {
+    public InteractionService(LikeRepository likeRepository, CommentRepository commentRepository, UserRepository userRepository) {
         this.likeRepository = likeRepository;
         this.commentRepository = commentRepository;
+        this.userRepository = userRepository;
     }
 
     // Toggle Like (Thích / Bỏ thích) - tương đương crud_interaction.toggle_like
@@ -57,23 +61,43 @@ public class InteractionService {
 
         comment = commentRepository.save(comment);
 
+        User user = userRepository.findById(userId).orElse(null);
+        String username = user != null ? user.getUsername() : "Unknown";
+        String avatarUrl = user != null ? user.getAvatarUrl() : null;
+
         return CommentResponseDto.builder()
                 .id(comment.getId())
                 .content(comment.getContent())
                 .userId(comment.getUserId())
                 .postId(postId)
+                .owner(CommentResponseDto.UserOutDto.builder()
+                        .id(userId)
+                        .username(username)
+                        .avatarUrl(avatarUrl)
+                        .build())
                 .build();
     }
 
     // Lấy danh sách bình luận theo post - tương đương crud_interaction.get_comments_by_post
     public List<CommentResponseDto> getCommentsByPost(Long postId) {
         return commentRepository.findByPostId(postId).stream()
-                .map(comment -> CommentResponseDto.builder()
-                        .id(comment.getId())
-                        .content(comment.getContent())
-                        .userId(comment.getUserId())
-                        .postId(postId)
-                        .build())
+                .map(comment -> {
+                    User user = userRepository.findById(comment.getUserId()).orElse(null);
+                    String username = user != null ? user.getUsername() : "Unknown";
+                    String avatarUrl = user != null ? user.getAvatarUrl() : null;
+
+                    return CommentResponseDto.builder()
+                            .id(comment.getId())
+                            .content(comment.getContent())
+                            .userId(comment.getUserId())
+                            .postId(postId)
+                            .owner(CommentResponseDto.UserOutDto.builder()
+                                    .id(comment.getUserId())
+                                    .username(username)
+                                    .avatarUrl(avatarUrl)
+                                    .build())
+                            .build();
+                })
                 .collect(Collectors.toList());
     }
 }

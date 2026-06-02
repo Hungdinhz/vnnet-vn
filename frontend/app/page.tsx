@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import api from '@/lib/axios';
@@ -13,10 +14,13 @@ export default function Home() {
   
   const [posts, setPosts] = useState<any[]>([]); 
   const [isLoading, setIsLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [suggestedUsers, setSuggestedUsers] = useState<any[]>([]);
 
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
-  const [file, setFile] = useState<File | null>(null); // Thêm state lưu file
+  const [file, setFile] = useState<File | null>(null); 
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
 
   const fetchPosts = async () => {
@@ -30,27 +34,70 @@ export default function Home() {
     }
   };
 
+  const fetchSuggestedUsers = async () => {
+    try {
+      const res = await api.get('/users');
+      // Lọc bỏ user hiện tại nếu có
+      if (currentUser) {
+        setSuggestedUsers((res.data || []).filter((u: any) => u.id !== currentUser.id).slice(0, 5));
+      } else {
+        setSuggestedUsers((res.data || []).slice(0, 5));
+      }
+    } catch (err) {
+      console.error("Lỗi tải gợi ý bạn bè:", err);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
       router.push('/login');
       return;
     }
+
+    const fetchMe = async () => {
+      try {
+        const res = await api.get('/users/me');
+        setCurrentUser(res.data);
+      } catch (err) {
+        console.error("Lỗi tải self user:", err);
+      }
+    };
+
+    fetchMe();
     fetchPosts();
   }, [router]);
 
-  // Hàm xử lý Đăng bài MỚI (Có hỗ trợ ảnh)
+  useEffect(() => {
+    if (currentUser) {
+      fetchSuggestedUsers();
+    }
+  }, [currentUser]);
+
+  // Handle image preview
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files ? e.target.files[0] : null;
+    setFile(selectedFile);
+    if (selectedFile) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(selectedFile);
+    } else {
+      setImagePreview(null);
+    }
+  };
+
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
-    // THÊM DÒNG NÀY ĐỂ CHECK XEM REACT CÓ NHẬN ĐƯỢC FILE KHÔNG
-    console.log("File đang được chọn là:", file);
-    if (!newTitle.trim() || !newContent.trim()) return;
+    if (!newContent.trim()) return;
 
     setIsPosting(true);
     try {
       let uploadedImageUrl = null;
 
-      // Bước 1: Upload ảnh trước nếu người dùng có chọn file
+      // Step 1: Upload image to Cloudinary if file exists
       if (file) {
         const formData = new FormData();
         formData.append("file", file);
@@ -58,33 +105,26 @@ export default function Home() {
         const uploadRes = await api.post("/upload", formData, {
           headers: { "Content-Type": "multipart/form-data" }
         });
-        // --- ĐẶT BẪY Ở ĐÂY ---
-        console.log("Toàn bộ dữ liệu Upload trả về:", uploadRes);
-        
-        // Đề phòng trường hợp file axios.ts của em đã cấu hình tự động trích xuất data
-        // Chỉ cần lấy đúng từ trong data ra là TypeScript sẽ im lặng
-          uploadedImageUrl = uploadRes.data.url;
-        
-        console.log("Link ảnh bóc tách được:", uploadedImageUrl);
+        uploadedImageUrl = uploadRes.data.url;
       }
 
-      // Bước 2: Tạo bài viết với link ảnh
+      // Step 2: Create post
       await api.post('/posts', {
-        title: newTitle,
+        title: newTitle || "Bài viết mới",
         content: newContent,
-        image_url: uploadedImageUrl // Thêm trường này
+        image_url: uploadedImageUrl 
       });
 
-      // Nếu thành công: Xóa rỗng form
+      // Clear form
       setNewTitle('');
       setNewContent('');
       setFile(null);
-      // Hack nhỏ: Đặt lại giá trị của input file
+      setImagePreview(null);
+      
       const fileInput = document.getElementById('file-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
       
       fetchPosts(); 
-
     } catch (error) {
       console.error("Lỗi khi đăng bài:", error);
       alert("Đăng bài thất bại, vui lòng thử lại!");
@@ -93,50 +133,112 @@ export default function Home() {
     }
   };
 
+  const handleAddFriend = async (friendId: number) => {
+    try {
+      await api.post(`/friends/request/${friendId}`);
+      alert('Đã gửi lời mời kết bạn!');
+      setSuggestedUsers(prev => prev.filter(u => u.id !== friendId));
+    } catch (err: any) {
+      console.error("Lỗi kết bạn:", err);
+      alert(err.response?.data?.detail || "Gửi lời mời thất bại");
+    }
+  };
+
+  const getInitials = (name: string) => {
+    if (!name) return 'U';
+    return name.charAt(0).toUpperCase();
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f0f2f5] text-gray-900">
       <Navbar />
-      <div className="max-w-7xl mx-auto flex">
+      
+      <div className="max-w-7xl mx-auto flex gap-4 px-2 md:px-4">
+        
+        {/* Left Sidebar */}
         <Sidebar />
         
-        <main className="flex-1 p-6 max-w-3xl">
-          <h1 className="text-2xl font-bold text-gray-800 mb-6">Bảng tin 🚀</h1>
+        {/* Center: News Feed */}
+        <main className="flex-1 max-w-2xl py-4 md:py-6 mx-auto">
+          
+          {/* Post publisher (Facebook Style "What's on your mind?") */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-4">
+            <div className="flex gap-3 items-center mb-3">
+              {currentUser?.avatar_url ? (
+                <img 
+                  src={currentUser.avatar_url} 
+                  alt={currentUser.username} 
+                  className="w-10 h-10 rounded-full object-cover border"
+                />
+              ) : (
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full text-white flex items-center justify-center font-bold">
+                  {getInitials(currentUser?.username)}
+                </div>
+              )}
+              <div className="flex-1">
+                <div className="text-sm font-semibold text-gray-800">
+                  {currentUser?.username || "Người dùng"}
+                </div>
+                <div className="text-xs text-gray-500 flex items-center gap-1">
+                  <span>🌎 Công khai</span>
+                </div>
+              </div>
+            </div>
 
-          {/* KHU VỰC ĐĂNG BÀI MỚI */}
-          <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6">
             <form onSubmit={handleCreatePost} className="space-y-3">
               <input
                 type="text"
-                placeholder="Tiêu đề bài viết..."
+                placeholder="Tiêu đề bài viết (tùy chọn)..."
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                required
+                className="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-semibold"
               />
               <textarea
-                placeholder="Hôm nay bạn nghĩ gì?"
+                placeholder={`${currentUser?.username ? currentUser.username : "Hùng"} ơi, bạn đang nghĩ gì thế?`}
                 value={newContent}
                 onChange={(e) => setNewContent(e.target.value)}
                 rows={3}
-                className="w-full px-4 py-2 bg-gray-50 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-[15px] placeholder-gray-500"
                 required
               />
+
+              {/* Image attachment preview */}
+              {imagePreview && (
+                <div className="relative border border-gray-100 rounded-lg overflow-hidden max-h-[300px] bg-gray-50 flex justify-center">
+                  <img src={imagePreview} alt="Preview" className="max-w-full h-auto object-contain max-h-[300px]" />
+                  <button 
+                    type="button"
+                    onClick={() => { setFile(null); setImagePreview(null); }}
+                    className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm focus:outline-none transition-colors"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
               
-              {/* KHU VỰC CHỌN ẢNH */}
+              <hr className="border-gray-100" />
+              
               <div className="flex items-center justify-between">
-                <input 
-                  id="file-upload"
-                  type="file" 
-                  accept="image/*"
-                  onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                />
-                
+                {/* Photo attachment icon button */}
+                <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors text-gray-600">
+                  <span className="text-xl">🖼️</span>
+                  <span className="text-sm font-semibold">Ảnh/Video</span>
+                  <input 
+                    id="file-upload"
+                    type="file" 
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </label>
+
                 <button
                   type="submit"
-                  disabled={isPosting}
-                  className={`px-6 py-2 rounded-lg text-white font-semibold transition-colors whitespace-nowrap ml-4 ${
-                    isPosting ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                  disabled={isPosting || !newContent.trim()}
+                  className={`px-8 py-2 rounded-lg text-white font-bold text-sm shadow-sm transition-all ${
+                    isPosting || !newContent.trim()
+                      ? 'bg-blue-400 cursor-not-allowed' 
+                      : 'bg-blue-600 hover:bg-blue-700 hover:shadow-md'
                   }`}
                 >
                   {isPosting ? 'Đang đăng...' : 'Đăng bài'}
@@ -145,25 +247,91 @@ export default function Home() {
             </form>
           </div>
 
-          {/* KHU VỰC HIỂN THỊ DANH SÁCH BÀI VIẾT */}
+          {/* Posts Feed container */}
           {isLoading ? (
-            <div className="flex justify-center items-center mt-10">
+            <div className="flex justify-center items-center py-20 bg-white rounded-xl border border-gray-200 shadow-sm">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
           ) : (
             <div className="space-y-4">
               {posts.length === 0 ? (
-                <p className="text-center text-gray-500 bg-white p-6 rounded-xl border shadow-sm">
-                  Chưa có bài viết nào. Hãy là người đầu tiên đăng bài!
-                </p>
+                <div className="text-center text-gray-500 bg-white p-10 rounded-xl border shadow-sm">
+                  <div className="text-3xl mb-2">📰</div>
+                  <p className="font-semibold text-gray-800">Chưa có bài viết nào.</p>
+                  <p className="text-sm text-gray-500 mt-1">Hãy bắt đầu chia sẻ câu chuyện đầu tiên!</p>
+                </div>
               ) : (
-                [...posts].map((post, index) => (
-                  <PostCard key={post.id || index} post={post} /> 
+                posts.map((post, index) => (
+                  <PostCard 
+                    key={post.id || index} 
+                    post={post} 
+                    onPostDeleted={fetchPosts}
+                    onPostUpdated={fetchPosts}
+                  /> 
                 ))
               )}
             </div>
           )}
         </main>
+
+        {/* Right Sidebar: Suggestions & Sponsored */}
+        <aside className="w-72 hidden lg:block py-6 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto">
+          {/* Sponsored card */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4 shadow-sm">
+            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2.5">Được tài trợ</h4>
+            <div className="flex gap-3 hover:bg-gray-50 p-1.5 rounded-lg transition-colors cursor-pointer">
+              <div className="w-24 h-16 bg-blue-100 rounded-lg flex items-center justify-center font-bold text-blue-700 text-xs text-center p-1 border">
+                Spring Boot Core
+              </div>
+              <div className="flex-1 flex flex-col justify-center">
+                <span className="font-semibold text-xs text-gray-900 leading-tight">Khóa học Java Spring Boot thực chiến</span>
+                <span className="text-[10px] text-gray-500 mt-0.5">vnnet.academy</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Suggestions block */}
+          {suggestedUsers.length > 0 && (
+            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+              <div className="flex justify-between items-center mb-3">
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Người bạn có thể biết</h4>
+                <Link href="/friends" className="text-xs text-blue-600 hover:underline font-semibold">Xem tất cả</Link>
+              </div>
+
+              <div className="space-y-3.5">
+                {suggestedUsers.map((user, idx) => (
+                  <div key={user.id || idx} className="flex items-center justify-between gap-2">
+                    <Link href={`/profile/${user.id}`} className="flex items-center gap-2.5 group">
+                      {user.avatar_url ? (
+                        <img 
+                          src={user.avatar_url} 
+                          alt={user.username} 
+                          className="w-9 h-9 rounded-full object-cover border"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 bg-blue-100 rounded-full text-blue-600 flex items-center justify-center font-bold text-sm shadow-sm group-hover:bg-blue-200 transition-colors">
+                          {getInitials(user.username)}
+                        </div>
+                      )}
+                      <div>
+                        <div className="font-semibold text-xs text-gray-900 group-hover:underline max-w-[110px] truncate">{user.username}</div>
+                        <div className="text-[9px] text-gray-500 truncate max-w-[110px]">{user.email}</div>
+                      </div>
+                    </Link>
+
+                    <button
+                      onClick={() => handleAddFriend(user.id)}
+                      className="px-3 py-1.5 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-600 font-semibold text-[11px] rounded-full transition-colors flex items-center gap-1 shadow-sm"
+                    >
+                      <span>➕</span> Kết bạn
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </aside>
+
       </div>
     </div>
   );

@@ -129,6 +129,14 @@ public class PostService {
         return null;
     }
 
+    // Lấy danh sách bài viết của một user cụ thể
+    public List<PostResponseDto> getPostsByOwnerId(Long ownerId, Long currentUserId) {
+        List<Post> posts = postRepository.findByOwnerIdOrderByIdDesc(ownerId);
+        return posts.stream()
+                .map(post -> toResponseDto(post, currentUserId))
+                .collect(Collectors.toList());
+    }
+
     // Chuyển đổi Post entity → PostResponseDto
     private PostResponseDto toResponseDto(Post post, Long currentUserId) {
         long likesCount = likeRepository.countByPostId(post.getId());
@@ -147,6 +155,7 @@ public class PostService {
                 .owner(PostResponseDto.UserOutDto.builder()
                         .id(owner.getId())
                         .username(owner.getUsername())
+                        .avatarUrl(owner.getAvatarUrl())
                         .build())
                 .likesCount((int) likesCount)
                 .commentsCount((int) commentsCount)

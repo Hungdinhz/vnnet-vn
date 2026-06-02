@@ -53,6 +53,15 @@ public class PostController {
         return ResponseEntity.ok(postService.getPostById(postId));
     }
 
+    // GET /posts/user/{userId} - Lấy danh sách bài viết của một user cụ thể
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<PostResponseDto>> getPostsByUser(
+            @PathVariable Long userId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Long currentUserId = postService.resolveCurrentUserId(authHeader);
+        return ResponseEntity.ok(postService.getPostsByOwnerId(userId, currentUserId));
+    }
+
     // PUT /posts/{post_id} - Sửa bài viết (cần token, chỉ chủ sở hữu)
     @PutMapping("/{postId}")
     public ResponseEntity<PostResponseDto> updatePost(

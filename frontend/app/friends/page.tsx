@@ -1,20 +1,32 @@
 // app/friends/page.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+export const dynamic = 'force-dynamic';
+
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import api from '@/lib/axios';
 
-export default function FriendsPage() {
+function FriendsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [activeTab, setActiveTab] = useState<'suggestions' | 'requests' | 'list'>('suggestions');
   const [suggestedUsers, setSuggestedUsers] = useState<any[]>([]);
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [friends, setFriends] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Read tab parameter if present
+  useEffect(() => {
+    const tabParam = searchParams.get('tab');
+    if (tabParam === 'requests' || tabParam === 'suggestions' || tabParam === 'list') {
+      setActiveTab(tabParam as any);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -23,7 +35,6 @@ export default function FriendsPage() {
       return;
     }
 
-    // Load data for the active tab
     if (activeTab === 'suggestions') fetchSuggestedUsers();
     if (activeTab === 'requests') fetchPendingRequests();
     if (activeTab === 'list') fetchFriendsList();
@@ -34,11 +45,13 @@ export default function FriendsPage() {
   const fetchSuggestedUsers = async () => {
     setIsLoading(true);
     try {
-      const res = await api.get('/users');
-      setSuggestedUsers(res.data || []);
+      const [res, meRes] = await Promise.all([api.get('/users'), api.get('/users/me')]);
+      const me = meRes.data;
+      // Filter out self from recommendations
+      const usersList = (res.data || []).filter((u: any) => u.id !== me.id);
+      setSuggestedUsers(usersList);
     } catch (error: any) {
       console.error('Lỗi khi tải danh sách người dùng:', error);
-      alert(error.response?.data?.detail || 'Không thể tải danh sách người dùng.');
     } finally {
       setIsLoading(false);
     }
@@ -51,7 +64,6 @@ export default function FriendsPage() {
       setPendingRequests(res.data || []);
     } catch (error: any) {
       console.error('Lỗi khi tải lời mời:', error);
-      alert(error.response?.data?.detail || 'Không thể tải lời mời.');
     } finally {
       setIsLoading(false);
     }
@@ -60,21 +72,17 @@ export default function FriendsPage() {
   const fetchFriendsList = async () => {
     setIsLoading(true);
     try {
-      // Lấy danh sách friendships rồi map sang user info của người bạn
       const [friendsRes, meRes] = await Promise.all([api.get('/friends/list'), api.get('/users/me')]);
       const friendships = Array.isArray(friendsRes.data) ? friendsRes.data : [];
       const me = meRes.data;
 
       if (!me || !me.id) {
-        console.error('Không lấy được thông tin user hiện tại:', meRes);
-        alert('Không thể xác thực người dùng. Vui lòng đăng nhập lại.');
         setFriends([]);
         setIsLoading(false);
         return;
       }
 
       const friendIds = friendships.map((f: any) => (f.user_id === me.id ? f.friend_id : f.user_id));
-      // Chuẩn hóa và loại bỏ ID không hợp lệ (undefined, null, NaN, ...)
       const uniqueIds = Array.from(new Set(
         friendIds
           .map((id: any) => Number(id))
@@ -88,7 +96,7 @@ export default function FriendsPage() {
           api.get(`/users/${id}`)
             .then(r => r.data)
             .catch(err => {
-              console.error(`Không lấy được user ${id}:`, err?.response?.data || err);
+              console.error(`Không lấy được user ${id}:`, err);
               return null;
             })
         );
@@ -98,7 +106,6 @@ export default function FriendsPage() {
       }
     } catch (error: any) {
       console.error('Lỗi khi tải danh sách bạn bè:', error);
-      alert(error.response?.data?.detail || 'Không thể tải danh sách bạn bè.');
     } finally {
       setIsLoading(false);
     }
@@ -111,106 +118,164 @@ export default function FriendsPage() {
       setSuggestedUsers(prev => prev.filter(u => u.id !== friendId));
     } catch (error: any) {
       console.error('Lỗi kết bạn:', error);
-      alert(error.response?.data?.detail || 'Không thể gửi lời mời lúc này.');
+      alert(error.response?.data?.detail || 'Không thể gửi lời mời kết bạn.');
     }
   };
 
   const handleAccept = async (requestId: number) => {
     try {
       await api.post(`/friends/accept/${requestId}`);
-      alert('Đã chấp nhận lời mời.');
-      // Refresh lists
+      alert('Đã chấp nhận lời mời kết bạn!');
       fetchPendingRequests();
       fetchFriendsList();
     } catch (error: any) {
-      console.error('Lỗi khi chấp nhận lời mời:', error);
+      console.error('Lỗi chấp nhận lời mời:', error);
       alert(error.response?.data?.detail || 'Không thể chấp nhận lời mời.');
     }
   };
 
+  const getInitials = (name: string) => {
+    if (!name) return 'U';
+    return name.charAt(0).toUpperCase();
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f0f2f5] text-gray-900">
       <Navbar />
-      <div className="max-w-7xl mx-auto flex">
+      
+      <div className="max-w-7xl mx-auto flex gap-4 px-2 md:px-4">
         <Sidebar />
 
-        <main className="flex-1 p-6 max-w-4xl">
-          <h1 className="text-2xl font-bold text-gray-800 mb-4">Mạng lưới bạn bè</h1>
+        <main className="flex-1 py-4 md:py-6 max-w-4xl mx-auto">
+          
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-4">
+            <h1 className="text-2xl font-extrabold text-gray-900 mb-4 tracking-tight">Bạn bè</h1>
 
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-6">
-            <div className="flex items-center gap-2">
+            {/* Navigation Tabs */}
+            <div className="flex items-center gap-2 border-b pb-2">
               <button
                 onClick={() => setActiveTab('suggestions')}
-                className={`${activeTab === 'suggestions' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'} px-4 py-2 rounded-lg font-medium shadow-sm`}
+                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
+                  activeTab === 'suggestions' 
+                    ? 'bg-blue-50 text-blue-600 shadow-sm' 
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
               >
-                Gợi ý
+                Gợi ý kết bạn
               </button>
               <button
                 onClick={() => setActiveTab('requests')}
-                className={`${activeTab === 'requests' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'} px-4 py-2 rounded-lg font-medium shadow-sm`}
+                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none relative ${
+                  activeTab === 'requests' 
+                    ? 'bg-blue-50 text-blue-600 shadow-sm' 
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
               >
-                Lời mời
+                Lời mời kết bạn
+                {pendingRequests.length > 0 && (
+                  <span className="ml-1.5 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                    {pendingRequests.length}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setActiveTab('list')}
-                className={`${activeTab === 'list' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'} px-4 py-2 rounded-lg font-medium shadow-sm`}
+                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
+                  activeTab === 'list' 
+                    ? 'bg-blue-50 text-blue-600 shadow-sm' 
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
               >
-                Danh sách
+                Tất cả bạn bè
               </button>
             </div>
           </div>
 
+          {/* Loader or Content */}
           {isLoading ? (
-            <div className="flex justify-center mt-10">
+            <div className="flex justify-center items-center py-20 bg-white rounded-xl border shadow-sm">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
           ) : activeTab === 'suggestions' ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            
+            /* Suggestions Grid */
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {suggestedUsers.length === 0 ? (
-                <p className="text-gray-500 col-span-full">Chưa có gợi ý bạn bè nào mới.</p>
+                <div className="bg-white p-8 rounded-xl border text-center text-gray-500 col-span-full shadow-sm">
+                  Chưa có gợi ý bạn bè nào mới dành cho bạn.
+                </div>
               ) : (
-                suggestedUsers.map((user, index) => (
-                  <div key={index} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center text-center">
-                    <div className="w-16 h-16 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full text-white flex items-center justify-center text-2xl font-bold mb-3 shadow-sm">
-                      {(user.username || 'U').charAt(0).toUpperCase()}
-                    </div>
-                    <h3 className="font-bold text-gray-900 text-lg">{user.username}</h3>
-                    <p className="text-sm text-gray-500 mb-4">{user.email}</p>
+                suggestedUsers.map((user, idx) => (
+                  <div key={user.id || idx} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow">
+                    
+                    {/* Fake Header Background */}
+                    <div className="h-20 bg-gradient-to-r from-blue-400 to-indigo-500" />
+                    
+                    <div className="p-4 flex flex-col items-center text-center -mt-10 flex-1 justify-between">
+                      <div className="flex flex-col items-center">
+                        <Link href={`/profile/${user.id}`} className="relative w-16 h-16 bg-white rounded-full p-1 shadow-md mb-2 hover:opacity-90 transition-opacity">
+                          {user.avatar_url ? (
+                            <img 
+                              src={user.avatar_url} 
+                              alt={user.username} 
+                              className="w-full h-full rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-blue-100 rounded-full flex items-center justify-center text-xl font-bold text-blue-600">
+                              {getInitials(user.username)}
+                            </div>
+                          )}
+                        </Link>
+                        <Link href={`/profile/${user.id}`} className="font-bold text-gray-900 text-[15px] hover:text-blue-600 hover:underline">
+                          {user.username}
+                        </Link>
+                        <p className="text-xs text-gray-500 truncate max-w-[180px] mt-0.5 mb-4">{user.email}</p>
+                      </div>
 
-                    <button
-                      onClick={() => handleAddFriend(user.id)}
-                      className="w-full py-2 bg-blue-50 text-blue-600 font-semibold rounded-lg hover:bg-blue-600 hover:text-white transition-colors"
-                    >
-                      Thêm bạn bè
-                    </button>
+                      <button
+                        onClick={() => handleAddFriend(user.id)}
+                        className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs shadow-sm transition-colors border-b border-blue-800"
+                      >
+                        Thêm bạn bè
+                      </button>
+                    </div>
                   </div>
                 ))
               )}
             </div>
           ) : activeTab === 'requests' ? (
+            
+            /* Requests Tab */
             <div className="space-y-3">
               {pendingRequests.length === 0 ? (
-                <p className="text-gray-500">Bạn không có lời mời nào đang chờ.</p>
+                <div className="bg-white p-10 rounded-xl border text-center text-gray-500 shadow-sm">
+                  Bạn không có lời mời kết bạn nào đang chờ.
+                </div>
               ) : (
                 pendingRequests.map((r: any) => (
-                  <div key={r.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between">
-                    <div>
-                      <h3 className="font-bold text-gray-900">{r.sender_username}</h3>
-                      <p className="text-sm text-gray-500">Yêu cầu kết bạn</p>
+                  <div key={r.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full text-white flex items-center justify-center font-bold shadow-sm">
+                        {getInitials(r.sender_username)}
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-gray-900 text-sm">{r.sender_username}</h3>
+                        <p className="text-xs text-gray-500">Yêu cầu kết bạn gửi cho bạn</p>
+                      </div>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleAccept(r.id)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold shadow-sm"
+                        className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs shadow-sm transition-colors"
                       >
                         Chấp nhận
                       </button>
                       <button
-                        onClick={() => alert('Từ chối chức năng chưa triển khai')}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium"
+                        onClick={() => alert('Từ chối lời mời này')}
+                        className="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-semibold text-xs transition-colors"
                       >
-                        Từ chối
+                        Xóa
                       </button>
                     </div>
                   </div>
@@ -218,18 +283,48 @@ export default function FriendsPage() {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            
+            /* Friends List Grid */
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {friends.length === 0 ? (
-                <p className="text-gray-500 col-span-full">Bạn chưa có bạn bè nào.</p>
+                <div className="bg-white p-8 rounded-xl border text-center text-gray-500 col-span-full shadow-sm">
+                  Bạn chưa kết nối với người bạn nào. Hãy gửi lời mời tới bạn bè nhé!
+                </div>
               ) : (
                 friends.map((user: any, idx: number) => (
-                  <div key={idx} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col items-center text-center">
-                    <div className="w-16 h-16 bg-gradient-to-r from-blue-400 to-indigo-500 rounded-full text-white flex items-center justify-center text-2xl font-bold mb-3 shadow-sm">
-                      {(user.username || 'U').charAt(0).toUpperCase()}
+                  <div key={user.id || idx} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow">
+                    
+                    {/* Fake Header Background */}
+                    <div className="h-20 bg-gradient-to-r from-teal-400 to-blue-500" />
+                    
+                    <div className="p-4 flex flex-col items-center text-center -mt-10 flex-1 justify-between">
+                      <div className="flex flex-col items-center">
+                        <Link href={`/profile/${user.id}`} className="relative w-16 h-16 bg-white rounded-full p-1 shadow-md mb-2 hover:opacity-90 transition-opacity">
+                          {user.avatar_url ? (
+                            <img 
+                              src={user.avatar_url} 
+                              alt={user.username} 
+                              className="w-full h-full rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-blue-100 rounded-full flex items-center justify-center text-xl font-bold text-blue-600">
+                              {getInitials(user.username)}
+                            </div>
+                          )}
+                        </Link>
+                        <Link href={`/profile/${user.id}`} className="font-bold text-gray-900 text-[15px] hover:text-blue-600 hover:underline">
+                          {user.username}
+                        </Link>
+                        <p className="text-xs text-gray-500 truncate max-w-[180px] mt-0.5 mb-4">{user.email}</p>
+                      </div>
+
+                      <button 
+                        onClick={() => router.push(`/profile/${user.id}`)}
+                        className="w-full py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-lg text-xs transition-colors border"
+                      >
+                        Xem trang cá nhân
+                      </button>
                     </div>
-                    <h3 className="font-bold text-gray-900 text-lg">{user.username}</h3>
-                    <p className="text-sm text-gray-500 mb-4">{user.email}</p>
-                    <button className="w-full py-2 bg-gray-100 text-gray-700 font-semibold rounded-lg">Xem trang cá nhân</button>
                   </div>
                 ))
               )}
@@ -238,5 +333,17 @@ export default function FriendsPage() {
         </main>
       </div>
     </div>
+  );
+}
+
+export default function FriendsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    }>
+      <FriendsContent />
+    </Suspense>
   );
 }

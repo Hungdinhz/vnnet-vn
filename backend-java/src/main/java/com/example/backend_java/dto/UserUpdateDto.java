@@ -9,10 +9,8 @@ import lombok.NoArgsConstructor;
 @Data
 @Builder
 @NoArgsConstructor @AllArgsConstructor
-public class UserResponseDto {
-    private Long id;
+public class UserUpdateDto {
     private String username;
-    private String email;
 
     @JsonProperty("avatar_url")
     private String avatarUrl;

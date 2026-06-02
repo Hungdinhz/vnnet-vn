@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+import com.example.backend_java.dto.UserUpdateDto;
+
 @RestController
 @RequestMapping("/users")
 public class UserController {
@@ -41,6 +43,15 @@ public class UserController {
     public ResponseEntity<UserResponseDto> getCurrentUser(Authentication authentication) {
         User currentUser = (User) authentication.getPrincipal();
         return ResponseEntity.ok(userService.getCurrentUser(currentUser));
+    }
+
+    // PUT /users/me - Cập nhật thông tin profile hiện tại (cần token)
+    @PutMapping("/me")
+    public ResponseEntity<UserResponseDto> updateProfile(
+            @RequestBody UserUpdateDto dto,
+            Authentication authentication) {
+        User currentUser = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(userService.updateProfile(currentUser, dto));
     }
 
     // GET /users/ - Danh sách tất cả user

@@ -29,6 +29,12 @@ public class User {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
+    @Column(name = "cover_url")
+    private String coverUrl;
+
+    @Column(columnDefinition = "TEXT")
+    private String bio;
+
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Post> posts = new ArrayList<>();
