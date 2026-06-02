@@ -35,6 +35,11 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // States for replying to a comment
+  const [replyingToId, setReplyingToId] = useState<number | null>(null);
+  const [replyingToUsername, setReplyingToUsername] = useState<string | null>(null);
+  const commentInputRef = useRef<HTMLInputElement>(null);
+  
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -42,7 +47,33 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
   const [editContent, setEditContent] = useState(post.content || '');
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
+  // Sharing states
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareContent, setShareContent] = useState('');
+  const [isSharing, setIsSharing] = useState(false);
+
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const handleShareSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSharing(true);
+    try {
+      await api.post('/posts', {
+        title: `Đã chia sẻ bài viết của ${post.owner?.username || 'một người dùng'}`,
+        content: shareContent || "Hãy xem bài viết này!",
+        shared_post_id: post.id
+      });
+      setShowShareModal(false);
+      setShareContent('');
+      alert("Đã chia sẻ bài viết thành công!");
+      if (onPostUpdated) onPostUpdated();
+    } catch (err: any) {
+      console.error("Lỗi khi chia sẻ:", err);
+      alert(err.response?.data?.detail || "Chia sẻ thất bại.");
+    } finally {
+      setIsSharing(false);
+    }
+  };
 
   // Fetch self user ID to determine permissions
   useEffect(() => {
@@ -87,6 +118,24 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
     }
   };
 
+  const handleCommentLike = async (commentId: number, currentLiked: boolean) => {
+    try {
+      await api.post(`/posts/${post.id}/comments/${commentId}/like`);
+      setComments(prev => prev.map(c => {
+        if (c.id === commentId) {
+          return {
+            ...c,
+            is_liked: !currentLiked,
+            likes_count: currentLiked ? Math.max(0, (c.likes_count || 0) - 1) : (c.likes_count || 0) + 1
+          };
+        }
+        return c;
+      }));
+    } catch (err) {
+      console.error("Lỗi khi like bình luận:", err);
+    }
+  };
+
   const toggleComments = async () => {
     const willShow = !showComments;
     setShowComments(willShow);
@@ -104,20 +153,37 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
     }
   };
 
+  const handleReplyClick = (commentId: number, username: string) => {
+    setReplyingToId(commentId);
+    setReplyingToUsername(username);
+    setTimeout(() => {
+      if (commentInputRef.current) {
+        commentInputRef.current.focus();
+      }
+    }, 100);
+  };
+
+  const cancelReply = () => {
+    setReplyingToId(null);
+    setReplyingToUsername(null);
+  };
+
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
 
     setIsSubmitting(true);
     try {
-      const response = await api.post(`/posts/${post.id}/comments`, {
-        content: newComment
+      await api.post(`/posts/${post.id}/comments`, {
+        content: newComment,
+        parent_id: replyingToId
       });
 
-      // Reload comments list from server to get accurate username/avatar
+      // Reload comments
       const commentsRes = await api.get(`/posts/${post.id}/comments`);
       setComments(commentsRes.data);
       setNewComment('');
+      cancelReply();
       
       // Update comment count on post if callback is available
       if (onPostUpdated) onPostUpdated();
@@ -286,6 +352,38 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
               />
             </div>
           )}
+
+          {/* Shared Post Container */}
+          {post.shared_post && (
+            <div className="border border-gray-200 rounded-xl p-3 mb-3 bg-gray-50/50">
+              <Link href={`/profile/${post.shared_post.owner?.id}`} className="flex items-center gap-2 mb-2 group">
+                {post.shared_post.owner?.avatar_url ? (
+                  <img 
+                    src={post.shared_post.owner.avatar_url} 
+                    alt={post.shared_post.owner.username} 
+                    className="w-6 h-6 rounded-full object-cover border border-gray-100"
+                  />
+                ) : (
+                  <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center font-bold text-[10px] text-blue-600">
+                    {(post.shared_post.owner?.username || 'U').charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <span className="font-semibold text-[13px] text-gray-900 group-hover:underline">
+                    {post.shared_post.owner?.username}
+                  </span>
+                  <span className="text-[10px] text-gray-500 ml-2">{formatDate(post.shared_post.created_at)}</span>
+                </div>
+              </Link>
+              {post.shared_post.title && <h4 className="font-semibold text-[14px] text-gray-900 mb-1">{post.shared_post.title}</h4>}
+              <p className="text-[13px] text-gray-800 line-clamp-3 mb-2">{post.shared_post.content}</p>
+              {post.shared_post.image_url && (
+                <div className="rounded-lg overflow-hidden border border-gray-100">
+                  <img src={post.shared_post.image_url} className="w-full max-h-[300px] object-cover" alt="Shared attachment" />
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
 
@@ -330,6 +428,14 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
           <span className="text-lg">💬</span>
           <span>Bình luận</span>
         </button>
+
+        <button 
+          onClick={() => setShowShareModal(true)}
+          className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-semibold text-sm transition-all focus:outline-none text-gray-600 hover:bg-gray-100"
+        >
+          <span className="text-lg">↪️</span>
+          <span>Chia sẻ</span>
+        </button>
       </div>
 
       {/* Comments section */}
@@ -337,34 +443,43 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
         <div className="space-y-3.5 pt-1.5 animate-in fade-in duration-200">
           
           {/* Create comment form */}
-          <form onSubmit={handleCommentSubmit} className="flex gap-2">
-            {post.owner?.avatar_url ? (
-              <img 
-                src={post.owner.avatar_url} 
-                alt="My avatar" 
-                className="w-8 h-8 rounded-full object-cover flex-shrink-0 border"
-              />
-            ) : (
-              <div className="w-8 h-8 bg-blue-100 rounded-full text-blue-600 flex items-center justify-center font-bold text-xs flex-shrink-0">
-                ME
+          <form onSubmit={handleCommentSubmit} className="flex flex-col gap-2">
+            {replyingToId && (
+              <div className="text-[11px] text-gray-500 flex items-center gap-1 ml-10">
+                <span>Đang trả lời <b>{replyingToUsername}</b></span>
+                <button type="button" onClick={cancelReply} className="text-blue-600 hover:underline">Hủy</button>
               </div>
             )}
-            <div className="flex-1 flex bg-gray-100 rounded-full items-center px-3 py-1 focus-within:ring-2 focus-within:ring-blue-400">
-              <input
-                type="text"
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Viết bình luận công khai..."
-                className="flex-1 bg-transparent border-0 text-sm focus:outline-none py-1 placeholder-gray-500"
-                required
-              />
-              <button 
-                type="submit"
-                disabled={isSubmitting || !newComment.trim()}
-                className="text-blue-600 font-bold hover:text-blue-700 transition-colors disabled:opacity-30 focus:outline-none text-xs px-2"
-              >
-                {isSubmitting ? "Gửi..." : "Đăng"}
-              </button>
+            <div className="flex gap-2">
+              {post.owner?.avatar_url ? (
+                <img 
+                  src={post.owner.avatar_url} 
+                  alt="My avatar" 
+                  className="w-8 h-8 rounded-full object-cover flex-shrink-0 border"
+                />
+              ) : (
+                <div className="w-8 h-8 bg-blue-100 rounded-full text-blue-600 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                  ME
+                </div>
+              )}
+              <div className="flex-1 flex bg-gray-100 rounded-2xl items-center px-3 py-1.5 focus-within:ring-2 focus-within:ring-blue-400">
+                <input
+                  ref={commentInputRef}
+                  type="text"
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder={replyingToId ? `Phản hồi ${replyingToUsername}...` : "Viết bình luận công khai..."}
+                  className="flex-1 bg-transparent border-0 text-[13px] focus:outline-none py-1 placeholder-gray-500"
+                  required
+                />
+                <button 
+                  type="submit"
+                  disabled={isSubmitting || !newComment.trim()}
+                  className="text-blue-600 font-bold hover:text-blue-700 transition-colors disabled:opacity-30 focus:outline-none text-xs px-2"
+                >
+                  {isSubmitting ? "Gửi..." : "Đăng"}
+                </button>
+              </div>
             </div>
           </form>
 
@@ -378,7 +493,10 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
           ) : (
             <div className="space-y-3.5 max-h-[400px] overflow-y-auto pr-1">
               {comments.map((comment, idx) => (
-                <div key={comment.id || idx} className="flex gap-2.5 items-start">
+                <div 
+                  key={comment.id || idx} 
+                  className={`flex gap-2.5 items-start ${comment.parent_id ? 'ml-10 mt-1' : ''}`}
+                >
                   <Link href={`/profile/${comment.userId || comment.owner?.id}`} className="flex-shrink-0">
                     {comment.owner?.avatar_url ? (
                       <img 
@@ -393,23 +511,86 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
                     )}
                   </Link>
                   <div className="flex-1">
-                    <div className="bg-gray-100 px-3.5 py-2 rounded-2xl rounded-tl-none inline-block max-w-[90%] shadow-sm">
+                    <div className="bg-gray-100 px-3.5 py-2 rounded-2xl rounded-tl-none inline-block max-w-[90%] shadow-sm relative group">
                       <Link 
                         href={`/profile/${comment.userId || comment.owner?.id}`}
-                        className="font-bold text-xs text-gray-900 hover:underline block mb-0.5"
+                        className="font-bold text-[13px] text-gray-900 hover:underline block mb-0.5"
                       >
                          {comment.owner?.username || `User #${comment.userId}`}
                       </Link>
                       <span className="text-[13px] text-gray-800 leading-snug whitespace-pre-wrap">{comment.content}</span>
+                      
+                      {/* Comment like count floating bubble */}
+                      {comment.likes_count > 0 && (
+                        <div className="absolute -bottom-2 -right-2 bg-white px-1.5 py-0.5 rounded-full border border-gray-100 shadow-sm flex items-center gap-1 text-[10px] text-gray-600">
+                          <span>👍</span>
+                          <span>{comment.likes_count}</span>
+                        </div>
+                      )}
                     </div>
-                    <div className="text-[10px] text-gray-500 ml-3.5 mt-1">
-                      <span>Thích</span> • <span>Phản hồi</span> • <span>Vừa xong</span>
+                    <div className="text-[11px] font-semibold text-gray-500 ml-3.5 mt-1 flex gap-3">
+                      <button 
+                        onClick={() => handleCommentLike(comment.id, comment.is_liked)}
+                        className={`hover:underline ${comment.is_liked ? 'text-blue-600' : ''}`}
+                      >
+                        Thích
+                      </button>
+                      <button 
+                        onClick={() => handleReplyClick(comment.id, comment.owner?.username)}
+                        className="hover:underline"
+                      >
+                        Phản hồi
+                      </button>
+                      <span className="font-normal">Vừa xong</span>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div className="border-b border-gray-100 px-4 py-3 flex items-center justify-between bg-gray-50/50">
+              <h3 className="font-bold text-gray-900">Chia sẻ bài viết</h3>
+              <button 
+                onClick={() => setShowShareModal(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <form onSubmit={handleShareSubmit} className="p-4">
+              <textarea
+                value={shareContent}
+                onChange={(e) => setShareContent(e.target.value)}
+                placeholder="Hãy nói gì đó về bài viết này..."
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-sm mb-4"
+                rows={3}
+              />
+              
+              {/* Preview of the shared post */}
+              <div className="border border-gray-200 rounded-lg p-3 bg-gray-50 opacity-80 pointer-events-none mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="font-semibold text-[13px] text-gray-900">{post.owner?.username}</div>
+                </div>
+                {post.title && <h4 className="font-semibold text-[13px] mb-1">{post.title}</h4>}
+                <p className="text-[12px] text-gray-600 line-clamp-2">{post.content}</p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSharing}
+                className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-sm transition-colors shadow-sm disabled:opacity-50"
+              >
+                {isSharing ? "Đang chia sẻ..." : "Chia sẻ ngay"}
+              </button>
+            </form>
+          </div>
         </div>
       )}
 

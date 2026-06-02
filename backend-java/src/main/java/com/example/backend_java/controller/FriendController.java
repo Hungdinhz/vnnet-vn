@@ -51,4 +51,11 @@ public class FriendController {
         User currentUser = (User) authentication.getPrincipal();
         return ResponseEntity.ok(friendService.getPendingRequests(currentUser.getId()));
     }
+
+    // GET /friends/suggestions - Gợi ý kết bạn
+    @GetMapping("/suggestions")
+    public ResponseEntity<List<com.example.backend_java.dto.UserResponseDto>> getSuggestions(Authentication authentication) {
+        User currentUser = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(friendService.getSuggestions(currentUser.getId()));
+    }
 }

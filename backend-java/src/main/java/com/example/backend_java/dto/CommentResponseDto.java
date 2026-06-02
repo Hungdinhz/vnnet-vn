@@ -22,6 +22,16 @@ public class CommentResponseDto {
 
     private UserOutDto owner;
 
+    @JsonProperty("parent_id")
+    private Long parentId;
+
+    @JsonProperty("likes_count")
+    @Builder.Default
+    private int likesCount = 0;
+
+    @JsonProperty("is_liked")
+    @Builder.Default
+    private boolean isLiked = false;
     @Data
     @Builder
     @NoArgsConstructor @AllArgsConstructor

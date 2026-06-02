@@ -42,16 +42,15 @@ function FriendsContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
+  const [requestedUserIds, setRequestedUserIds] = useState<Set<number>>(new Set());
+
   const fetchSuggestedUsers = async () => {
     setIsLoading(true);
     try {
-      const [res, meRes] = await Promise.all([api.get('/users'), api.get('/users/me')]);
-      const me = meRes.data;
-      // Filter out self from recommendations
-      const usersList = (res.data || []).filter((u: any) => u.id !== me.id);
-      setSuggestedUsers(usersList);
+      const res = await api.get('/friends/suggestions');
+      setSuggestedUsers(res.data || []);
     } catch (error: any) {
-      console.error('Lỗi khi tải danh sách người dùng:', error);
+      console.error('Lỗi khi tải danh sách gợi ý:', error);
     } finally {
       setIsLoading(false);
     }
@@ -115,7 +114,7 @@ function FriendsContent() {
     try {
       await api.post(`/friends/request/${friendId}`);
       alert('Đã gửi lời mời kết bạn thành công!');
-      setSuggestedUsers(prev => prev.filter(u => u.id !== friendId));
+      setRequestedUserIds(prev => new Set(prev).add(friendId));
     } catch (error: any) {
       console.error('Lỗi kết bạn:', error);
       alert(error.response?.data?.detail || 'Không thể gửi lời mời kết bạn.');
@@ -232,12 +231,21 @@ function FriendsContent() {
                         <p className="text-xs text-gray-500 truncate max-w-[180px] mt-0.5 mb-4">{user.email}</p>
                       </div>
 
-                      <button
-                        onClick={() => handleAddFriend(user.id)}
-                        className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs shadow-sm transition-colors border-b border-blue-800"
-                      >
-                        Thêm bạn bè
-                      </button>
+                      {requestedUserIds.has(user.id) ? (
+                        <button
+                          disabled
+                          className="w-full py-2 bg-gray-200 text-gray-500 font-bold rounded-lg text-xs shadow-sm transition-colors border cursor-not-allowed"
+                        >
+                          Đã gửi yêu cầu
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => handleAddFriend(user.id)}
+                          className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs shadow-sm transition-colors border-b border-blue-800"
+                        >
+                          Thêm bạn bè
+                        </button>
+                      )}
                     </div>
                   </div>
                 ))

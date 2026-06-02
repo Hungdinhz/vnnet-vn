@@ -114,11 +114,16 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-gray-600">
-          Chưa có tài khoản?{' '}
-          <Link href="/register" className="text-blue-600 hover:underline font-medium">
-            Đăng ký ngay
+        <div className="mt-6 flex justify-between items-center text-sm text-gray-600">
+          <Link href="/forgot-password" className="text-gray-500 hover:text-blue-600 hover:underline">
+            Quên mật khẩu?
           </Link>
+          <div>
+            Chưa có tài khoản?{' '}
+            <Link href="/register" className="text-blue-600 hover:underline font-medium">
+              Đăng ký ngay
+            </Link>
+          </div>
         </div>
       </div>
     </div>

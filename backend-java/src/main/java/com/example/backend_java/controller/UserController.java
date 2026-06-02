@@ -38,6 +38,20 @@ public class UserController {
         return ResponseEntity.ok(userService.login(username, password));
     }
 
+    // POST /users/forgot-password - Quên mật khẩu
+    @PostMapping("/forgot-password")
+    public ResponseEntity<com.example.backend_java.dto.MessageDto> forgotPassword(
+            @Valid @RequestBody com.example.backend_java.dto.ForgotPasswordDto dto) {
+        return ResponseEntity.ok(userService.forgotPassword(dto.getEmail()));
+    }
+
+    // POST /users/reset-password - Đặt lại mật khẩu
+    @PostMapping("/reset-password")
+    public ResponseEntity<com.example.backend_java.dto.MessageDto> resetPassword(
+            @Valid @RequestBody com.example.backend_java.dto.ResetPasswordDto dto) {
+        return ResponseEntity.ok(userService.resetPassword(dto));
+    }
+
     // GET /users/me - Lấy thông tin user hiện tại (cần token)
     @GetMapping("/me")
     public ResponseEntity<UserResponseDto> getCurrentUser(Authentication authentication) {

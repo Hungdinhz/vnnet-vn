@@ -35,6 +35,9 @@ public class User {
     @Column(columnDefinition = "TEXT")
     private String bio;
 
+    @Column(name = "reset_password_otp", length = 10)
+    private String resetPasswordOtp;
+
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Post> posts = new ArrayList<>();

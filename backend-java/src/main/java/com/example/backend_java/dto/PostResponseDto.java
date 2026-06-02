@@ -40,6 +40,9 @@ public class PostResponseDto {
     @Builder.Default
     private boolean isLiked = false;
 
+    @JsonProperty("shared_post")
+    private PostResponseDto sharedPost;
+
     @Data
     @Builder
     @NoArgsConstructor @AllArgsConstructor

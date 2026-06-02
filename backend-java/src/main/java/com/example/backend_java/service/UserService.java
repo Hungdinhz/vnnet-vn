@@ -117,6 +117,36 @@ public class UserService {
         return toResponseDto(user);
     }
 
+    // Quên mật khẩu
+    public com.example.backend_java.dto.MessageDto forgotPassword(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng với email này"));
+        
+        // Tạo OTP ảo 6 số
+        String otp = String.format("%06d", new java.util.Random().nextInt(999999));
+        user.setResetPasswordOtp(otp);
+        userRepository.save(user);
+
+        // Trả về OTP trong response (chỉ dùng cho môi trường dev/demo)
+        return new com.example.backend_java.dto.MessageDto("Mã OTP của bạn là: " + otp);
+    }
+
+    // Đặt lại mật khẩu
+    public com.example.backend_java.dto.MessageDto resetPassword(com.example.backend_java.dto.ResetPasswordDto dto) {
+        User user = userRepository.findByEmail(dto.getEmail())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng với email này"));
+
+        if (user.getResetPasswordOtp() == null || !user.getResetPasswordOtp().equals(dto.getOtp())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã OTP không hợp lệ hoặc đã hết hạn");
+        }
+
+        user.setHashedPassword(passwordEncoder.encode(dto.getNewPassword()));
+        user.setResetPasswordOtp(null); // Clear OTP after use
+        userRepository.save(user);
+
+        return new com.example.backend_java.dto.MessageDto("Đặt lại mật khẩu thành công");
+    }
+
     // Chuyển đổi Entity → DTO
     private UserResponseDto toResponseDto(User user) {
         return UserResponseDto.builder()

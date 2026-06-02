@@ -15,4 +15,7 @@ public class PostCreateDto {
 
     @JsonProperty("image_url")
     private String imageUrl;
+
+    @JsonProperty("shared_post_id")
+    private Long sharedPostId;
 }

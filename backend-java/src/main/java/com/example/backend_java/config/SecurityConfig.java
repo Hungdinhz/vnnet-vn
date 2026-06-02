@@ -32,6 +32,8 @@ public class SecurityConfig {
                 // --- PUBLIC endpoints (không cần token) ---
                 .requestMatchers(HttpMethod.POST, "/users/register").permitAll()
                 .requestMatchers(HttpMethod.POST, "/users/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/users/forgot-password").permitAll()
+                .requestMatchers(HttpMethod.POST, "/users/reset-password").permitAll()
                 .requestMatchers(HttpMethod.GET, "/users/").permitAll()
                 .requestMatchers(HttpMethod.GET, "/users").permitAll()
                 .requestMatchers(HttpMethod.GET, "/users/{id}").permitAll()

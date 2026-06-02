@@ -119,11 +119,28 @@ public class PostController {
         return ResponseEntity.ok(comment);
     }
 
+    // POST /posts/{post_id}/comments/{comment_id}/like - Toggle like bình luận (cần token)
+    @PostMapping("/{postId}/comments/{commentId}/like")
+    public ResponseEntity<MessageDto> toggleCommentLike(
+            @PathVariable Long postId,
+            @PathVariable Long commentId,
+            Authentication authentication) {
+        User currentUser = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(interactionService.toggleCommentLike(currentUser.getId(), commentId));
+    }
+
     // GET /posts/{post_id}/comments - Xem danh sách bình luận
     @GetMapping("/{postId}/comments")
-    public ResponseEntity<List<CommentResponseDto>> getComments(@PathVariable Long postId) {
-        // Kiểm tra bài viết tồn tại
+    public ResponseEntity<List<CommentResponseDto>> getComments(
+            @PathVariable Long postId,
+            Authentication authentication) {
         postService.getPostEntity(postId);
-        return ResponseEntity.ok(interactionService.getCommentsByPost(postId));
+        
+        Long currentUserId = null;
+        if (authentication != null && authentication.getPrincipal() instanceof User) {
+            currentUserId = ((User) authentication.getPrincipal()).getId();
+        }
+        
+        return ResponseEntity.ok(interactionService.getCommentsByPost(postId, currentUserId));
     }
 }

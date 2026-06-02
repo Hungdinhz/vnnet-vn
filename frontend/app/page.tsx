@@ -34,15 +34,12 @@ export default function Home() {
     }
   };
 
+  const [requestedUserIds, setRequestedUserIds] = useState<Set<number>>(new Set());
+
   const fetchSuggestedUsers = async () => {
     try {
-      const res = await api.get('/users');
-      // Lọc bỏ user hiện tại nếu có
-      if (currentUser) {
-        setSuggestedUsers((res.data || []).filter((u: any) => u.id !== currentUser.id).slice(0, 5));
-      } else {
-        setSuggestedUsers((res.data || []).slice(0, 5));
-      }
+      const res = await api.get('/friends/suggestions');
+      setSuggestedUsers((res.data || []).slice(0, 5));
     } catch (err) {
       console.error("Lỗi tải gợi ý bạn bè:", err);
     }
@@ -137,7 +134,7 @@ export default function Home() {
     try {
       await api.post(`/friends/request/${friendId}`);
       alert('Đã gửi lời mời kết bạn!');
-      setSuggestedUsers(prev => prev.filter(u => u.id !== friendId));
+      setRequestedUserIds(prev => new Set(prev).add(friendId));
     } catch (err: any) {
       console.error("Lỗi kết bạn:", err);
       alert(err.response?.data?.detail || "Gửi lời mời thất bại");
@@ -319,12 +316,21 @@ export default function Home() {
                       </div>
                     </Link>
 
-                    <button
-                      onClick={() => handleAddFriend(user.id)}
-                      className="px-3 py-1.5 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-600 font-semibold text-[11px] rounded-full transition-colors flex items-center gap-1 shadow-sm"
-                    >
-                      <span>➕</span> Kết bạn
-                    </button>
+                    {requestedUserIds.has(user.id) ? (
+                      <button
+                        disabled
+                        className="px-3 py-1.5 bg-gray-200 text-gray-500 font-semibold text-[11px] rounded-full shadow-sm border cursor-not-allowed"
+                      >
+                        Đã gửi
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleAddFriend(user.id)}
+                        className="px-3 py-1.5 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-600 font-semibold text-[11px] rounded-full transition-colors flex items-center gap-1 shadow-sm"
+                      >
+                        <span>➕</span> Kết bạn
+                      </button>
+                    )}
                   </div>
                 ))}
               </div>

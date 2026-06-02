@@ -38,11 +38,19 @@ public class PostService {
 
     // Tạo bài viết mới (tương đương crud_post.create_post)
     public PostResponseDto createPost(PostCreateDto dto, User currentUser) {
+        Post sharedPost = null;
+        if (dto.getSharedPostId() != null) {
+            sharedPost = postRepository.findById(dto.getSharedPostId())
+                    .orElseThrow(() -> new ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy bài viết để chia sẻ"));
+        }
+
         Post post = Post.builder()
                 .title(dto.getTitle())
                 .content(dto.getContent())
                 .imageUrl(dto.getImageUrl())
                 .owner(currentUser)
+                .sharedPostId(dto.getSharedPostId())
+                .sharedPost(sharedPost)
                 .build();
 
         post = postRepository.save(post);
@@ -144,6 +152,25 @@ public class PostService {
         boolean isLiked = currentUserId != null && likeRepository.existsByUserIdAndPostId(currentUserId, post.getId());
 
         User owner = post.getOwner();
+        
+        PostResponseDto sharedPostDto = null;
+        if (post.getSharedPost() != null) {
+            Post sp = post.getSharedPost();
+            User spOwner = sp.getOwner();
+            sharedPostDto = PostResponseDto.builder()
+                .id(sp.getId())
+                .title(sp.getTitle())
+                .content(sp.getContent())
+                .imageUrl(sp.getImageUrl())
+                .createdAt(sp.getCreatedAt())
+                .ownerId(spOwner.getId())
+                .owner(PostResponseDto.UserOutDto.builder()
+                        .id(spOwner.getId())
+                        .username(spOwner.getUsername())
+                        .avatarUrl(spOwner.getAvatarUrl())
+                        .build())
+                .build();
+        }
 
         return PostResponseDto.builder()
                 .id(post.getId())
@@ -160,6 +187,7 @@ public class PostService {
                 .likesCount((int) likesCount)
                 .commentsCount((int) commentsCount)
                 .isLiked(isLiked)
+                .sharedPost(sharedPostDto)
                 .build();
     }
 }

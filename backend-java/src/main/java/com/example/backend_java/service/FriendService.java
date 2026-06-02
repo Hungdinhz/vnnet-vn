@@ -88,6 +88,34 @@ public class FriendService {
         }).collect(Collectors.toList());
     }
 
+    // Lấy gợi ý kết bạn (bỏ qua bản thân, bạn bè, và người đã gửi/nhận lời mời)
+    public List<com.example.backend_java.dto.UserResponseDto> getSuggestions(Long userId) {
+        // Lấy tất cả quan hệ bạn bè liên quan đến userId (cả gửi đi và nhận lại, mọi status)
+        List<Friendship> relatedFriendships = friendshipRepository.findAll().stream()
+                .filter(f -> f.getUserId().equals(userId) || f.getFriendId().equals(userId))
+                .collect(Collectors.toList());
+
+        // Tập hợp ID của những người cần loại trừ
+        java.util.Set<Long> excludedUserIds = relatedFriendships.stream()
+                .map(f -> f.getUserId().equals(userId) ? f.getFriendId() : f.getUserId())
+                .collect(Collectors.toSet());
+        
+        // Thêm chính mình vào danh sách loại trừ
+        excludedUserIds.add(userId);
+
+        return userRepository.findAll().stream()
+                .filter(u -> !excludedUserIds.contains(u.getId()))
+                .map(u -> com.example.backend_java.dto.UserResponseDto.builder()
+                        .id(u.getId())
+                        .username(u.getUsername())
+                        .email(u.getEmail())
+                        .avatarUrl(u.getAvatarUrl())
+                        .coverUrl(u.getCoverUrl())
+                        .bio(u.getBio())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
     private FriendshipResponseDto toResponseDto(Friendship friendship) {
         return FriendshipResponseDto.builder()
                 .id(friendship.getId())
