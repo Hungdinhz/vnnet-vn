@@ -29,6 +29,9 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable()) // Tắt CSRF cho REST API
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                // --- PROTECTED endpoints (cần token) ---
+                .requestMatchers(HttpMethod.GET, "/users/me").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/users/me").authenticated()
                 // --- PUBLIC endpoints (không cần token) ---
                 .requestMatchers(HttpMethod.POST, "/users/register").permitAll()
                 .requestMatchers(HttpMethod.POST, "/users/login").permitAll()
