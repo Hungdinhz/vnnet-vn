@@ -21,8 +21,8 @@ public class NotificationService {
 
     // Tạo thông báo - tương đương crud_notif.create_notification
     public void createNotification(Long recipientId, Long senderId, String type, Long targetId) {
-        // Tránh tự thông báo cho chính mình
-        if (recipientId.equals(senderId)) {
+        // Tránh tự thông báo cho chính mình hoặc lỗi truyền ID null
+        if (recipientId == null || senderId == null || recipientId.equals(senderId)) {
             return;
         }
 

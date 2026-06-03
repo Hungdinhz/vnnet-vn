@@ -1,13 +1,16 @@
 server:
-  port: 8000
+  port: ${SERVER_PORT:8000}
 
 spring:
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: backend-java
   datasource:
-    url: jdbc:postgresql://localhost:5432/vnnet
-    username: postgres
-    password: 123456
+    url: jdbc:postgresql://${DB_HOST}:${DB_PORT:5432}/${DB_NAME}?sslmode=${DB_SSLMODE:require}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
@@ -20,13 +23,11 @@ spring:
       max-file-size: 10MB
       max-request-size: 10MB
 
-# JWT Configuration
 jwt:
-  secret: who_am_i_vnnet_api
-  expiration: 1800000  # 30 phút (milliseconds)
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:1800000}
 
-# Cloudinary Configuration
 cloudinary:
-  cloud-name: dmrfw1vw5
-  api-key: "537557692366912"
-  api-secret: KOEPZChTcB1T2BY4G5vzTHOlBiE
+  cloud-name: ${CLOUDINARY_CLOUD_NAME}
+  api-key: ${CLOUDINARY_API_KEY}
+  api-secret: ${CLOUDINARY_API_SECRET}
