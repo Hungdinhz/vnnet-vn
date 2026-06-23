@@ -146,8 +146,16 @@ export default function Home() {
     return name.charAt(0).toUpperCase();
   };
 
+  const trendingTopics = [
+    { tag: '#AnimeViệtNam', count: '2.1K bài viết' },
+    { tag: '#CosplayVN', count: '1.8K bài viết' },
+    { tag: '#GameMobile', count: '956 bài viết' },
+    { tag: '#MangaMới', count: '743 bài viết' },
+    { tag: '#LivestreamHot', count: '512 bài viết' },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#f0f2f5] text-gray-900">
+    <div className="min-h-screen bg-[#0F0B1E] text-[#E8E0F0]">
       <Navbar />
       
       <div className="max-w-7xl mx-auto flex gap-4 px-2 md:px-4">
@@ -158,26 +166,26 @@ export default function Home() {
         {/* Center: News Feed */}
         <main className="flex-1 max-w-2xl py-4 md:py-6 mx-auto">
           
-          {/* Post publisher (Facebook Style "What's on your mind?") */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-4">
+          {/* Post publisher */}
+          <div className="glass-card rounded-xl p-4 mb-4">
             <div className="flex gap-3 items-center mb-3">
               {currentUser?.avatar_url ? (
                 <img 
                   src={currentUser.avatar_url} 
                   alt={currentUser.username} 
-                  className="w-10 h-10 rounded-full object-cover border"
+                  className="w-10 h-10 rounded-full object-cover avatar-glow"
                 />
               ) : (
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full text-white flex items-center justify-center font-bold">
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full text-white flex items-center justify-center font-bold">
                   {getInitials(currentUser?.username)}
                 </div>
               )}
               <div className="flex-1">
-                <div className="text-sm font-semibold text-gray-800">
+                <div className="text-sm font-semibold text-[#F0E6FF]">
                   {currentUser?.username || "Người dùng"}
                 </div>
-                <div className="text-xs text-gray-500 flex items-center gap-1">
-                  <span>🌎 Công khai</span>
+                <div className="text-xs text-purple-400/50 flex items-center gap-1">
+                  <span>🌏 Công khai</span>
                 </div>
               </div>
             </div>
@@ -188,20 +196,20 @@ export default function Home() {
                 placeholder="Tiêu đề bài viết (tùy chọn)..."
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
-                className="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-semibold"
+                className="w-full px-3 py-1.5 input-anime rounded-lg text-sm font-semibold"
               />
               <textarea
-                placeholder={`${currentUser?.username ? currentUser.username : "Hùng"} ơi, bạn đang nghĩ gì thế?`}
+                placeholder={`${currentUser?.username ? currentUser.username : "Bạn"} ơi, bạn đang nghĩ gì thế? ✨`}
                 value={newContent}
                 onChange={(e) => setNewContent(e.target.value)}
                 rows={3}
-                className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-[15px] placeholder-gray-500"
+                className="w-full px-4 py-2.5 input-anime rounded-lg resize-none text-[15px]"
                 required
               />
 
               {/* Image attachment preview */}
               {imagePreview && (
-                <div className="relative border border-gray-100 rounded-lg overflow-hidden max-h-[300px] bg-gray-50 flex justify-center">
+                <div className="relative border border-purple-500/20 rounded-lg overflow-hidden max-h-[300px] bg-black/20 flex justify-center">
                   <img src={imagePreview} alt="Preview" className="max-w-full h-auto object-contain max-h-[300px]" />
                   <button 
                     type="button"
@@ -213,11 +221,11 @@ export default function Home() {
                 </div>
               )}
               
-              <hr className="border-gray-100" />
+              <hr className="border-purple-500/10" />
               
               <div className="flex items-center justify-between">
                 {/* Photo attachment icon button */}
-                <label className="flex items-center gap-2 cursor-pointer hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors text-gray-600">
+                <label className="flex items-center gap-2 cursor-pointer hover:bg-white/5 px-3 py-2 rounded-lg transition-colors text-purple-300/70">
                   <span className="text-xl">🖼️</span>
                   <span className="text-sm font-semibold">Ảnh/Video</span>
                   <input 
@@ -232,13 +240,9 @@ export default function Home() {
                 <button
                   type="submit"
                   disabled={isPosting || !newContent.trim()}
-                  className={`px-8 py-2 rounded-lg text-white font-bold text-sm shadow-sm transition-all ${
-                    isPosting || !newContent.trim()
-                      ? 'bg-blue-400 cursor-not-allowed' 
-                      : 'bg-blue-600 hover:bg-blue-700 hover:shadow-md'
-                  }`}
+                  className="px-8 py-2 rounded-lg text-sm shadow-sm transition-all btn-anime"
                 >
-                  {isPosting ? 'Đang đăng...' : 'Đăng bài'}
+                  {isPosting ? 'Đang đăng...' : '✨ Đăng bài'}
                 </button>
               </div>
             </form>
@@ -246,16 +250,16 @@ export default function Home() {
 
           {/* Posts Feed container */}
           {isLoading ? (
-            <div className="flex justify-center items-center py-20 bg-white rounded-xl border border-gray-200 shadow-sm">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="flex justify-center items-center py-20 glass-card rounded-xl">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
             </div>
           ) : (
             <div className="space-y-4">
               {posts.length === 0 ? (
-                <div className="text-center text-gray-500 bg-white p-10 rounded-xl border shadow-sm">
+                <div className="text-center glass-card p-10 rounded-xl">
                   <div className="text-3xl mb-2">📰</div>
-                  <p className="font-semibold text-gray-800">Chưa có bài viết nào.</p>
-                  <p className="text-sm text-gray-500 mt-1">Hãy bắt đầu chia sẻ câu chuyện đầu tiên!</p>
+                  <p className="font-semibold text-[#F0E6FF]">Chưa có bài viết nào.</p>
+                  <p className="text-sm text-purple-400/50 mt-1">Hãy bắt đầu chia sẻ câu chuyện đầu tiên! ✨</p>
                 </div>
               ) : (
                 posts.map((post, index) => (
@@ -271,28 +275,33 @@ export default function Home() {
           )}
         </main>
 
-        {/* Right Sidebar: Suggestions & Sponsored */}
+        {/* Right Sidebar: Trending & Suggestions */}
         <aside className="w-72 hidden lg:block py-6 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto">
-          {/* Sponsored card */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 mb-4 shadow-sm">
-            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2.5">Được tài trợ</h4>
-            <div className="flex gap-3 hover:bg-gray-50 p-1.5 rounded-lg transition-colors cursor-pointer">
-              <div className="w-24 h-16 bg-blue-100 rounded-lg flex items-center justify-center font-bold text-blue-700 text-xs text-center p-1 border">
-                Spring Boot Core
-              </div>
-              <div className="flex-1 flex flex-col justify-center">
-                <span className="font-semibold text-xs text-gray-900 leading-tight">Khóa học Java Spring Boot thực chiến</span>
-                <span className="text-[10px] text-gray-500 mt-0.5">vnnet.academy</span>
-              </div>
+          
+          {/* Trending card */}
+          <div className="glass-card rounded-xl p-4 mb-4">
+            <h4 className="text-xs font-bold text-purple-300/70 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+              🔥 Xu hướng
+            </h4>
+            <div className="space-y-3">
+              {trendingTopics.map((topic, idx) => (
+                <div key={idx} className="flex justify-between items-center hover:bg-white/5 p-2 -mx-2 rounded-lg transition-colors cursor-pointer group">
+                  <div>
+                    <div className="font-semibold text-sm text-purple-200 group-hover:text-pink-300 transition-colors">{topic.tag}</div>
+                    <div className="text-[10px] text-purple-400/40">{topic.count}</div>
+                  </div>
+                  <span className="text-purple-400/30 text-xs">•••</span>
+                </div>
+              ))}
             </div>
           </div>
 
           {/* Suggestions block */}
           {suggestedUsers.length > 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 p-4 shadow-sm">
+            <div className="glass-card rounded-xl p-4">
               <div className="flex justify-between items-center mb-3">
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Người bạn có thể biết</h4>
-                <Link href="/friends" className="text-xs text-blue-600 hover:underline font-semibold">Xem tất cả</Link>
+                <h4 className="text-xs font-bold text-purple-300/70 uppercase tracking-wider">✨ Người bạn có thể biết</h4>
+                <Link href="/friends" className="text-xs text-pink-400 hover:underline font-semibold">Xem tất cả</Link>
               </div>
 
               <div className="space-y-3.5">
@@ -303,30 +312,30 @@ export default function Home() {
                         <img 
                           src={user.avatar_url} 
                           alt={user.username} 
-                          className="w-9 h-9 rounded-full object-cover border"
+                          className="w-9 h-9 rounded-full object-cover avatar-glow"
                         />
                       ) : (
-                        <div className="w-9 h-9 bg-blue-100 rounded-full text-blue-600 flex items-center justify-center font-bold text-sm shadow-sm group-hover:bg-blue-200 transition-colors">
+                        <div className="w-9 h-9 bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full text-purple-200 flex items-center justify-center font-bold text-sm shadow-sm group-hover:from-purple-500 group-hover:to-pink-500 transition-all">
                           {getInitials(user.username)}
                         </div>
                       )}
                       <div>
-                        <div className="font-semibold text-xs text-gray-900 group-hover:underline max-w-[110px] truncate">{user.username}</div>
-                        <div className="text-[9px] text-gray-500 truncate max-w-[110px]">{user.email}</div>
+                        <div className="font-semibold text-xs text-purple-200 group-hover:text-pink-300 transition-colors max-w-[110px] truncate">{user.username}</div>
+                        <div className="text-[9px] text-purple-400/40 truncate max-w-[110px]">{user.email}</div>
                       </div>
                     </Link>
 
                     {requestedUserIds.has(user.id) ? (
                       <button
                         disabled
-                        className="px-3 py-1.5 bg-gray-200 text-gray-500 font-semibold text-[11px] rounded-full shadow-sm border cursor-not-allowed"
+                        className="px-3 py-1.5 bg-white/5 text-purple-400/50 font-semibold text-[11px] rounded-full shadow-sm border border-purple-500/10 cursor-not-allowed"
                       >
                         Đã gửi
                       </button>
                     ) : (
                       <button
                         onClick={() => handleAddFriend(user.id)}
-                        className="px-3 py-1.5 bg-blue-50 hover:bg-blue-600 hover:text-white text-blue-600 font-semibold text-[11px] rounded-full transition-colors flex items-center gap-1 shadow-sm"
+                        className="px-3 py-1.5 bg-purple-500/20 hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 text-purple-300 hover:text-white font-semibold text-[11px] rounded-full transition-all flex items-center gap-1 shadow-sm border border-purple-500/20 hover:border-transparent"
                       >
                         <span>➕</span> Kết bạn
                       </button>

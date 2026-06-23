@@ -1,5 +1,5 @@
 // app/(auth)/register/page.tsx
-"use client"; // BẮT BUỘC: Vì trang này có form tương tác và gọi API
+"use client";
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -9,13 +9,11 @@ import api from '@/lib/axios';
 export default function RegisterPage() {
   const router = useRouter();
   
-  // State quản lý form
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   
-  // State quản lý trạng thái
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -25,7 +23,6 @@ export default function RegisterPage() {
     setError('');
     setSuccess('');
 
-    // Validate cơ bản ở Front-end
     if (password !== confirmPassword) {
       setError('Mật khẩu nhập lại không khớp!');
       return;
@@ -34,24 +31,19 @@ export default function RegisterPage() {
     setIsLoading(true);
 
     try {
-      // TÙY CHỈNH THEO FASTAPI: Sửa '/register' thành endpoint tạo user của bạn
-      // Thường thì FastAPI hay dùng '/users/' hoặc '/register'
       const response = await api.post('/users/register', {
         username: username,
         email: email,
         password: password
       });
 
-      // Nếu API đăng ký thành công
       setSuccess('Đăng ký thành công! Đang chuyển hướng đến trang đăng nhập...');
       
-      // Chờ 2 giây rồi tự động đẩy người dùng về trang login
       setTimeout(() => {
         router.push('/login');
       }, 2000);
 
     } catch (err: any) {
-      // Bắt lỗi từ server (VD: trùng username, trùng email)
       setError(err.response?.data?.detail || 'Đăng ký thất bại. Vui lòng thử lại.');
     } finally {
       setIsLoading(false);
@@ -59,57 +51,66 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md border border-gray-200">
-        <h2 className="text-3xl font-bold text-center text-blue-600 mb-6">MạngXãHội</h2>
-        <h3 className="text-xl font-semibold text-center text-gray-800 mb-6">Tạo tài khoản mới</h3>
+    <div className="min-h-screen flex items-center justify-center bg-[#0F0B1E] py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Animated background blobs */}
+      <div className="absolute top-1/3 -left-20 w-72 h-72 bg-pink-600/20 rounded-full blur-[100px] animate-float"></div>
+      <div className="absolute bottom-1/3 -right-20 w-72 h-72 bg-purple-600/20 rounded-full blur-[100px] animate-float" style={{ animationDelay: '1.5s' }}></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-600/10 rounded-full blur-[120px]"></div>
 
-        {/* Hiển thị thông báo lỗi nếu có */}
+      <div className="glass-card p-8 rounded-2xl shadow-2xl w-full max-w-md relative z-10 animate-slide-up">
+        {/* Logo */}
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-cyan-400 shadow-lg shadow-purple-500/30 mb-4">
+            <span className="text-white text-2xl font-black">VN</span>
+          </div>
+          <h2 className="text-3xl font-bold gradient-text">VnNet</h2>
+          <p className="text-purple-400/50 text-sm mt-1">Tạo tài khoản mới ✨</p>
+        </div>
+
         {error && (
-          <div className="bg-red-50 text-red-500 p-3 rounded-lg mb-4 text-sm text-center">
+          <div className="bg-rose-500/10 text-rose-400 p-3 rounded-lg mb-4 text-sm text-center border border-rose-500/20">
             {error}
           </div>
         )}
 
-        {/* Hiển thị thông báo thành công */}
         {success && (
-          <div className="bg-green-50 text-green-600 p-3 rounded-lg mb-4 text-sm text-center font-medium">
+          <div className="bg-emerald-500/10 text-emerald-400 p-3 rounded-lg mb-4 text-sm text-center font-medium border border-emerald-500/20">
             {success}
           </div>
         )}
 
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <label className="block text-gray-700 text-sm font-medium mb-1">Tên đăng nhập</label>
+            <label className="block text-purple-300/70 text-sm font-medium mb-1.5">Tên đăng nhập</label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
               placeholder="VD: hungdeptrai"
               required
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 text-sm font-medium mb-1">Email</label>
+            <label className="block text-purple-300/70 text-sm font-medium mb-1.5">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
               placeholder="VD: hung@gmail.com"
               required
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 text-sm font-medium mb-1">Mật khẩu</label>
+            <label className="block text-purple-300/70 text-sm font-medium mb-1.5">Mật khẩu</label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
               placeholder="Nhập mật khẩu..."
               required
               minLength={6}
@@ -117,12 +118,12 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-gray-700 text-sm font-medium mb-1">Nhập lại mật khẩu</label>
+            <label className="block text-purple-300/70 text-sm font-medium mb-1.5">Nhập lại mật khẩu</label>
             <input
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
               placeholder="Xác nhận mật khẩu..."
               required
             />
@@ -131,17 +132,15 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={isLoading || success !== ''}
-            className={`w-full py-2 px-4 rounded-lg text-white font-semibold transition-colors mt-6 ${
-              isLoading || success ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-            }`}
+            className="w-full py-2.5 px-4 rounded-xl text-sm font-bold transition-all btn-anime mt-2"
           >
-            {isLoading ? 'Đang xử lý...' : 'Đăng ký tài khoản'}
+            {isLoading ? 'Đang xử lý...' : '✨ Đăng ký tài khoản'}
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-gray-600">
+        <div className="mt-6 text-center text-sm text-purple-400/50">
           Đã có tài khoản?{' '}
-          <Link href="/login" className="text-blue-600 hover:underline font-medium">
+          <Link href="/login" className="text-pink-400 hover:text-pink-300 font-medium transition-colors">
             Đăng nhập ngay
           </Link>
         </div>

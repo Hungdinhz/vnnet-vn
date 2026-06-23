@@ -60,21 +60,32 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-md border border-gray-200">
-        <h2 className="text-3xl font-bold text-center text-blue-600 mb-6">MạngXãHội</h2>
-        <h3 className="text-xl font-semibold text-center text-gray-800 mb-6">
+    <div className="min-h-screen flex items-center justify-center bg-[#0F0B1E] relative overflow-hidden">
+      {/* Animated background blobs */}
+      <div className="absolute top-1/4 -left-20 w-72 h-72 bg-cyan-600/20 rounded-full blur-[100px] animate-float"></div>
+      <div className="absolute bottom-1/4 -right-20 w-72 h-72 bg-purple-600/20 rounded-full blur-[100px] animate-float" style={{ animationDelay: '1.5s' }}></div>
+
+      <div className="glass-card p-8 rounded-2xl shadow-2xl w-full max-w-md relative z-10 animate-slide-up">
+        {/* Logo */}
+        <div className="text-center mb-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-cyan-400 shadow-lg shadow-purple-500/30 mb-4">
+            <span className="text-white text-2xl font-black">VN</span>
+          </div>
+          <h2 className="text-3xl font-bold gradient-text">VnNet</h2>
+        </div>
+        
+        <h3 className="text-lg font-semibold text-center text-purple-200 mb-6">
           {step === 1 ? 'Khôi phục mật khẩu' : 'Đặt lại mật khẩu mới'}
         </h3>
 
         {error && (
-          <div className="bg-red-50 text-red-500 p-3 rounded-lg mb-4 text-sm text-center">
+          <div className="bg-rose-500/10 text-rose-400 p-3 rounded-lg mb-4 text-sm text-center border border-rose-500/20">
             {error}
           </div>
         )}
         
         {success && (
-          <div className="bg-green-50 text-green-600 p-3 rounded-lg mb-4 text-sm text-center font-medium">
+          <div className="bg-emerald-500/10 text-emerald-400 p-3 rounded-lg mb-4 text-sm text-center font-medium border border-emerald-500/20">
             {success}
           </div>
         )}
@@ -82,12 +93,12 @@ export default function ForgotPasswordPage() {
         {step === 1 ? (
           <form onSubmit={handleSendOtp} className="space-y-4">
             <div>
-              <label className="block text-gray-700 text-sm font-medium mb-1">Email của bạn</label>
+              <label className="block text-purple-300/70 text-sm font-medium mb-1.5">Email của bạn</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
                 placeholder="Nhập email đã đăng ký..."
                 required
               />
@@ -95,34 +106,32 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full py-2 px-4 rounded-lg text-white font-semibold transition-colors ${
-                isLoading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-              }`}
+              className="w-full py-2.5 px-4 rounded-xl text-sm font-bold btn-anime"
             >
-              {isLoading ? 'Đang xử lý...' : 'Gửi mã xác nhận'}
+              {isLoading ? 'Đang xử lý...' : '✨ Gửi mã xác nhận'}
             </button>
           </form>
         ) : (
           <form onSubmit={handleResetPassword} className="space-y-4">
             <div>
-              <label className="block text-gray-700 text-sm font-medium mb-1">Mã OTP</label>
+              <label className="block text-purple-300/70 text-sm font-medium mb-1.5">Mã OTP</label>
               <input
                 type="text"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 tracking-widest text-center font-bold"
+                className="w-full px-4 py-2.5 input-anime rounded-xl tracking-widest text-center font-bold text-sm"
                 placeholder="Nhập mã 6 số"
                 maxLength={6}
                 required
               />
             </div>
             <div>
-              <label className="block text-gray-700 text-sm font-medium mb-1">Mật khẩu mới</label>
+              <label className="block text-purple-300/70 text-sm font-medium mb-1.5">Mật khẩu mới</label>
               <input
                 type="password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
                 placeholder="Nhập mật khẩu mới..."
                 required
                 minLength={6}
@@ -131,24 +140,22 @@ export default function ForgotPasswordPage() {
             <button
               type="submit"
               disabled={isLoading || resetSuccess}
-              className={`w-full py-2 px-4 rounded-lg text-white font-semibold transition-colors ${
-                isLoading || resetSuccess ? 'bg-blue-400 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'
-              }`}
+              className="w-full py-2.5 px-4 rounded-xl text-sm font-bold btn-anime"
             >
-              {isLoading ? 'Đang xử lý...' : 'Xác nhận đổi mật khẩu'}
+              {isLoading ? 'Đang xử lý...' : '✨ Xác nhận đổi mật khẩu'}
             </button>
           </form>
         )}
 
-        <div className="mt-6 flex justify-between items-center text-sm text-gray-600">
-          <Link href="/login" className="text-blue-600 hover:underline font-medium">
+        <div className="mt-6 flex justify-between items-center text-sm">
+          <Link href="/login" className="text-pink-400 hover:text-pink-300 font-medium transition-colors">
             Quay lại đăng nhập
           </Link>
           {step === 2 && (
             <button 
               type="button" 
               onClick={() => setStep(1)} 
-              className="text-gray-500 hover:underline"
+              className="text-purple-400/50 hover:text-purple-300 transition-colors"
             >
               Nhập email khác
             </button>

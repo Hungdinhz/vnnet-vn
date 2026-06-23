@@ -2,13 +2,13 @@
 
 > **Mục đích file**: Tóm tắt toàn bộ kiến trúc dự án để AI assistant có thể nhanh chóng nắm bắt context mà không cần quét lại toàn bộ source code. Cập nhật file này mỗi khi có thay đổi lớn về cấu trúc.
 >
-> **Cập nhật lần cuối**: 2026-06-15
+> **Cập nhật lần cuối**: 2026-06-23
 
 ---
 
 ## 1. Tổng Quan Dự Án
 
-**VnNet** là một mạng xã hội (social network) tương tự Facebook, cho phép người dùng đăng bài, tương tác (like, comment), kết bạn, và nhận thông báo. Dự án gồm 2 phần chính:
+**VnNet** là một mạng xã hội (social network) phong cách Anime, cho phép người dùng đăng bài, tương tác (like, comment), kết bạn, nhận thông báo, chơi game, xem livestream, mua bán và nhắn tin. Dự án gồm 2 phần chính:
 
 | Thành phần    | Công nghệ                              | Thư mục            | Deploy          |
 |---------------|----------------------------------------|---------------------|-----------------|
@@ -229,29 +229,48 @@ CLOUDINARY_API_SECRET=<secret>
 - **React 19.2.4** + TypeScript
 - **TailwindCSS 4.2.2** (PostCSS plugin)
 - **Axios 1.15.0** — HTTP client
-- Font: Geist Sans + Geist Mono (Google Fonts)
+- Font: **Outfit** (Google Fonts)
+
+### 3.1.1 Design System — Anime Dark Theme
+
+- **Bảng màu chủ đạo**:
+  - Background: Deep Navy `#0F0B1E`
+  - Accent Purple: `#8B5CF6`
+  - Accent Pink (Sakura): `#EC4899`
+  - Accent Cyan: `#06B6D4`
+  - Text Primary: `#F0E6FF`
+  - Text Secondary: `#A78BCA`
+- **Hiệu ứng CSS**: Glassmorphism (`glass-card`, `glass-nav`), gradient borders, glow effects
+- **Animations**: `sparkle`, `float`, `glow-pulse`, `heart-pop`, `slide-up`, `shimmer`
+- **Utility Classes** (globals.css): `btn-anime`, `input-anime`, `avatar-glow`, `gradient-text`, `badge-anime`, `nav-active`, `sidebar-active`
+- **Logo**: Gradient VN (tím-hồng-cyan) thay vì "f" (Facebook)
 
 ### 3.2 Cấu Trúc Thư Mục
 
 ```
 frontend/
 ├── app/
-│   ├── layout.tsx                     # Root layout (Geist fonts, TailwindCSS)
-│   ├── globals.css                    # Global CSS + Tailwind imports
-│   ├── page.tsx                       # "/" — Trang chủ (News Feed)
+│   ├── layout.tsx                     # Root layout (Outfit font, dark theme)
+│   ├── globals.css                    # Anime dark theme CSS + animations + utilities
+│   ├── page.tsx                       # "/" — Trang chủ (News Feed + Trending)
 │   ├── (auth)/                        # Route group cho auth pages
-│   │   ├── login/page.tsx             # "/login" — Đăng nhập
+│   │   ├── login/page.tsx             # "/login" — Đăng nhập (glassmorphism)
 │   │   ├── register/page.tsx          # "/register" — Đăng ký
 │   │   └── forgot-password/page.tsx   # "/forgot-password" — Quên mật khẩu
 │   ├── profile/
 │   │   ├── page.tsx                   # "/profile" — Profile redirect
 │   │   └── [id]/page.tsx             # "/profile/:id" — Trang cá nhân
 │   ├── friends/page.tsx               # "/friends" — Quản lý bạn bè
+│   ├── games/page.tsx                 # "/games" — Trò chơi (UI placeholder)
+│   ├── livestream/page.tsx            # "/livestream" — Phát trực tiếp (UI placeholder)
+│   ├── marketplace/page.tsx           # "/marketplace" — Chợ mua bán (UI placeholder)
+│   ├── groups/page.tsx                # "/groups" — Nhóm (UI placeholder)
+│   ├── messages/page.tsx              # "/messages" — Tin nhắn (UI placeholder)
 │   └── settings/page.tsx             # "/settings" — Cài đặt tài khoản
 ├── components/
-│   ├── Navbar.tsx                     # Thanh navigation (top bar)
-│   ├── PostCard.tsx                   # Component hiển thị bài viết (like, comment, share, edit, delete)
-│   └── Sidebar.tsx                    # Sidebar trái (menu điều hướng)
+│   ├── Navbar.tsx                     # Thanh navigation glassmorphism (logo VN, 5 nav icons, messages, notifications)
+│   ├── PostCard.tsx                   # Component bài viết dark theme (heart like ❤️, glassmorphism cards)
+│   └── Sidebar.tsx                    # Sidebar trái (7 menu items + cài đặt)
 ├── lib/
 │   └── axios.ts                       # Axios instance + JWT interceptor
 │                                      # baseURL: https://vnnet-vn-java.onrender.com
@@ -273,22 +292,34 @@ frontend/
 
 ### 3.4 Trang Chủ (page.tsx) — Các Chức Năng Chính
 
-- **Create Post**: Form gồm title (tùy chọn), content (bắt buộc), upload ảnh (Cloudinary).
+- **Create Post**: Form glassmorphism gồm title (tùy chọn), content (bắt buộc), upload ảnh (Cloudinary).
 - **News Feed**: Hiển thị danh sách bài viết bằng component `PostCard`.
-- **Friend Suggestions**: Sidebar phải hiển thị gợi ý kết bạn (tối đa 5 user).
-- **Sponsored**: Card quảng cáo tĩnh (placeholder).
+- **Friend Suggestions**: Sidebar phải hiển thị gợi ý kết bạn (tối đa 5 user) với gradient cards.
+- **Trending Topics**: Sidebar phải hiển thị xu hướng (hashtags tĩnh).
 
 ### 3.5 PostCard Component — Tính Năng
 
-- Hiển thị bài viết: avatar, username, nội dung, ảnh, thời gian.
-- Like/Unlike bài viết (toggle).
+- Hiển thị bài viết: avatar (glow effect), username, nội dung, ảnh, thời gian.
+- Like/Unlike bài viết (toggle) — icon ❤️/🤍 với heart-pop animation.
 - Xem & tạo bình luận (accordion).
 - Like bình luận.
 - Chỉnh sửa bài viết (chỉ chủ sở hữu).
 - Xóa bài viết (chỉ chủ sở hữu).
-- Chia sẻ bài viết (share post).
+- Chia sẻ bài viết (share post) — modal glassmorphism.
 
-### 3.6 API Base URL
+### 3.6 Các Trang Mới (UI Placeholder — chưa có API backend)
+
+| Route          | Trang         | Mô tả                                              |
+|----------------|---------------|-----------------------------------------------------|
+| `/games`       | Trò chơi      | Grid game cards, category filter, nút "Chơi ngay"   |
+| `/livestream`  | Phát trực tiếp| Stream cards với LIVE badge, viewer count, categories|
+| `/marketplace` | Chợ           | Product cards với giá, địa điểm, categories         |
+| `/groups`      | Nhóm          | Group cards, member count, nút "Tham gia"           |
+| `/messages`    | Tin nhắn      | Split-view: contact list + chat area placeholder    |
+
+> ⚠️ Các trang trên hiển thị **dữ liệu tĩnh (mock data)**. Cần thêm API backend nếu muốn dữ liệu thật.
+
+### 3.7 API Base URL
 
 ```typescript
 // lib/axios.ts

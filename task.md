@@ -1,0 +1,21 @@
+# Task: Anime Theme Redesign
+
+- `[x]` Global CSS (globals.css) — anime dark theme, animations
+- `[x]` Layout (layout.tsx) — font Outfit, metadata
+- `[x]` Navbar — anime logo, gradient nav, new icons
+- `[x]` Sidebar — new menu items, dark theme
+- `[x]` PostCard — dark glassmorphism, heart like
+- `[x]` Home page — dark theme, trending sidebar
+- `[x]` Login page — anime glassmorphism
+- `[x]` Register page — anime glassmorphism
+- `[x]` Forgot password page — anime glassmorphism
+- `[x]` Friends page — dark theme
+- `[x]` Profile [id] page — dark theme
+- `[x]` Profile redirect page — dark theme
+- `[x]` Settings page — dark theme
+- `[x]` NEW: Games page
+- `[x]` NEW: Livestream page
+- `[x]` NEW: Marketplace page
+- `[x]` NEW: Groups page
+- `[x]` NEW: Messages page
+- `[x]` Verification — browser test passed ✅
