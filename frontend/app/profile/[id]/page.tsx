@@ -16,6 +16,7 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [isFriend, setIsFriend] = useState(false);
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [newBio, setNewBio] = useState('');
   const [isSavingBio, setIsSavingBio] = useState(false);
@@ -43,8 +44,20 @@ export default function ProfilePage() {
     const token = localStorage.getItem('token');
     if (!token) { router.push('/login'); return; }
     const fetchSelf = async () => {
-      try { const r = await api.get('/users/me'); setCurrentUserId(r.data.id); }
-      catch (e) { console.error(e); }
+      try { 
+        const r = await api.get('/users/me'); 
+        const myId = r.data.id;
+        setCurrentUserId(myId); 
+
+        const fRes = await api.get('/friends/list');
+        const friendships = fRes.data || [];
+        const targetId = Number(id);
+        const isMatched = friendships.some((f: any) => 
+           (f.user_id === myId && f.friend_id === targetId) || 
+           (f.friend_id === myId && f.user_id === targetId)
+        );
+        setIsFriend(isMatched);
+      } catch (e) { console.error(e); }
     };
     fetchSelf(); fetchProfile(); fetchUserPosts();
   }, [id, router]);
@@ -129,6 +142,11 @@ export default function ProfilePage() {
                         <button onClick={() => setIsEditingBio(!isEditingBio)} className="px-6 py-2 bg-white/5 hover:bg-white/10 text-purple-200 font-bold rounded-lg transition-colors text-sm flex items-center gap-1.5 border border-purple-500/20">
                           ✏️ {isEditingBio ? "Đóng" : "Chỉnh sửa tiểu sử"}
                         </button>
+                      ) : isFriend ? (
+                        <div className="flex items-center gap-2">
+                          <button disabled className="flex items-center gap-2 px-6 py-2.5 bg-white/10 text-purple-200 font-bold rounded-lg text-sm border border-purple-500/20 shadow-sm cursor-default">✅ Bạn bè</button>
+                          <button onClick={() => router.push(`/messages?userId=${id}`)} className="flex items-center gap-2 px-6 py-2.5 btn-anime rounded-lg text-sm shadow-md">💬 Nhắn tin</button>
+                        </div>
                       ) : (
                         <button onClick={handleAddFriend} className="flex items-center gap-2 px-6 py-2.5 btn-anime rounded-lg text-sm shadow-md">👋 Thêm bạn bè</button>
                       )}
