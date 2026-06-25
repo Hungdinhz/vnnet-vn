@@ -2,7 +2,7 @@
 
 > **Mục đích file**: Tóm tắt toàn bộ kiến trúc dự án để AI assistant có thể nhanh chóng nắm bắt context mà không cần quét lại toàn bộ source code. Cập nhật file này mỗi khi có thay đổi lớn về cấu trúc.
 >
-> **Cập nhật lần cuối**: 2026-06-23
+> **Cập nhật lần cuối**: 2026-06-25
 
 ---
 
@@ -183,6 +183,18 @@ backend-java/src/main/java/com/example/backend_java/
 | GET    | `/notifications`               | 🔒 Token | Lấy thông báo              |
 | PUT    | `/notifications/{id}/read`     | 🔒 Token | Đánh dấu đã đọc            |
 
+#### Messages (`/messages`)
+| Method | Path                           | Auth     | Mô tả                     |
+|--------|--------------------------------|----------|----------------------------|
+| GET    | `/messages/conversations`      | 🔒 Token | Lấy danh sách cuộc trò chuyện |
+| GET    | `/messages/{contactId}`        | 🔒 Token | Lấy lịch sử chat           |
+| POST   | `/messages`                    | 🔒 Token | Gửi tin nhắn mới            |
+
+#### Activity (`/users/{userId}/activity`)
+| Method | Path                           | Auth     | Mô tả                     |
+|--------|--------------------------------|----------|----------------------------|
+| GET    | `/users/{userId}/activity`     | 🔒 Token | Lấy tần suất hoạt động 30 ngày |
+
 #### Upload (`/upload`)
 | Method | Path       | Auth   | Mô tả                         |
 |--------|------------|--------|--------------------------------|
@@ -259,16 +271,16 @@ frontend/
 │   │   └── forgot-password/page.tsx   # "/forgot-password" — Quên mật khẩu
 │   ├── profile/
 │   │   ├── page.tsx                   # "/profile" — Profile redirect
-│   │   └── [id]/page.tsx             # "/profile/:id" — Trang cá nhân
+│   │   └── [id]/page.tsx             # "/profile/:id" — Trang cá nhân (+ biểu đồ hoạt động)
 │   ├── friends/page.tsx               # "/friends" — Quản lý bạn bè
 │   ├── games/page.tsx                 # "/games" — Trò chơi (UI placeholder)
 │   ├── livestream/page.tsx            # "/livestream" — Phát trực tiếp (UI placeholder)
 │   ├── marketplace/page.tsx           # "/marketplace" — Chợ mua bán (UI placeholder)
 │   ├── groups/page.tsx                # "/groups" — Nhóm (UI placeholder)
-│   ├── messages/page.tsx              # "/messages" — Tin nhắn (UI placeholder)
+│   ├── messages/page.tsx              # "/messages" — Tin nhắn (REST API + polling 3s)
 │   └── settings/page.tsx             # "/settings" — Cài đặt tài khoản
 ├── components/
-│   ├── Navbar.tsx                     # Thanh navigation glassmorphism (logo VN, 5 nav icons, messages, notifications)
+│   ├── Navbar.tsx                     # Thanh navigation glassmorphism (logo VN, 5 nav icons, messages, notifications dropdown)
 │   ├── PostCard.tsx                   # Component bài viết dark theme (heart like ❤️, glassmorphism cards)
 │   └── Sidebar.tsx                    # Sidebar trái (7 menu items + cài đặt)
 ├── lib/

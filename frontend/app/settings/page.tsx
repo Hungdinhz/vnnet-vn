@@ -88,28 +88,47 @@ export default function SettingsPage() {
                   <textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} maxLength={150} className="w-full px-4 py-2 input-anime rounded-lg text-sm resize-none" />
                   <div className="flex justify-between mt-1"><span className="text-[11px] text-purple-400/30">Giới thiệu ngắn</span><span className="text-[11px] text-purple-400/30">{bio.length}/150</span></div>
                 </div>
+
+                {/* Avatar Upload - No URL display */}
                 <div className="border-t border-purple-500/10 pt-4">
                   <label className="block text-sm font-semibold text-purple-300/70 mb-2">Ảnh đại diện</label>
                   <div className="flex items-center gap-4">
-                    <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 bg-white/[0.03]">
-                      {avatarUrl ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full flex items-center justify-center font-bold text-purple-200 text-lg">{getInitials(username)}</div>}
+                    <div className="w-20 h-20 rounded-full overflow-hidden flex-shrink-0 bg-white/[0.03] border-2 border-purple-500/20">
+                      {avatarUrl ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full flex items-center justify-center font-bold text-purple-200 text-xl">{getInitials(username)}</div>}
                     </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="px-4 py-2 bg-white/5 hover:bg-white/10 text-purple-200 text-xs font-bold rounded-lg cursor-pointer transition-colors border border-purple-500/10 w-fit">📁 {isUploadingAvatar ? "Đang tải..." : "Chọn ảnh"}<input type="file" accept="image/*" onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0], 'avatar')} className="hidden" disabled={isUploadingAvatar} /></label>
-                      <input type="text" value={avatarUrl} onChange={e => setAvatarUrl(e.target.value)} placeholder="Hoặc dán URL..." className="px-3 py-1.5 input-anime rounded-lg text-xs w-80" />
+                    <div className="flex flex-col gap-2">
+                      <label className="px-5 py-2.5 btn-anime rounded-lg cursor-pointer text-xs font-bold inline-flex items-center gap-2 w-fit">
+                        📷 {isUploadingAvatar ? "Đang tải lên..." : "Chọn ảnh đại diện"}
+                        <input type="file" accept="image/*" onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0], 'avatar')} className="hidden" disabled={isUploadingAvatar} />
+                      </label>
+                      {avatarUrl && (
+                        <button type="button" onClick={() => setAvatarUrl('')} className="text-[11px] text-rose-400/60 hover:text-rose-400 transition-colors text-left">
+                          ✕ Xóa ảnh đại diện
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
+
+                {/* Cover Upload - No URL display */}
                 <div className="border-t border-purple-500/10 pt-4">
                   <label className="block text-sm font-semibold text-purple-300/70 mb-2">Ảnh bìa</label>
-                  <div className="h-32 w-full rounded-lg overflow-hidden bg-gradient-to-r from-purple-600/40 via-pink-500/30 to-cyan-500/20 mb-3 flex items-center justify-center">
+                  <div className="h-36 w-full rounded-xl overflow-hidden bg-gradient-to-r from-purple-600/40 via-pink-500/30 to-cyan-500/20 mb-3 flex items-center justify-center border border-purple-500/10">
                     {coverUrl ? <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" /> : <span className="text-purple-400/30 text-xs font-medium">Chưa thiết lập ảnh bìa</span>}
                   </div>
                   <div className="flex items-center gap-3">
-                    <label className="px-4 py-2 bg-white/5 hover:bg-white/10 text-purple-200 text-xs font-bold rounded-lg cursor-pointer transition-colors border border-purple-500/10 w-fit flex-shrink-0">📁 {isUploadingCover ? "Đang tải..." : "Chọn ảnh"}<input type="file" accept="image/*" onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0], 'cover')} className="hidden" disabled={isUploadingCover} /></label>
-                    <input type="text" value={coverUrl} onChange={e => setCoverUrl(e.target.value)} placeholder="Hoặc dán URL..." className="px-3 py-1.5 input-anime rounded-lg text-xs w-full" />
+                    <label className="px-5 py-2.5 btn-anime rounded-lg cursor-pointer text-xs font-bold inline-flex items-center gap-2 w-fit flex-shrink-0">
+                      📷 {isUploadingCover ? "Đang tải lên..." : "Chọn ảnh bìa"}
+                      <input type="file" accept="image/*" onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0], 'cover')} className="hidden" disabled={isUploadingCover} />
+                    </label>
+                    {coverUrl && (
+                      <button type="button" onClick={() => setCoverUrl('')} className="text-[11px] text-rose-400/60 hover:text-rose-400 transition-colors">
+                        ✕ Xóa ảnh bìa
+                      </button>
+                    )}
                   </div>
                 </div>
+
                 <div className="border-t border-purple-500/10 pt-6 flex justify-end gap-3">
                   <button type="button" onClick={() => router.push('/')} className="px-5 py-2 text-sm font-semibold text-purple-400/50 hover:bg-white/5 rounded-lg transition-colors border border-purple-500/10">Hủy</button>
                   <button type="submit" disabled={isSaving} className="px-6 py-2 btn-anime rounded-lg text-sm">{isSaving ? "Đang lưu..." : "✨ Lưu thay đổi"}</button>

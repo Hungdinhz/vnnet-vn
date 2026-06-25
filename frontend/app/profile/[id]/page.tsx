@@ -22,6 +22,7 @@ export default function ProfilePage() {
   const [isSavingBio, setIsSavingBio] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const [activityData, setActivityData] = useState<any[]>([]);
 
   const fetchProfile = async () => {
     try {
@@ -59,8 +60,15 @@ export default function ProfilePage() {
         setIsFriend(isMatched);
       } catch (e) { console.error(e); }
     };
-    fetchSelf(); fetchProfile(); fetchUserPosts();
+    fetchSelf(); fetchProfile(); fetchUserPosts(); fetchActivity();
   }, [id, router]);
+
+  const fetchActivity = async () => {
+    try {
+      const r = await api.get(`/users/${id}/activity`);
+      setActivityData(r.data || []);
+    } catch (e) { console.error('Activity error:', e); }
+  };
 
   const handleAddFriend = async () => {
     try { await api.post(`/friends/request/${id}`); alert(`Đã gửi lời mời kết bạn!`); }
@@ -196,6 +204,50 @@ export default function ProfilePage() {
                       ))}
                       {posts.filter(p => p.image_url).length === 0 && <div className="col-span-full py-6 text-center text-xs text-purple-400/30">Không có ảnh.</div>}
                     </div>
+                  </div>
+
+                  {/* Activity Chart */}
+                  <div className="glass-card rounded-xl p-4">
+                    <h3 className="font-bold text-purple-100 text-[17px] mb-3 flex items-center gap-2">📊 Tần suất hoạt động</h3>
+                    {activityData.length === 0 ? (
+                      <div className="py-6 text-center text-xs text-purple-400/30">Đang tải dữ liệu...</div>
+                    ) : (
+                      <>
+                        <div className="flex items-end gap-[2px] h-24 mb-2">
+                          {activityData.map((d: any, i: number) => {
+                            const total = (d.posts || 0) + (d.comments || 0) + (d.likes || 0);
+                            const maxVal = Math.max(...activityData.map((x: any) => (x.posts || 0) + (x.comments || 0) + (x.likes || 0)), 1);
+                            const pct = (total / maxVal) * 100;
+                            const dayOfWeek = new Date(d.date).getDay();
+                            return (
+                              <div key={i} className="flex-1 flex flex-col items-center justify-end h-full group relative">
+                                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/80 text-[9px] text-purple-200 px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                                  {d.date.slice(5)} • {total} HĐ
+                                </div>
+                                <div 
+                                  className={`w-full rounded-t-sm transition-all duration-200 group-hover:brightness-125 ${
+                                    total === 0 ? 'bg-white/5' :
+                                    pct > 60 ? 'bg-gradient-to-t from-purple-500 to-pink-400' :
+                                    pct > 30 ? 'bg-gradient-to-t from-purple-500/80 to-purple-400/60' :
+                                    'bg-purple-500/40'
+                                  }`}
+                                  style={{ height: total === 0 ? '2px' : `${Math.max(pct, 8)}%` }}
+                                ></div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        <div className="flex justify-between text-[10px] text-purple-400/30">
+                          <span>30 ngày trước</span>
+                          <span>Hôm nay</span>
+                        </div>
+                        <div className="flex items-center gap-4 mt-3 text-[11px] text-purple-400/50">
+                          <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-500 inline-block"></span> Bài viết: {activityData.reduce((s: number, d: any) => s + (d.posts || 0), 0)}</div>
+                          <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-pink-500 inline-block"></span> Bình luận: {activityData.reduce((s: number, d: any) => s + (d.comments || 0), 0)}</div>
+                          <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-cyan-500 inline-block"></span> Lượt thích: {activityData.reduce((s: number, d: any) => s + (d.likes || 0), 0)}</div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </div>
 

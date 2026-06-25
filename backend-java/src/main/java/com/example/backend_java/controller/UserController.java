@@ -1,9 +1,11 @@
 package com.example.backend_java.controller;
 
+import com.example.backend_java.dto.ActivityDataDto;
 import com.example.backend_java.dto.TokenDto;
 import com.example.backend_java.dto.UserCreateDto;
 import com.example.backend_java.dto.UserResponseDto;
 import com.example.backend_java.entity.User;
+import com.example.backend_java.service.ActivityService;
 import com.example.backend_java.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -19,9 +21,11 @@ import com.example.backend_java.dto.UserUpdateDto;
 public class UserController {
 
     private final UserService userService;
+    private final ActivityService activityService;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, ActivityService activityService) {
         this.userService = userService;
+        this.activityService = activityService;
     }
 
     // POST /users/register - Đăng ký
@@ -78,5 +82,11 @@ public class UserController {
     @GetMapping("/{userId}")
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long userId) {
         return ResponseEntity.ok(userService.getUserById(userId));
+    }
+
+    // GET /users/{userId}/activity - Lấy tần suất hoạt động 30 ngày
+    @GetMapping("/{userId}/activity")
+    public ResponseEntity<List<ActivityDataDto>> getUserActivity(@PathVariable Long userId) {
+        return ResponseEntity.ok(activityService.getUserActivity(userId));
     }
 }

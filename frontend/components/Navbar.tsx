@@ -11,9 +11,13 @@ export default function Navbar() {
   const pathname = usePathname();
   
   const [unreadCount, setUnreadCount] = useState(0);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+  const [senderNames, setSenderNames] = useState<Record<number, string>>({});
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
 
   // Fetch current user and notifications
   useEffect(() => {
@@ -26,16 +30,6 @@ export default function Navbar() {
       }
     };
 
-    const fetchNotifications = async () => {
-      try {
-        const res = await api.get('/notifications');
-        const unread = res.data.filter((n: any) => !n.is_read).length;
-        setUnreadCount(unread);
-      } catch (err) {
-        console.error("Lỗi lấy thông báo:", err);
-      }
-    };
-
     fetchUserData();
     fetchNotifications();
 
@@ -43,11 +37,105 @@ export default function Navbar() {
     return () => clearInterval(interval);
   }, []);
 
-  // Close dropdown on click outside
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get('/notifications');
+      const notifs = res.data || [];
+      setNotifications(notifs);
+      const unread = notifs.filter((n: any) => !n.is_read).length;
+      setUnreadCount(unread);
+
+      // Fetch sender names for notifications
+      const senderIds = [...new Set(notifs.map((n: any) => n.sender_id).filter(Boolean))] as number[];
+      const newNames: Record<number, string> = {};
+      for (const sid of senderIds) {
+        if (!senderNames[sid]) {
+          try {
+            const uRes = await api.get(`/users/${sid}`);
+            newNames[sid] = uRes.data.username || `User ${sid}`;
+          } catch {
+            newNames[sid] = `User ${sid}`;
+          }
+        }
+      }
+      if (Object.keys(newNames).length > 0) {
+        setSenderNames(prev => ({ ...prev, ...newNames }));
+      }
+    } catch (err) {
+      console.error("Lỗi lấy thông báo:", err);
+    }
+  };
+
+  const handleMarkAsRead = async (notifId: number) => {
+    try {
+      await api.put(`/notifications/${notifId}/read`);
+      setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, is_read: true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error("Lỗi đánh dấu đã đọc:", err);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    const unreadNotifs = notifications.filter(n => !n.is_read);
+    for (const n of unreadNotifs) {
+      try { await api.put(`/notifications/${n.id}/read`); } catch {}
+    }
+    setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    setUnreadCount(0);
+  };
+
+  const getNotifText = (notif: any) => {
+    const senderName = senderNames[notif.sender_id] || 'Ai đó';
+    switch (notif.type) {
+      case 'like': return { icon: '❤️', text: `${senderName} đã thích bài viết của bạn` };
+      case 'comment': return { icon: '💬', text: `${senderName} đã bình luận bài viết của bạn` };
+      case 'friend_request': return { icon: '👋', text: `${senderName} đã gửi lời mời kết bạn` };
+      case 'friend_accept': return { icon: '🤝', text: `${senderName} đã chấp nhận lời mời kết bạn` };
+      case 'comment_like': return { icon: '👍', text: `${senderName} đã thích bình luận của bạn` };
+      default: return { icon: '🔔', text: `${senderName} đã tương tác với bạn` };
+    }
+  };
+
+  const getNotifLink = (notif: any) => {
+    switch (notif.type) {
+      case 'like':
+      case 'comment':
+      case 'comment_like':
+        return '/'; // Go to feed where they can see the post
+      case 'friend_request':
+        return '/friends?tab=requests';
+      case 'friend_accept':
+        return `/profile/${notif.sender_id}`;
+      default:
+        return '/';
+    }
+  };
+
+  const formatTimeAgo = (dateStr: string) => {
+    if (!dateStr) return '';
+    try {
+      const now = new Date();
+      const date = new Date(dateStr);
+      const diffMs = now.getTime() - date.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      if (diffMins < 1) return 'Vừa xong';
+      if (diffMins < 60) return `${diffMins} phút`;
+      const diffHours = Math.floor(diffMins / 60);
+      if (diffHours < 24) return `${diffHours} giờ`;
+      const diffDays = Math.floor(diffHours / 24);
+      return `${diffDays} ngày`;
+    } catch { return ''; }
+  };
+
+  // Close dropdowns on click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setShowNotifDropdown(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -122,20 +210,81 @@ export default function Navbar() {
             <span className="text-lg">💬</span>
           </Link>
 
-          {/* Notifications Icon */}
-          <Link href="/friends?tab=requests" className="relative cursor-pointer hover:bg-white/10 w-10 h-10 flex items-center justify-center rounded-full bg-white/5 transition-all duration-200 border border-purple-500/10">
-            <span className="text-lg">🔔</span>
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 badge-anime animate-pulse border-2 border-[#0F0B1E]">
-                {unreadCount}
-              </span>
+          {/* Notifications Icon + Dropdown */}
+          <div className="relative" ref={notifRef}>
+            <button 
+              onClick={() => { setShowNotifDropdown(!showNotifDropdown); setShowDropdown(false); }}
+              className="relative cursor-pointer hover:bg-white/10 w-10 h-10 flex items-center justify-center rounded-full bg-white/5 transition-all duration-200 border border-purple-500/10 focus:outline-none"
+            >
+              <span className="text-lg">🔔</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 badge-anime animate-pulse border-2 border-[#0F0B1E]">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+
+            {/* Notifications Dropdown */}
+            {showNotifDropdown && (
+              <div className="absolute right-0 mt-2 w-96 glass-card rounded-xl py-2 z-50 animate-slide-up max-h-[480px] overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-purple-500/10">
+                  <h3 className="font-bold text-purple-100 text-[15px]">🔔 Thông báo</h3>
+                  {unreadCount > 0 && (
+                    <button 
+                      onClick={handleMarkAllRead}
+                      className="text-[11px] text-pink-400 hover:text-pink-300 font-semibold transition-colors"
+                    >
+                      Đánh dấu tất cả đã đọc
+                    </button>
+                  )}
+                </div>
+                <div className="overflow-y-auto flex-1 max-h-[400px]">
+                  {notifications.length === 0 ? (
+                    <div className="py-12 text-center">
+                      <div className="text-3xl mb-2">🔕</div>
+                      <p className="text-sm text-purple-400/40">Chưa có thông báo nào</p>
+                    </div>
+                  ) : (
+                    notifications.slice(0, 20).map((notif) => {
+                      const { icon, text } = getNotifText(notif);
+                      const link = getNotifLink(notif);
+                      return (
+                        <Link
+                          key={notif.id}
+                          href={link}
+                          onClick={() => {
+                            if (!notif.is_read) handleMarkAsRead(notif.id);
+                            setShowNotifDropdown(false);
+                          }}
+                          className={`flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition-colors border-b border-purple-500/5 ${
+                            !notif.is_read ? 'bg-purple-500/5' : ''
+                          }`}
+                        >
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-lg flex-shrink-0 border border-purple-500/10">
+                            {icon}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-[13px] leading-snug ${!notif.is_read ? 'text-purple-100 font-semibold' : 'text-purple-300/70'}`}>
+                              {text}
+                            </p>
+                            <p className="text-[11px] text-purple-400/40 mt-0.5">{formatTimeAgo(notif.created_at)}</p>
+                          </div>
+                          {!notif.is_read && (
+                            <div className="w-2.5 h-2.5 rounded-full bg-pink-500 flex-shrink-0 mt-1.5"></div>
+                          )}
+                        </Link>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
             )}
-          </Link>
+          </div>
 
           {/* User Profile Menu */}
           <div className="relative" ref={dropdownRef}>
             <button 
-              onClick={() => setShowDropdown(!showDropdown)}
+              onClick={() => { setShowDropdown(!showDropdown); setShowNotifDropdown(false); }}
               className="flex items-center space-x-1 hover:brightness-110 transition-all focus:outline-none"
             >
               {currentUser?.avatar_url ? (
