@@ -159,7 +159,7 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-[#0F0B1E] text-[#E8E0F0]">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       
       <div className="max-w-7xl mx-auto flex gap-4 px-2 md:px-4">
@@ -187,7 +187,7 @@ export default function Home() {
                 )}
                 <div 
                   onClick={() => setIsComposing(true)}
-                  className="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-purple-500/10 text-purple-300/60 rounded-full cursor-pointer transition-colors text-[15px]"
+                  className="flex-1 px-4 py-2.5 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 border border-purple-500/10 text-accent-purple/60 rounded-full cursor-pointer transition-colors text-[15px]"
                 >
                   {currentUser?.username ? currentUser.username : "Bạn"} ơi, bạn đang nghĩ gì thế? ✨
                 </div>
@@ -208,17 +208,17 @@ export default function Home() {
                       </div>
                     )}
                     <div className="flex-1">
-                      <div className="text-sm font-semibold text-[#F0E6FF]">
+                      <div className="text-sm font-semibold text-foreground">
                         {currentUser?.username || "Người dùng"}
                       </div>
-                      <div className="text-xs text-purple-400/50 flex items-center gap-1">
+                      <div className="text-xs text-muted/50 flex items-center gap-1">
                         <span>🌏 Công khai</span>
                       </div>
                     </div>
                   </div>
                   <button 
                     onClick={() => setIsComposing(false)}
-                    className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-purple-400/60 transition-colors focus:outline-none"
+                    className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 flex items-center justify-center text-muted/60 transition-colors focus:outline-none"
                   >
                     ✕
                   </button>
@@ -259,7 +259,7 @@ export default function Home() {
                   
                   <div className="flex items-center justify-between">
                     {/* Photo attachment icon button */}
-                    <label className="flex items-center gap-2 cursor-pointer hover:bg-white/5 px-3 py-2 rounded-lg transition-colors text-purple-300/70">
+                    <label className="flex items-center gap-2 cursor-pointer hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 px-3 py-2 rounded-lg transition-colors text-accent-purple/70">
                       <span className="text-xl">🖼️</span>
                       <span className="text-sm font-semibold">Ảnh/Video</span>
                       <input 
@@ -294,8 +294,8 @@ export default function Home() {
               {posts.length === 0 ? (
                 <div className="text-center glass-card p-10 rounded-xl">
                   <div className="text-3xl mb-2">📰</div>
-                  <p className="font-semibold text-[#F0E6FF]">Chưa có bài viết nào.</p>
-                  <p className="text-sm text-purple-400/50 mt-1">Hãy bắt đầu chia sẻ câu chuyện đầu tiên! ✨</p>
+                  <p className="font-semibold text-foreground">Chưa có bài viết nào.</p>
+                  <p className="text-sm text-muted/50 mt-1">Hãy bắt đầu chia sẻ câu chuyện đầu tiên! ✨</p>
                 </div>
               ) : (
                 posts.map((post, index) => (
@@ -316,17 +316,17 @@ export default function Home() {
           
           {/* Trending card */}
           <div className="glass-card rounded-xl p-4 mb-4">
-            <h4 className="text-xs font-bold text-purple-300/70 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+            <h4 className="text-xs font-bold text-muted uppercase tracking-wider mb-3 flex items-center gap-1.5">
               🔥 Xu hướng
             </h4>
             <div className="space-y-3">
               {trendingTopics.map((topic, idx) => (
-                <div key={idx} className="flex justify-between items-center hover:bg-white/5 p-2 -mx-2 rounded-lg transition-colors cursor-pointer group">
+                <div key={idx} className="flex justify-between items-center hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 p-2 -mx-2 rounded-lg transition-colors cursor-pointer group">
                   <div>
-                    <div className="font-semibold text-sm text-purple-200 group-hover:text-pink-300 transition-colors">{topic.tag}</div>
-                    <div className="text-[10px] text-purple-400/40">{topic.count}</div>
+                    <div className="font-semibold text-sm text-foreground group-hover:text-accent-pink transition-colors">{topic.tag}</div>
+                    <div className="text-[10px] text-muted">{topic.count}</div>
                   </div>
-                  <span className="text-purple-400/30 text-xs">•••</span>
+                  <span className="text-muted/50 text-xs">•••</span>
                 </div>
               ))}
             </div>
@@ -336,8 +336,8 @@ export default function Home() {
           {suggestedUsers.length > 0 && (
             <div className="glass-card rounded-xl p-4">
               <div className="flex justify-between items-center mb-3">
-                <h4 className="text-xs font-bold text-purple-300/70 uppercase tracking-wider">✨ Người bạn có thể biết</h4>
-                <Link href="/friends" className="text-xs text-pink-400 hover:underline font-semibold">Xem tất cả</Link>
+                <h4 className="text-xs font-bold text-muted uppercase tracking-wider">✨ Người bạn có thể biết</h4>
+                <Link href="/friends" className="text-xs text-accent-pink hover:underline font-semibold">Xem tất cả</Link>
               </div>
 
               <div className="space-y-3.5">
@@ -351,27 +351,27 @@ export default function Home() {
                           className="w-9 h-9 rounded-full object-cover avatar-glow"
                         />
                       ) : (
-                        <div className="w-9 h-9 bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full text-purple-200 flex items-center justify-center font-bold text-sm shadow-sm group-hover:from-purple-500 group-hover:to-pink-500 transition-all">
+                        <div className="w-9 h-9 bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full text-secondary flex items-center justify-center font-bold text-sm shadow-sm group-hover:from-purple-500 group-hover:to-pink-500 transition-all">
                           {getInitials(user.username)}
                         </div>
                       )}
                       <div>
-                        <div className="font-semibold text-xs text-purple-200 group-hover:text-pink-300 transition-colors max-w-[110px] truncate">{user.username}</div>
-                        <div className="text-[9px] text-purple-400/40 truncate max-w-[110px]">{user.email}</div>
+                        <div className="font-semibold text-xs text-foreground group-hover:text-accent-pink transition-colors max-w-[110px] truncate">{user.username}</div>
+                        <div className="text-[9px] text-muted truncate max-w-[110px]">{user.email}</div>
                       </div>
                     </Link>
 
                     {requestedUserIds.has(user.id) ? (
                       <button
                         disabled
-                        className="px-3 py-1.5 bg-white/5 text-purple-400/50 font-semibold text-[11px] rounded-full shadow-sm border border-purple-500/10 cursor-not-allowed"
+                        className="px-3 py-1.5 bg-black/5 dark:bg-black/5 dark:bg-white/5 text-muted font-semibold text-[11px] rounded-full shadow-sm border border-purple-500/10 cursor-not-allowed"
                       >
                         Đã gửi
                       </button>
                     ) : (
                       <button
                         onClick={() => handleAddFriend(user.id)}
-                        className="px-3 py-1.5 bg-purple-500/20 hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 text-purple-300 hover:text-white font-semibold text-[11px] rounded-full transition-all flex items-center gap-1 shadow-sm border border-purple-500/20 hover:border-transparent"
+                        className="px-3 py-1.5 bg-purple-500/10 hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 text-accent-purple hover:text-white font-semibold text-[11px] rounded-full transition-all flex items-center gap-1 shadow-sm border border-purple-500/20 hover:border-transparent"
                       >
                         <span>➕</span> Kết bạn
                       </button>

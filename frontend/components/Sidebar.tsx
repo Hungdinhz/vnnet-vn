@@ -49,8 +49,8 @@ export default function Sidebar() {
         {currentUser && (
           <Link 
             href={`/profile/${currentUser.id}`}
-            className={`flex items-center gap-3 p-2.5 hover:bg-white/5 rounded-xl transition-all ${
-              pathname === `/profile/${currentUser.id}` ? 'sidebar-active font-semibold' : 'text-purple-200'
+            className={`flex items-center gap-3 p-2.5 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 rounded-xl transition-all ${
+              pathname === `/profile/${currentUser.id}` ? 'sidebar-active font-semibold text-foreground' : 'text-secondary hover:text-foreground'
             }`}
           >
             {currentUser.avatar_url ? (
@@ -64,7 +64,7 @@ export default function Sidebar() {
                 {getInitials(currentUser.username)}
               </div>
             )}
-            <span className="font-medium text-[15px] truncate text-[#F0E6FF]">{currentUser.username}</span>
+            <span className="font-medium text-[15px] truncate text-foreground">{currentUser.username}</span>
           </Link>
         )}
 
@@ -79,8 +79,8 @@ export default function Sidebar() {
               href={item.path}
               className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${
                 isActive 
-                  ? 'sidebar-active text-purple-200 font-semibold' 
-                  : 'text-purple-300/70 font-medium hover:bg-white/5 hover:text-purple-200'
+                  ? 'sidebar-active text-foreground font-semibold' 
+                  : 'text-secondary font-medium hover:bg-black/5 dark:hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-foreground'
               }`}
             >
               <span className="text-xl">{item.icon}</span>
@@ -100,8 +100,8 @@ export default function Sidebar() {
               href={item.path}
               className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${
                 isActive 
-                  ? 'sidebar-active text-purple-200 font-semibold' 
-                  : 'text-purple-300/70 font-medium hover:bg-white/5 hover:text-purple-200'
+                  ? 'sidebar-active text-foreground font-semibold' 
+                  : 'text-secondary font-medium hover:bg-black/5 dark:hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-foreground'
               }`}
             >
               <span className="text-xl">{item.icon}</span>
@@ -116,7 +116,7 @@ export default function Sidebar() {
         <div className="px-3 py-2 text-xs text-purple-500/40 leading-relaxed">
           <span className="gradient-text font-semibold">VnNet</span> © 2026 ✨
           <br />
-          <span className="text-purple-500/30">Mạng xã hội thế hệ mới</span>
+          <span className="text-muted">Mạng xã hội thế hệ mới</span>
         </div>
       </div>
     </aside>

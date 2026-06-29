@@ -260,13 +260,13 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
           )}
           
           <div>
-            <div className="font-bold text-[#F0E6FF] group-hover:text-purple-300 transition-colors text-[15px] flex items-center gap-1.5">
+            <div className="font-bold text-foreground group-hover:text-accent-purple transition-colors text-[15px] flex items-center gap-1.5">
               {post.owner?.username || `User #${post.owner_id}`}
               {isOwner && (
-                <span className="text-[10px] bg-purple-500/20 text-purple-300 font-semibold px-2 py-0.5 rounded-full border border-purple-500/30">Bạn</span>
+                <span className="text-[10px] bg-purple-500/20 text-accent-purple font-semibold px-2 py-0.5 rounded-full border border-purple-500/30">Bạn</span>
               )}
             </div>
-            <div className="text-xs text-purple-400/50 flex items-center gap-1">
+            <div className="text-xs text-muted/50 flex items-center gap-1">
               <span>{formatDate(post.created_at)}</span>
               <span>•</span>
               <span title="Công khai">🌏</span>
@@ -279,7 +279,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
           <div className="relative" ref={menuRef}>
             <button 
               onClick={() => setShowMenu(!showMenu)}
-              className="w-8 h-8 rounded-full hover:bg-white/10 text-purple-400/60 flex items-center justify-center focus:outline-none transition-colors"
+              className="w-8 h-8 rounded-full hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 text-muted/60 flex items-center justify-center focus:outline-none transition-colors"
             >
               •••
             </button>
@@ -288,7 +288,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
               <div className="absolute right-0 mt-1 w-44 glass-card rounded-lg py-1.5 z-40 animate-slide-up">
                 <button 
                   onClick={() => { setIsEditing(true); setShowMenu(false); }}
-                  className="w-full text-left px-4 py-2 hover:bg-white/5 text-purple-200 text-sm font-medium flex items-center gap-2"
+                  className="w-full text-left px-4 py-2 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 text-secondary text-sm font-medium flex items-center gap-2"
                 >
                   ✏️ Chỉnh sửa bài viết
                 </button>
@@ -327,7 +327,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
             <button 
               type="button"
               onClick={() => setIsEditing(false)}
-              className="px-4 py-1.5 text-xs font-semibold text-purple-400/60 hover:bg-white/5 rounded-lg transition-colors"
+              className="px-4 py-1.5 text-xs font-semibold text-muted/60 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 rounded-lg transition-colors"
             >
               Hủy
             </button>
@@ -343,8 +343,8 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
       ) : (
         /* Regular View */
         <>
-          {post.title && <h3 className="font-bold text-[#F0E6FF] mb-1 text-[16px]">{post.title}</h3>}
-          <p className="text-[15px] text-purple-100/80 leading-relaxed whitespace-pre-wrap mb-3">{post.content}</p>
+          {post.title && <h3 className="font-bold text-foreground mb-1 text-[16px]">{post.title}</h3>}
+          <p className="text-[15px] text-foreground/80 leading-relaxed whitespace-pre-wrap mb-3">{post.content}</p>
 
           {/* Post attachment image */}
           {post.image_url && (
@@ -368,19 +368,19 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
                     className="w-6 h-6 rounded-full object-cover border border-purple-500/20"
                   />
                 ) : (
-                  <div className="w-6 h-6 bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full flex items-center justify-center font-bold text-[10px] text-purple-200">
+                  <div className="w-6 h-6 bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full flex items-center justify-center font-bold text-[10px] text-secondary">
                     {(post.shared_post.owner?.username || 'U').charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div>
-                  <span className="font-semibold text-[13px] text-purple-200 group-hover:underline">
+                  <span className="font-semibold text-[13px] text-secondary group-hover:underline">
                     {post.shared_post.owner?.username}
                   </span>
-                  <span className="text-[10px] text-purple-400/40 ml-2">{formatDate(post.shared_post.created_at)}</span>
+                  <span className="text-[10px] text-muted/40 ml-2">{formatDate(post.shared_post.created_at)}</span>
                 </div>
               </Link>
-              {post.shared_post.title && <h4 className="font-semibold text-[14px] text-purple-100 mb-1">{post.shared_post.title}</h4>}
-              <p className="text-[13px] text-purple-200/60 line-clamp-3 mb-2">{post.shared_post.content}</p>
+              {post.shared_post.title && <h4 className="font-semibold text-[14px] text-foreground mb-1">{post.shared_post.title}</h4>}
+              <p className="text-[13px] text-secondary/60 line-clamp-3 mb-2">{post.shared_post.content}</p>
               {post.shared_post.image_url && (
                 <div className="rounded-lg overflow-hidden border border-purple-500/10">
                   <img src={post.shared_post.image_url} className="w-full max-h-[300px] object-cover" alt="Shared attachment" />
@@ -392,7 +392,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
       )}
 
       {/* Stats counter */}
-      <div className="flex items-center justify-between text-xs text-purple-400/50 pb-3 border-b border-purple-500/10 mb-2 px-1">
+      <div className="flex items-center justify-between text-xs text-muted/50 pb-3 border-b border-purple-500/10 mb-2 px-1">
         <div className="flex items-center gap-1">
           {likeCount > 0 && (
             <>
@@ -401,7 +401,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
             </>
           )}
         </div>
-        <div className="cursor-pointer hover:underline hover:text-purple-300 transition-colors" onClick={toggleComments}>
+        <div className="cursor-pointer hover:underline hover:text-accent-purple transition-colors" onClick={toggleComments}>
           {post.comments_count ?? comments.length} bình luận
         </div>
       </div>
@@ -414,7 +414,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
           className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-semibold text-sm transition-all focus:outline-none ${
             isLiked 
               ? 'text-pink-400 bg-pink-500/10 hover:bg-pink-500/20' 
-              : 'text-purple-300/60 hover:bg-white/5 hover:text-purple-200'
+              : 'text-accent-purple/60 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-secondary'
           }`}
         >
           <span className={`text-lg ${likeAnimating ? 'animate-heart-pop' : ''}`}>{isLiked ? '❤️' : '🤍'}</span>
@@ -425,8 +425,8 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
           onClick={toggleComments}
           className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-semibold text-sm transition-all focus:outline-none ${
             showComments 
-              ? 'text-purple-300 bg-purple-500/10 hover:bg-purple-500/20' 
-              : 'text-purple-300/60 hover:bg-white/5 hover:text-purple-200'
+              ? 'text-accent-purple bg-purple-500/10 hover:bg-purple-500/20' 
+              : 'text-accent-purple/60 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-secondary'
           }`}
         >
           <span className="text-lg">💬</span>
@@ -436,7 +436,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
         {!isOwner && (
           <button 
             onClick={() => setShowShareModal(true)}
-            className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-semibold text-sm transition-all focus:outline-none text-purple-300/60 hover:bg-white/5 hover:text-purple-200"
+            className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-semibold text-sm transition-all focus:outline-none text-accent-purple/60 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-secondary"
           >
             <span className="text-lg">↪️</span>
             <span>Chia sẻ</span>
@@ -451,8 +451,8 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
           {/* Create comment form */}
           <form onSubmit={handleCommentSubmit} className="flex flex-col gap-2">
             {replyingToId && (
-              <div className="text-[11px] text-purple-400/50 flex items-center gap-1 ml-10">
-                <span>Đang trả lời <b className="text-purple-300">{replyingToUsername}</b></span>
+              <div className="text-[11px] text-muted/50 flex items-center gap-1 ml-10">
+                <span>Đang trả lời <b className="text-accent-purple">{replyingToUsername}</b></span>
                 <button type="button" onClick={cancelReply} className="text-pink-400 hover:underline">Hủy</button>
               </div>
             )}
@@ -464,7 +464,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
                   className="w-8 h-8 rounded-full object-cover flex-shrink-0 avatar-glow"
                 />
               ) : (
-                <div className="w-8 h-8 bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full text-purple-200 flex items-center justify-center font-bold text-xs flex-shrink-0">
+                <div className="w-8 h-8 bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full text-secondary flex items-center justify-center font-bold text-xs flex-shrink-0">
                   ME
                 </div>
               )}
@@ -475,13 +475,13 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                   placeholder={replyingToId ? `Phản hồi ${replyingToUsername}...` : "Viết bình luận..."}
-                  className="flex-1 bg-transparent border-0 text-[13px] focus:outline-none py-1 placeholder-purple-500/40 text-purple-100"
+                  className="flex-1 bg-transparent border-0 text-[13px] focus:outline-none py-1 placeholder-purple-500/40 text-foreground"
                   required
                 />
                 <button 
                   type="submit"
                   disabled={isSubmitting || !newComment.trim()}
-                  className="text-purple-400 font-bold hover:text-pink-400 transition-colors disabled:opacity-30 focus:outline-none text-xs px-2"
+                  className="text-muted font-bold hover:text-pink-400 transition-colors disabled:opacity-30 focus:outline-none text-xs px-2"
                 >
                   {isSubmitting ? "Gửi..." : "Đăng"}
                 </button>
@@ -495,7 +495,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-500"></div>
             </div>
           ) : comments.length === 0 ? (
-            <div className="text-center text-xs text-purple-400/40 py-1.5">Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</div>
+            <div className="text-center text-xs text-muted/40 py-1.5">Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</div>
           ) : (
             <div className="space-y-3.5 max-h-[400px] overflow-y-auto pr-1">
               {comments.filter(c => !c.parent_id).map((comment) => (
@@ -510,7 +510,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
                           className="w-8 h-8 rounded-full object-cover border border-purple-500/20 shadow-sm"
                         />
                       ) : (
-                        <div className="w-8 h-8 bg-purple-500/20 rounded-full flex items-center justify-center text-xs font-bold text-purple-300">
+                        <div className="w-8 h-8 bg-purple-500/20 rounded-full flex items-center justify-center text-xs font-bold text-accent-purple">
                           {(comment.owner?.username || 'U').charAt(0).toUpperCase()}
                         </div>
                       )}
@@ -519,21 +519,21 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
                       <div className="bg-white/[0.05] px-3.5 py-2 rounded-2xl rounded-tl-none inline-block max-w-[90%] shadow-sm relative group border border-purple-500/10">
                         <Link 
                           href={`/profile/${comment.userId || comment.owner?.id}`}
-                          className="font-bold text-[13px] text-purple-200 hover:underline block mb-0.5"
+                          className="font-bold text-[13px] text-secondary hover:underline block mb-0.5"
                         >
                            {comment.owner?.username || `User #${comment.userId}`}
                         </Link>
-                        <span className="text-[13px] text-purple-100/70 leading-snug whitespace-pre-wrap">{comment.content}</span>
+                        <span className="text-[13px] text-foreground/70 leading-snug whitespace-pre-wrap">{comment.content}</span>
                         
                         {/* Comment like count floating bubble */}
                         {comment.likes_count > 0 && (
-                          <div className="absolute -bottom-2 -right-2 bg-[#1a1030] px-1.5 py-0.5 rounded-full border border-purple-500/20 shadow-sm flex items-center gap-1 text-[10px] text-pink-300/70">
+                          <div className="absolute -bottom-2 -right-2 bg-background px-1.5 py-0.5 rounded-full border border-purple-500/20 shadow-sm flex items-center gap-1 text-[10px] text-pink-300/70">
                             <span>❤️</span>
                             <span>{comment.likes_count}</span>
                           </div>
                         )}
                       </div>
-                      <div className="text-[11px] font-semibold text-purple-400/40 ml-3.5 mt-1 flex gap-3">
+                      <div className="text-[11px] font-semibold text-muted/40 ml-3.5 mt-1 flex gap-3">
                         <button 
                           onClick={() => handleCommentLike(comment.id, comment.is_liked)}
                           className={`hover:underline ${comment.is_liked ? 'text-pink-400' : ''}`}
@@ -562,7 +562,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
                             className="w-7 h-7 rounded-full object-cover border border-purple-500/20 shadow-sm"
                           />
                         ) : (
-                          <div className="w-7 h-7 bg-purple-500/20 rounded-full flex items-center justify-center text-[10px] font-bold text-purple-300">
+                          <div className="w-7 h-7 bg-purple-500/20 rounded-full flex items-center justify-center text-[10px] font-bold text-accent-purple">
                             {(reply.owner?.username || 'U').charAt(0).toUpperCase()}
                           </div>
                         )}
@@ -571,20 +571,20 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
                         <div className="bg-white/[0.05] px-3 py-1.5 rounded-2xl rounded-tl-none inline-block max-w-[90%] shadow-sm relative group border border-purple-500/10">
                           <Link 
                             href={`/profile/${reply.userId || reply.owner?.id}`}
-                            className="font-bold text-[12px] text-purple-200 hover:underline block mb-0.5"
+                            className="font-bold text-[12px] text-secondary hover:underline block mb-0.5"
                           >
                              {reply.owner?.username || `User #${reply.userId}`}
                           </Link>
-                          <span className="text-[12px] text-purple-100/70 leading-snug whitespace-pre-wrap">{reply.content}</span>
+                          <span className="text-[12px] text-foreground/70 leading-snug whitespace-pre-wrap">{reply.content}</span>
                           
                           {reply.likes_count > 0 && (
-                            <div className="absolute -bottom-2 -right-2 bg-[#1a1030] px-1.5 py-0.5 rounded-full border border-purple-500/20 shadow-sm flex items-center gap-1 text-[9px] text-pink-300/70">
+                            <div className="absolute -bottom-2 -right-2 bg-background px-1.5 py-0.5 rounded-full border border-purple-500/20 shadow-sm flex items-center gap-1 text-[9px] text-pink-300/70">
                               <span>❤️</span>
                               <span>{reply.likes_count}</span>
                             </div>
                           )}
                         </div>
-                        <div className="text-[10px] font-semibold text-purple-400/40 ml-3.5 mt-1 flex gap-3">
+                        <div className="text-[10px] font-semibold text-muted/40 ml-3.5 mt-1 flex gap-3">
                           <button 
                             onClick={() => handleCommentLike(reply.id, reply.is_liked)}
                             className={`hover:underline ${reply.is_liked ? 'text-pink-400' : ''}`}
@@ -614,10 +614,10 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="glass-card rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-slide-up">
             <div className="border-b border-purple-500/10 px-4 py-3 flex items-center justify-between bg-white/[0.02]">
-              <h3 className="font-bold text-[#F0E6FF]">Chia sẻ bài viết</h3>
+              <h3 className="font-bold text-foreground">Chia sẻ bài viết</h3>
               <button 
                 onClick={() => setShowShareModal(false)}
-                className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-purple-400/60 transition-colors"
+                className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 flex items-center justify-center text-muted/60 transition-colors"
               >
                 ✕
               </button>
@@ -634,10 +634,10 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
               {/* Preview of the shared post */}
               <div className="border border-purple-500/10 rounded-lg p-3 bg-white/[0.02] opacity-80 pointer-events-none mb-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="font-semibold text-[13px] text-purple-200">{post.owner?.username}</div>
+                  <div className="font-semibold text-[13px] text-secondary">{post.owner?.username}</div>
                 </div>
-                {post.title && <h4 className="font-semibold text-[13px] text-purple-100 mb-1">{post.title}</h4>}
-                <p className="text-[12px] text-purple-300/50 line-clamp-2">{post.content}</p>
+                {post.title && <h4 className="font-semibold text-[13px] text-foreground mb-1">{post.title}</h4>}
+                <p className="text-[12px] text-accent-purple/50 line-clamp-2">{post.content}</p>
               </div>
 
               <button

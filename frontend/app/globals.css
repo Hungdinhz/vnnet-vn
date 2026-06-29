@@ -1,26 +1,77 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0F0B1E;
-  --foreground: #E8E0F0;
-  --card-bg: rgba(30, 20, 60, 0.65);
+  /* LIGHT MODE (Pastel, clean, anime-day vibe) */
+  --background: #F4F0FA;
+  --foreground: #2D2442;
+  --card-bg: rgba(255, 255, 255, 0.7);
   --card-border: rgba(139, 92, 246, 0.2);
   --accent-purple: #8B5CF6;
   --accent-pink: #EC4899;
   --accent-cyan: #06B6D4;
   --accent-rose: #F43F5E;
-  --text-primary: #F0E6FF;
-  --text-secondary: #A78BCA;
-  --text-muted: #6B5B8A;
-  --glow-purple: rgba(139, 92, 246, 0.4);
-  --glow-pink: rgba(236, 72, 153, 0.3);
-  --surface-hover: rgba(139, 92, 246, 0.1);
+  --text-primary: #1A1525;
+  --text-secondary: #5B4A75;
+  --text-muted: #8E7CA6;
+  --glow-purple: rgba(139, 92, 246, 0.2);
+  --glow-pink: rgba(236, 72, 153, 0.2);
+  --surface-hover: rgba(139, 92, 246, 0.08);
+  --input-bg: rgba(255, 255, 255, 0.8);
+  --nav-bg: rgba(244, 240, 250, 0.85);
+
+  /* Override hardcoded purples for light mode visibility */
+  --theme-purple-100: #2D2442;
+  --theme-purple-200: #5B4A75;
+  --theme-purple-300: #8B5CF6;
+  --theme-purple-400: #8E7CA6;
+  --theme-purple-500: #8B5CF6;
+  --theme-pink-300: #EC4899;
+  --theme-white-alpha: rgba(0, 0, 0, 0.05);
+}
+
+.dark {
+  /* DARK MODE (Brighter anime night vibe) */
+  --background: #16112C;
+  --foreground: #F0E6FF;
+  --card-bg: rgba(45, 35, 80, 0.65);
+  --card-border: rgba(168, 85, 247, 0.25);
+  --accent-purple: #A855F7;
+  --accent-pink: #F472B6;
+  --accent-cyan: #22D3EE;
+  --accent-rose: #FB7185;
+  --text-primary: #FFFFFF;
+  --text-secondary: #C4B5FD;
+  --text-muted: #8B7CA6;
+  --glow-purple: rgba(168, 85, 247, 0.4);
+  --glow-pink: rgba(244, 114, 182, 0.3);
+  --surface-hover: rgba(168, 85, 247, 0.15);
+  --input-bg: rgba(45, 35, 80, 0.5);
+  --nav-bg: rgba(22, 17, 44, 0.85);
+
+  /* Original Tailwind purples for dark mode */
+  --theme-purple-100: #f3e8ff;
+  --theme-purple-200: #e9d5ff;
+  --theme-purple-300: #d8b4fe;
+  --theme-purple-400: #c084fc;
+  --theme-purple-500: #a855f7;
+  --theme-pink-300: #f9a8d4;
+  --theme-white-alpha: rgba(255, 255, 255, 0.05);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-secondary: var(--text-secondary);
+  --color-muted: var(--text-muted);
+  --color-accent-purple: var(--accent-purple);
+  --color-accent-pink: var(--accent-pink);
   --font-sans: var(--font-outfit);
+  --color-purple-100: var(--theme-purple-100);
+  --color-purple-200: var(--theme-purple-200);
+  --color-purple-300: var(--theme-purple-300);
+  --color-purple-400: var(--theme-purple-400);
+  --color-purple-500: var(--theme-purple-500);
+  --color-pink-300: var(--theme-pink-300);
 }
 
 body {
@@ -46,25 +97,25 @@ body {
 
 /* Glassmorphism card base */
 .glass-card {
-  background: rgba(30, 20, 60, 0.65);
+  background: var(--card-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(139, 92, 246, 0.15);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .glass-card-hover:hover {
-  border-color: rgba(139, 92, 246, 0.35);
-  box-shadow: 0 8px 40px rgba(139, 92, 246, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border-color: var(--accent-purple);
+  box-shadow: 0 8px 40px var(--glow-purple), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 /* Glassmorphism Navbar */
 .glass-nav {
-  background: rgba(15, 11, 30, 0.75);
+  background: var(--nav-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(139, 92, 246, 0.15);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid var(--card-border);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
 /* Gradient text utility */
@@ -187,18 +238,18 @@ body {
 
 /* Input styling for dark theme */
 .input-anime {
-  background: rgba(30, 20, 60, 0.5);
-  border: 1px solid rgba(139, 92, 246, 0.2);
-  color: #F0E6FF;
+  background: var(--input-bg);
+  border: 1px solid var(--card-border);
+  color: var(--foreground);
   transition: all 0.3s ease;
 }
 .input-anime::placeholder {
-  color: #6B5B8A;
+  color: var(--text-muted);
 }
 .input-anime:focus {
   outline: none;
-  border-color: rgba(139, 92, 246, 0.5);
-  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15), 0 0 15px rgba(139, 92, 246, 0.1);
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 0 3px var(--glow-purple), 0 0 15px rgba(139, 92, 246, 0.1);
 }
 
 /* Active nav indicator */

@@ -21,7 +21,7 @@ export default function MarketplacePage() {
   const filtered = activeCategory === 'Tất cả' ? products : products.filter(p => p.category === activeCategory);
 
   return (
-    <div className="min-h-screen bg-[#0F0B1E] text-[#E8E0F0]">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       <div className="max-w-7xl mx-auto flex gap-4 px-2 md:px-4">
         <Sidebar />
@@ -31,10 +31,10 @@ export default function MarketplacePage() {
               <h1 className="text-2xl font-extrabold gradient-text">🛒 Chợ</h1>
               <button className="px-4 py-2 btn-anime rounded-lg text-xs">➕ Đăng bán</button>
             </div>
-            <p className="text-sm text-purple-400/50 mb-4">Mua bán trao đổi trong cộng đồng</p>
+            <p className="text-sm text-muted/50 mb-4">Mua bán trao đổi trong cộng đồng</p>
             <div className="flex flex-wrap gap-2">
               {categories.map(cat => (
-                <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${activeCategory === cat ? 'btn-anime' : 'bg-white/5 text-purple-300/60 hover:bg-white/10 border border-purple-500/10'}`}>{cat}</button>
+                <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${activeCategory === cat ? 'btn-anime' : 'bg-black/5 dark:bg-white/5 text-accent-purple/60 hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 border border-purple-500/10'}`}>{cat}</button>
               ))}
             </div>
           </div>
@@ -46,11 +46,11 @@ export default function MarketplacePage() {
                   <span className="text-6xl group-hover:scale-110 transition-transform duration-300">{product.emoji}</span>
                 </div>
                 <div className="p-4">
-                  <h3 className="font-bold text-purple-100 text-[14px] mb-1 line-clamp-1">{product.name}</h3>
+                  <h3 className="font-bold text-foreground text-[14px] mb-1 line-clamp-1">{product.name}</h3>
                   <p className="text-lg font-extrabold gradient-text mb-2">{product.price}</p>
-                  <div className="flex items-center justify-between text-xs text-purple-400/50">
+                  <div className="flex items-center justify-between text-xs text-muted/50">
                     <span>📍 {product.location}</span>
-                    <span className="bg-white/5 px-2 py-0.5 rounded-full border border-purple-500/10">{product.category}</span>
+                    <span className="bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-full border border-purple-500/10">{product.category}</span>
                   </div>
                 </div>
               </div>

@@ -24,17 +24,17 @@ export default function GamesPage() {
   const filtered = activeCategory === 'Tất cả' ? games : games.filter(g => g.category === activeCategory);
 
   return (
-    <div className="min-h-screen bg-[#0F0B1E] text-[#E8E0F0]">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       <div className="max-w-7xl mx-auto flex gap-4 px-2 md:px-4">
         <Sidebar />
         <main className="flex-1 py-4 md:py-6 max-w-5xl mx-auto">
           <div className="glass-card rounded-xl p-4 mb-4">
             <h1 className="text-2xl font-extrabold gradient-text mb-2">🎮 Trò chơi</h1>
-            <p className="text-sm text-purple-400/50 mb-4">Khám phá và chơi các trò chơi thú vị cùng bạn bè</p>
+            <p className="text-sm text-muted/50 mb-4">Khám phá và chơi các trò chơi thú vị cùng bạn bè</p>
             <div className="flex flex-wrap gap-2">
               {gameCategories.map(cat => (
-                <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${activeCategory === cat ? 'btn-anime' : 'bg-white/5 text-purple-300/60 hover:bg-white/10 border border-purple-500/10'}`}>{cat}</button>
+                <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${activeCategory === cat ? 'btn-anime' : 'bg-black/5 dark:bg-white/5 text-accent-purple/60 hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 border border-purple-500/10'}`}>{cat}</button>
               ))}
             </div>
           </div>
@@ -46,14 +46,14 @@ export default function GamesPage() {
                   <span className="text-6xl group-hover:scale-110 transition-transform duration-300">{game.emoji}</span>
                 </div>
                 <div className="p-4">
-                  <h3 className="font-bold text-purple-100 text-[15px] mb-1">{game.name}</h3>
-                  <div className="flex items-center gap-3 text-xs text-purple-400/50 mb-3">
+                  <h3 className="font-bold text-foreground text-[15px] mb-1">{game.name}</h3>
+                  <div className="flex items-center gap-3 text-xs text-muted/50 mb-3">
                     <span>👥 {game.players} người chơi</span>
                     <span>⭐ {game.rating}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <button className="flex-1 py-2 btn-anime rounded-lg text-xs">🎮 Chơi ngay</button>
-                    <button className="px-3 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs text-purple-300/60 border border-purple-500/10 transition-colors">♥</button>
+                    <button className="px-3 py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 rounded-lg text-xs text-accent-purple/60 border border-purple-500/10 transition-colors">♥</button>
                   </div>
                 </div>
               </div>

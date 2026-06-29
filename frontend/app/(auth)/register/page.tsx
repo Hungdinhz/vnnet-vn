@@ -51,7 +51,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0F0B1E] py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Animated background blobs */}
       <div className="absolute top-1/3 -left-20 w-72 h-72 bg-pink-600/20 rounded-full blur-[100px] animate-float"></div>
       <div className="absolute bottom-1/3 -right-20 w-72 h-72 bg-purple-600/20 rounded-full blur-[100px] animate-float" style={{ animationDelay: '1.5s' }}></div>
@@ -64,7 +64,7 @@ export default function RegisterPage() {
             <span className="text-white text-2xl font-black">VN</span>
           </div>
           <h2 className="text-3xl font-bold gradient-text">VnNet</h2>
-          <p className="text-purple-400/50 text-sm mt-1">Tạo tài khoản mới ✨</p>
+          <p className="text-muted/50 text-sm mt-1">Tạo tài khoản mới ✨</p>
         </div>
 
         {error && (
@@ -81,7 +81,7 @@ export default function RegisterPage() {
 
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <label className="block text-purple-300/70 text-sm font-medium mb-1.5">Tên đăng nhập</label>
+            <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Tên đăng nhập</label>
             <input
               type="text"
               value={username}
@@ -93,7 +93,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-purple-300/70 text-sm font-medium mb-1.5">Email</label>
+            <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Email</label>
             <input
               type="email"
               value={email}
@@ -105,7 +105,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-purple-300/70 text-sm font-medium mb-1.5">Mật khẩu</label>
+            <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Mật khẩu</label>
             <input
               type="password"
               value={password}
@@ -118,7 +118,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="block text-purple-300/70 text-sm font-medium mb-1.5">Nhập lại mật khẩu</label>
+            <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Nhập lại mật khẩu</label>
             <input
               type="password"
               value={confirmPassword}
@@ -138,7 +138,7 @@ export default function RegisterPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center text-sm text-purple-400/50">
+        <div className="mt-6 text-center text-sm text-muted/50">
           Đã có tài khoản?{' '}
           <Link href="/login" className="text-pink-400 hover:text-pink-300 font-medium transition-colors">
             Đăng nhập ngay

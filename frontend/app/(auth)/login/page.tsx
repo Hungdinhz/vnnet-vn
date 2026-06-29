@@ -53,7 +53,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0F0B1E] relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
       {/* Animated background blobs */}
       <div className="absolute top-1/4 -left-20 w-72 h-72 bg-purple-600/20 rounded-full blur-[100px] animate-float"></div>
       <div className="absolute bottom-1/4 -right-20 w-72 h-72 bg-pink-600/20 rounded-full blur-[100px] animate-float" style={{ animationDelay: '1.5s' }}></div>
@@ -66,10 +66,10 @@ export default function LoginPage() {
             <span className="text-white text-2xl font-black">VN</span>
           </div>
           <h2 className="text-3xl font-bold gradient-text">VnNet</h2>
-          <p className="text-purple-400/50 text-sm mt-1">Mạng xã hội thế hệ mới ✨</p>
+          <p className="text-muted/50 text-sm mt-1">Mạng xã hội thế hệ mới ✨</p>
         </div>
         
-        <h3 className="text-lg font-semibold text-center text-purple-200 mb-6">Đăng nhập vào tài khoản</h3>
+        <h3 className="text-lg font-semibold text-center text-secondary mb-6">Đăng nhập vào tài khoản</h3>
 
         {error && (
           <div className="bg-rose-500/10 text-rose-400 p-3 rounded-lg mb-4 text-sm text-center border border-rose-500/20">
@@ -79,7 +79,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-purple-300/70 text-sm font-medium mb-1.5">Tên đăng nhập (hoặc Email)</label>
+            <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Tên đăng nhập (hoặc Email)</label>
             <input
               type="text"
               value={username}
@@ -91,7 +91,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-purple-300/70 text-sm font-medium mb-1.5">Mật khẩu</label>
+            <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Mật khẩu</label>
             <input
               type="password"
               value={password}
@@ -112,10 +112,10 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-6 flex justify-between items-center text-sm">
-          <Link href="/forgot-password" className="text-purple-400/60 hover:text-pink-400 transition-colors">
+          <Link href="/forgot-password" className="text-muted/60 hover:text-pink-400 transition-colors">
             Quên mật khẩu?
           </Link>
-          <div className="text-purple-400/50">
+          <div className="text-muted/50">
             Chưa có tài khoản?{' '}
             <Link href="/register" className="text-pink-400 hover:text-pink-300 font-medium transition-colors">
               Đăng ký ngay

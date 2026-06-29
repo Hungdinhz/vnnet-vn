@@ -140,7 +140,7 @@ function FriendsContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0F0B1E] text-[#E8E0F0]">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       
       <div className="max-w-7xl mx-auto flex gap-4 px-2 md:px-4">
@@ -157,8 +157,8 @@ function FriendsContent() {
                 onClick={() => setActiveTab('suggestions')}
                 className={`px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
                   activeTab === 'suggestions' 
-                    ? 'bg-purple-500/15 text-purple-300 shadow-sm' 
-                    : 'text-purple-400/50 hover:bg-white/5 hover:text-purple-300'
+                    ? 'bg-purple-500/15 text-accent-purple shadow-sm' 
+                    : 'text-muted/50 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-accent-purple'
                 }`}
               >
                 ✨ Gợi ý kết bạn
@@ -167,8 +167,8 @@ function FriendsContent() {
                 onClick={() => setActiveTab('requests')}
                 className={`px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none relative ${
                   activeTab === 'requests' 
-                    ? 'bg-purple-500/15 text-purple-300 shadow-sm' 
-                    : 'text-purple-400/50 hover:bg-white/5 hover:text-purple-300'
+                    ? 'bg-purple-500/15 text-accent-purple shadow-sm' 
+                    : 'text-muted/50 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-accent-purple'
                 }`}
               >
                 📩 Lời mời kết bạn
@@ -182,8 +182,8 @@ function FriendsContent() {
                 onClick={() => setActiveTab('list')}
                 className={`px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
                   activeTab === 'list' 
-                    ? 'bg-purple-500/15 text-purple-300 shadow-sm' 
-                    : 'text-purple-400/50 hover:bg-white/5 hover:text-purple-300'
+                    ? 'bg-purple-500/15 text-accent-purple shadow-sm' 
+                    : 'text-muted/50 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-accent-purple'
                 }`}
               >
                 💫 Tất cả bạn bè
@@ -201,7 +201,7 @@ function FriendsContent() {
             /* Suggestions Grid */
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {suggestedUsers.length === 0 ? (
-                <div className="glass-card p-8 rounded-xl text-center text-purple-400/50 col-span-full">
+                <div className="glass-card p-8 rounded-xl text-center text-muted/50 col-span-full">
                   Chưa có gợi ý bạn bè nào mới dành cho bạn.
                 </div>
               ) : (
@@ -213,7 +213,7 @@ function FriendsContent() {
                     
                     <div className="p-4 flex flex-col items-center text-center -mt-10 flex-1 justify-between">
                       <div className="flex flex-col items-center">
-                        <Link href={`/profile/${user.id}`} className="relative w-16 h-16 bg-[#1a1030] rounded-full p-1 shadow-md mb-2 hover:opacity-90 transition-opacity">
+                        <Link href={`/profile/${user.id}`} className="relative w-16 h-16 bg-background rounded-full p-1 shadow-md mb-2 hover:opacity-90 transition-opacity">
                           {user.avatar_url ? (
                             <img 
                               src={user.avatar_url} 
@@ -221,21 +221,21 @@ function FriendsContent() {
                               className="w-full h-full rounded-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full flex items-center justify-center text-xl font-bold text-purple-200">
+                            <div className="w-full h-full bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full flex items-center justify-center text-xl font-bold text-secondary">
                               {getInitials(user.username)}
                             </div>
                           )}
                         </Link>
-                        <Link href={`/profile/${user.id}`} className="font-bold text-purple-100 text-[15px] hover:text-pink-300 transition-colors">
+                        <Link href={`/profile/${user.id}`} className="font-bold text-foreground text-[15px] hover:text-pink-300 transition-colors">
                           {user.username}
                         </Link>
-                        <p className="text-xs text-purple-400/40 truncate max-w-[180px] mt-0.5 mb-4">{user.email}</p>
+                        <p className="text-xs text-muted/40 truncate max-w-[180px] mt-0.5 mb-4">{user.email}</p>
                       </div>
 
                       {requestedUserIds.has(user.id) ? (
                         <button
                           disabled
-                          className="w-full py-2 bg-white/5 text-purple-400/50 font-bold rounded-lg text-xs shadow-sm transition-colors border border-purple-500/10 cursor-not-allowed"
+                          className="w-full py-2 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-xs shadow-sm transition-colors border border-purple-500/10 cursor-not-allowed"
                         >
                           Đã gửi yêu cầu
                         </button>
@@ -257,7 +257,7 @@ function FriendsContent() {
             /* Requests Tab */
             <div className="space-y-3">
               {pendingRequests.length === 0 ? (
-                <div className="glass-card p-10 rounded-xl text-center text-purple-400/50">
+                <div className="glass-card p-10 rounded-xl text-center text-muted/50">
                   Bạn không có lời mời kết bạn nào đang chờ.
                 </div>
               ) : (
@@ -268,8 +268,8 @@ function FriendsContent() {
                         {getInitials(r.sender_username)}
                       </div>
                       <div>
-                        <h3 className="font-bold text-purple-100 text-sm">{r.sender_username}</h3>
-                        <p className="text-xs text-purple-400/40">Yêu cầu kết bạn gửi cho bạn</p>
+                        <h3 className="font-bold text-foreground text-sm">{r.sender_username}</h3>
+                        <p className="text-xs text-muted/40">Yêu cầu kết bạn gửi cho bạn</p>
                       </div>
                     </div>
 
@@ -282,7 +282,7 @@ function FriendsContent() {
                       </button>
                       <button
                         onClick={() => toast.success('Đã từ chối lời mời này')}
-                        className="px-5 py-2 bg-white/5 hover:bg-white/10 text-purple-300/70 rounded-lg font-semibold text-xs transition-colors border border-purple-500/10"
+                        className="px-5 py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 text-accent-purple/70 rounded-lg font-semibold text-xs transition-colors border border-purple-500/10"
                       >
                         Xóa
                       </button>
@@ -296,7 +296,7 @@ function FriendsContent() {
             /* Friends List Grid */
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {friends.length === 0 ? (
-                <div className="glass-card p-8 rounded-xl text-center text-purple-400/50 col-span-full">
+                <div className="glass-card p-8 rounded-xl text-center text-muted/50 col-span-full">
                   Bạn chưa kết nối với người bạn nào. Hãy gửi lời mời tới bạn bè nhé!
                 </div>
               ) : (
@@ -308,7 +308,7 @@ function FriendsContent() {
                     
                     <div className="p-4 flex flex-col items-center text-center -mt-10 flex-1 justify-between">
                       <div className="flex flex-col items-center">
-                        <Link href={`/profile/${user.id}`} className="relative w-16 h-16 bg-[#1a1030] rounded-full p-1 shadow-md mb-2 hover:opacity-90 transition-opacity">
+                        <Link href={`/profile/${user.id}`} className="relative w-16 h-16 bg-background rounded-full p-1 shadow-md mb-2 hover:opacity-90 transition-opacity">
                           {user.avatar_url ? (
                             <img 
                               src={user.avatar_url} 
@@ -316,20 +316,20 @@ function FriendsContent() {
                               className="w-full h-full rounded-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-purple-500/50 to-cyan-500/50 rounded-full flex items-center justify-center text-xl font-bold text-purple-200">
+                            <div className="w-full h-full bg-gradient-to-br from-purple-500/50 to-cyan-500/50 rounded-full flex items-center justify-center text-xl font-bold text-secondary">
                               {getInitials(user.username)}
                             </div>
                           )}
                         </Link>
-                        <Link href={`/profile/${user.id}`} className="font-bold text-purple-100 text-[15px] hover:text-pink-300 transition-colors">
+                        <Link href={`/profile/${user.id}`} className="font-bold text-foreground text-[15px] hover:text-pink-300 transition-colors">
                           {user.username}
                         </Link>
-                        <p className="text-xs text-purple-400/40 truncate max-w-[180px] mt-0.5 mb-4">{user.email}</p>
+                        <p className="text-xs text-muted/40 truncate max-w-[180px] mt-0.5 mb-4">{user.email}</p>
                       </div>
 
                       <button 
                         onClick={() => router.push(`/profile/${user.id}`)}
-                        className="w-full py-2 bg-white/5 hover:bg-white/10 text-purple-200 font-bold rounded-lg text-xs transition-colors border border-purple-500/10"
+                        className="w-full py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 text-secondary font-bold rounded-lg text-xs transition-colors border border-purple-500/10"
                       >
                         Xem trang cá nhân
                       </button>
@@ -348,7 +348,7 @@ function FriendsContent() {
 export default function FriendsPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-[#0F0B1E] flex justify-center items-center">
+      <div className="min-h-screen bg-background flex justify-center items-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
       </div>
     }>

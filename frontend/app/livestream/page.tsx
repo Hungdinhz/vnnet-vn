@@ -21,7 +21,7 @@ export default function LivestreamPage() {
   const filtered = activeCategory === 'Tất cả' ? streams : streams.filter(s => s.category === activeCategory);
 
   return (
-    <div className="min-h-screen bg-[#0F0B1E] text-[#E8E0F0]">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       <div className="max-w-7xl mx-auto flex gap-4 px-2 md:px-4">
         <Sidebar />
@@ -31,10 +31,10 @@ export default function LivestreamPage() {
               <h1 className="text-2xl font-extrabold gradient-text">📺 Livestream</h1>
               <button className="px-4 py-2 btn-anime rounded-lg text-xs">🔴 Phát trực tiếp</button>
             </div>
-            <p className="text-sm text-purple-400/50 mb-4">Xem và tương tác với các buổi phát trực tiếp</p>
+            <p className="text-sm text-muted/50 mb-4">Xem và tương tác với các buổi phát trực tiếp</p>
             <div className="flex flex-wrap gap-2">
               {categories.map(cat => (
-                <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${activeCategory === cat ? 'btn-anime' : 'bg-white/5 text-purple-300/60 hover:bg-white/10 border border-purple-500/10'}`}>{cat}</button>
+                <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${activeCategory === cat ? 'btn-anime' : 'bg-black/5 dark:bg-white/5 text-accent-purple/60 hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 border border-purple-500/10'}`}>{cat}</button>
               ))}
             </div>
           </div>
@@ -55,10 +55,10 @@ export default function LivestreamPage() {
                   </div>
                 </div>
                 <div className="p-4">
-                  <h3 className="font-bold text-purple-100 text-[14px] mb-1 line-clamp-1">{stream.title}</h3>
-                  <div className="flex items-center justify-between text-xs text-purple-400/50">
-                    <span className="font-semibold text-purple-300/70">{stream.streamer}</span>
-                    <span className="bg-white/5 px-2 py-0.5 rounded-full border border-purple-500/10">{stream.category}</span>
+                  <h3 className="font-bold text-foreground text-[14px] mb-1 line-clamp-1">{stream.title}</h3>
+                  <div className="flex items-center justify-between text-xs text-muted/50">
+                    <span className="font-semibold text-accent-purple/70">{stream.streamer}</span>
+                    <span className="bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-full border border-purple-500/10">{stream.category}</span>
                   </div>
                 </div>
               </div>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import api from '@/lib/axios';
+import { ThemeToggle } from './ThemeToggle';
 
 export default function Navbar() {
   const router = useRouter();
@@ -170,7 +171,7 @@ export default function Navbar() {
             <span className="text-white text-lg font-black tracking-tighter">VN</span>
           </Link>
           <div className="relative max-w-xs w-full hidden sm:block">
-            <span className="absolute inset-y-0 left-3 flex items-center text-purple-400/60">
+            <span className="absolute inset-y-0 left-3 flex items-center text-muted/60">
               🔍
             </span>
             <input 
@@ -191,8 +192,8 @@ export default function Navbar() {
                 href={item.href} 
                 className={`flex items-center justify-center flex-1 h-full border-b-[3px] transition-all duration-200 ${
                   isActive 
-                    ? 'border-transparent nav-active text-purple-300' 
-                    : 'border-transparent text-purple-400/50 hover:text-purple-300 hover:bg-white/5'
+                    ? 'border-transparent nav-active text-accent-purple' 
+                    : 'border-transparent text-secondary hover:text-accent-purple hover:bg-black/5 dark:hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5'
                 }`}
                 title={item.label}
               >
@@ -205,8 +206,11 @@ export default function Navbar() {
         {/* Right: Actions & Profile Menu */}
         <div className="flex items-center space-x-2 md:space-x-3">
           
+          {/* Theme Toggle */}
+          <ThemeToggle />
+          
           {/* Messages Icon */}
-          <Link href="/messages" className="relative cursor-pointer hover:bg-white/10 w-10 h-10 flex items-center justify-center rounded-full bg-white/5 transition-all duration-200 border border-purple-500/10">
+          <Link href="/messages" className="relative cursor-pointer hover:bg-black/10 dark:hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-black/5 dark:bg-white/5 transition-all duration-200 border border-purple-500/10">
             <span className="text-lg">💬</span>
           </Link>
 
@@ -214,7 +218,7 @@ export default function Navbar() {
           <div className="relative" ref={notifRef}>
             <button 
               onClick={() => { setShowNotifDropdown(!showNotifDropdown); setShowDropdown(false); }}
-              className="relative cursor-pointer hover:bg-white/10 w-10 h-10 flex items-center justify-center rounded-full bg-white/5 transition-all duration-200 border border-purple-500/10 focus:outline-none"
+              className="relative cursor-pointer hover:bg-black/10 dark:hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-black/5 dark:bg-white/5 transition-all duration-200 border border-purple-500/10 focus:outline-none"
             >
               <span className="text-lg">🔔</span>
               {unreadCount > 0 && (
@@ -226,9 +230,9 @@ export default function Navbar() {
 
             {/* Notifications Dropdown */}
             {showNotifDropdown && (
-              <div className="absolute right-0 mt-2 w-96 bg-[#1A1528] border border-purple-500/20 shadow-2xl rounded-xl py-2 z-50 animate-slide-up max-h-[480px] overflow-hidden flex flex-col">
+              <div className="absolute right-0 mt-2 w-96 bg-background border border-purple-500/20 shadow-2xl rounded-xl py-2 z-50 animate-slide-up max-h-[480px] overflow-hidden flex flex-col">
                 <div className="flex items-center justify-between px-4 py-2 border-b border-purple-500/10">
-                  <h3 className="font-bold text-purple-100 text-[15px]">🔔 Thông báo</h3>
+                  <h3 className="font-bold text-foreground text-[15px]">🔔 Thông báo</h3>
                   {unreadCount > 0 && (
                     <button 
                       onClick={handleMarkAllRead}
@@ -242,7 +246,7 @@ export default function Navbar() {
                   {notifications.length === 0 ? (
                     <div className="py-12 text-center">
                       <div className="text-3xl mb-2">🔕</div>
-                      <p className="text-sm text-purple-400/40">Chưa có thông báo nào</p>
+                      <p className="text-sm text-muted">Chưa có thông báo nào</p>
                     </div>
                   ) : (
                     notifications.slice(0, 20).map((notif) => {
@@ -256,7 +260,7 @@ export default function Navbar() {
                             if (!notif.is_read) handleMarkAsRead(notif.id);
                             setShowNotifDropdown(false);
                           }}
-                          className={`flex items-start gap-3 px-4 py-3 hover:bg-white/5 transition-colors border-b border-purple-500/5 ${
+                          className={`flex items-start gap-3 px-4 py-3 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 transition-colors border-b border-purple-500/5 ${
                             !notif.is_read ? 'bg-purple-500/5' : ''
                           }`}
                         >
@@ -264,10 +268,10 @@ export default function Navbar() {
                             {icon}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className={`text-[13px] leading-snug ${!notif.is_read ? 'text-purple-100 font-semibold' : 'text-purple-300/70'}`}>
+                            <p className={`text-[13px] leading-snug ${!notif.is_read ? 'text-foreground font-semibold' : 'text-secondary'}`}>
                               {text}
                             </p>
-                            <p className="text-[11px] text-purple-400/40 mt-0.5">{formatTimeAgo(notif.created_at)}</p>
+                            <p className="text-[11px] text-muted/40 mt-0.5">{formatTimeAgo(notif.created_at)}</p>
                           </div>
                           {!notif.is_read && (
                             <div className="w-2.5 h-2.5 rounded-full bg-pink-500 flex-shrink-0 mt-1.5"></div>
@@ -302,11 +306,11 @@ export default function Navbar() {
 
             {/* User Dropdown Menu */}
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-72 bg-[#1A1528] border border-purple-500/20 shadow-2xl rounded-xl py-3 z-50 animate-slide-up">
+              <div className="absolute right-0 mt-2 w-72 bg-background border border-purple-500/20 shadow-2xl rounded-xl py-3 z-50 animate-slide-up">
                 <Link 
                   href="/profile" 
                   onClick={() => setShowDropdown(false)}
-                  className="flex items-center gap-3 px-4 py-2 hover:bg-white/5 mx-2 rounded-lg transition-colors"
+                  className="flex items-center gap-3 px-4 py-2 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 mx-2 rounded-lg transition-colors"
                 >
                   {currentUser?.avatar_url ? (
                     <img 
@@ -320,8 +324,8 @@ export default function Navbar() {
                     </div>
                   )}
                   <div className="text-left">
-                    <div className="font-bold text-[#F0E6FF]">{currentUser?.username || "Người dùng"}</div>
-                    <div className="text-xs text-purple-400/60">Xem trang cá nhân của bạn</div>
+                    <div className="font-bold text-foreground">{currentUser?.username || "Người dùng"}</div>
+                    <div className="text-xs text-muted">Xem trang cá nhân của bạn</div>
                   </div>
                 </Link>
 
@@ -330,7 +334,7 @@ export default function Navbar() {
                 <Link 
                   href="/friends"
                   onClick={() => setShowDropdown(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 mx-2 rounded-lg transition-colors text-sm font-medium text-left text-purple-200"
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 mx-2 rounded-lg transition-colors text-sm font-medium text-left text-secondary"
                 >
                   <span className="text-lg">👥</span> Bạn bè
                 </Link>
@@ -338,7 +342,7 @@ export default function Navbar() {
                 <Link 
                   href="/settings"
                   onClick={() => setShowDropdown(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-white/5 mx-2 rounded-lg transition-colors text-sm font-medium text-left text-purple-200"
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 mx-2 rounded-lg transition-colors text-sm font-medium text-left text-secondary"
                 >
                   <span className="text-lg">⚙️</span> Cài đặt
                 </Link>

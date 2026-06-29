@@ -60,7 +60,7 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#0F0B1E] relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
       {/* Animated background blobs */}
       <div className="absolute top-1/4 -left-20 w-72 h-72 bg-cyan-600/20 rounded-full blur-[100px] animate-float"></div>
       <div className="absolute bottom-1/4 -right-20 w-72 h-72 bg-purple-600/20 rounded-full blur-[100px] animate-float" style={{ animationDelay: '1.5s' }}></div>
@@ -74,7 +74,7 @@ export default function ForgotPasswordPage() {
           <h2 className="text-3xl font-bold gradient-text">VnNet</h2>
         </div>
         
-        <h3 className="text-lg font-semibold text-center text-purple-200 mb-6">
+        <h3 className="text-lg font-semibold text-center text-secondary mb-6">
           {step === 1 ? 'Khôi phục mật khẩu' : 'Đặt lại mật khẩu mới'}
         </h3>
 
@@ -93,7 +93,7 @@ export default function ForgotPasswordPage() {
         {step === 1 ? (
           <form onSubmit={handleSendOtp} className="space-y-4">
             <div>
-              <label className="block text-purple-300/70 text-sm font-medium mb-1.5">Email của bạn</label>
+              <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Email của bạn</label>
               <input
                 type="email"
                 value={email}
@@ -114,7 +114,7 @@ export default function ForgotPasswordPage() {
         ) : (
           <form onSubmit={handleResetPassword} className="space-y-4">
             <div>
-              <label className="block text-purple-300/70 text-sm font-medium mb-1.5">Mã OTP</label>
+              <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Mã OTP</label>
               <input
                 type="text"
                 value={otp}
@@ -126,7 +126,7 @@ export default function ForgotPasswordPage() {
               />
             </div>
             <div>
-              <label className="block text-purple-300/70 text-sm font-medium mb-1.5">Mật khẩu mới</label>
+              <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Mật khẩu mới</label>
               <input
                 type="password"
                 value={newPassword}
@@ -155,7 +155,7 @@ export default function ForgotPasswordPage() {
             <button 
               type="button" 
               onClick={() => setStep(1)} 
-              className="text-purple-400/50 hover:text-purple-300 transition-colors"
+              className="text-muted/50 hover:text-accent-purple transition-colors"
             >
               Nhập email khác
             </button>

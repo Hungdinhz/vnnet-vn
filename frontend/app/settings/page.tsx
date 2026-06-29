@@ -66,7 +66,7 @@ export default function SettingsPage() {
   const getInitials = (n: string) => n ? n.charAt(0).toUpperCase() : 'U';
 
   return (
-    <div className="min-h-screen bg-[#0F0B1E] text-[#E8E0F0]">
+    <div className="min-h-screen bg-background text-foreground">
       <Navbar />
       <div className="max-w-7xl mx-auto flex gap-4 px-2 md:px-4">
         <Sidebar />
@@ -81,21 +81,21 @@ export default function SettingsPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-semibold text-purple-300/70 mb-1.5">Tên hiển thị</label>
+                  <label className="block text-sm font-semibold text-accent-purple/70 mb-1.5">Tên hiển thị</label>
                   <input type="text" value={username} onChange={e => setUsername(e.target.value)} className="w-full px-4 py-2 input-anime rounded-lg text-sm font-medium" required />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-purple-300/70 mb-1.5">Tiểu sử</label>
+                  <label className="block text-sm font-semibold text-accent-purple/70 mb-1.5">Tiểu sử</label>
                   <textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} maxLength={150} className="w-full px-4 py-2 input-anime rounded-lg text-sm resize-none" />
-                  <div className="flex justify-between mt-1"><span className="text-[11px] text-purple-400/30">Giới thiệu ngắn</span><span className="text-[11px] text-purple-400/30">{bio.length}/150</span></div>
+                  <div className="flex justify-between mt-1"><span className="text-[11px] text-muted/30">Giới thiệu ngắn</span><span className="text-[11px] text-muted/30">{bio.length}/150</span></div>
                 </div>
 
                 {/* Avatar Upload - No URL display */}
                 <div className="border-t border-purple-500/10 pt-4">
-                  <label className="block text-sm font-semibold text-purple-300/70 mb-2">Ảnh đại diện</label>
+                  <label className="block text-sm font-semibold text-accent-purple/70 mb-2">Ảnh đại diện</label>
                   <div className="flex items-center gap-4">
                     <div className="w-20 h-20 rounded-full overflow-hidden flex-shrink-0 bg-white/[0.03] border-2 border-purple-500/20">
-                      {avatarUrl ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full flex items-center justify-center font-bold text-purple-200 text-xl">{getInitials(username)}</div>}
+                      {avatarUrl ? <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full flex items-center justify-center font-bold text-secondary text-xl">{getInitials(username)}</div>}
                     </div>
                     <div className="flex flex-col gap-2">
                       <label className="px-5 py-2.5 btn-anime rounded-lg cursor-pointer text-xs font-bold inline-flex items-center gap-2 w-fit">
@@ -113,9 +113,9 @@ export default function SettingsPage() {
 
                 {/* Cover Upload - No URL display */}
                 <div className="border-t border-purple-500/10 pt-4">
-                  <label className="block text-sm font-semibold text-purple-300/70 mb-2">Ảnh bìa</label>
+                  <label className="block text-sm font-semibold text-accent-purple/70 mb-2">Ảnh bìa</label>
                   <div className="h-36 w-full rounded-xl overflow-hidden bg-gradient-to-r from-purple-600/40 via-pink-500/30 to-cyan-500/20 mb-3 flex items-center justify-center border border-purple-500/10">
-                    {coverUrl ? <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" /> : <span className="text-purple-400/30 text-xs font-medium">Chưa thiết lập ảnh bìa</span>}
+                    {coverUrl ? <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" /> : <span className="text-muted/30 text-xs font-medium">Chưa thiết lập ảnh bìa</span>}
                   </div>
                   <div className="flex items-center gap-3">
                     <label className="px-5 py-2.5 btn-anime rounded-lg cursor-pointer text-xs font-bold inline-flex items-center gap-2 w-fit flex-shrink-0">
@@ -131,7 +131,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="border-t border-purple-500/10 pt-6 flex justify-end gap-3">
-                  <button type="button" onClick={() => router.push('/')} className="px-5 py-2 text-sm font-semibold text-purple-400/50 hover:bg-white/5 rounded-lg transition-colors border border-purple-500/10">Hủy</button>
+                  <button type="button" onClick={() => router.push('/')} className="px-5 py-2 text-sm font-semibold text-muted/50 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 rounded-lg transition-colors border border-purple-500/10">Hủy</button>
                   <button type="submit" disabled={isSaving} className="px-6 py-2 btn-anime rounded-lg text-sm">{isSaving ? "Đang lưu..." : "✨ Lưu thay đổi"}</button>
                 </div>
               </form>
