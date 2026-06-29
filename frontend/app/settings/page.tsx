@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
+import toast from 'react-hot-toast';
 import api from '@/lib/axios';
 
 export default function SettingsPage() {
@@ -44,21 +45,21 @@ export default function SettingsPage() {
       const r = await api.post("/upload", fd, { headers: { "Content-Type": "multipart/form-data" } });
       if (type === 'avatar') setAvatarUrl(r.data.url);
       else setCoverUrl(r.data.url);
-      alert(`Tải lên ảnh ${type === 'avatar' ? 'đại diện' : 'bìa'} thành công!`);
-    } catch { alert("Tải lên thất bại!"); }
+      toast.success(`Tải lên ảnh ${type === 'avatar' ? 'đại diện' : 'bìa'} thành công!`);
+    } catch { toast.error("Tải lên thất bại!"); }
     finally { if (type === 'avatar') setIsUploadingAvatar(false); else setIsUploadingCover(false); }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim()) { alert("Tên không được để trống!"); return; }
+    if (!username.trim()) { toast.error("Tên không được để trống!"); return; }
     setIsSaving(true);
     try {
       const res = await api.put('/users/me', { username, bio, avatar_url: avatarUrl, cover_url: coverUrl });
       setCurrentUser(res.data);
-      alert("Cập nhật thành công!");
+      toast.success("Cập nhật thành công!");
       window.location.reload();
-    } catch (err: any) { alert(err.response?.data?.detail || "Lưu thất bại!"); }
+    } catch (err: any) { toast.error(err.response?.data?.detail || "Lưu thất bại!"); }
     finally { setIsSaving(false); }
   };
 

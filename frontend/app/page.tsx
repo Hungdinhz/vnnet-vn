@@ -8,6 +8,7 @@ import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import api from '@/lib/axios';
 import PostCard from '@/components/PostCard';
+import toast from 'react-hot-toast';
 
 export default function Home() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function Home() {
   const [file, setFile] = useState<File | null>(null); 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isPosting, setIsPosting] = useState(false);
+  const [isComposing, setIsComposing] = useState(false);
 
   const fetchPosts = async () => {
     try {
@@ -117,14 +119,16 @@ export default function Home() {
       setNewContent('');
       setFile(null);
       setImagePreview(null);
+      setIsComposing(false);
       
       const fileInput = document.getElementById('file-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
       
+      toast.success("Đăng bài viết thành công!");
       fetchPosts(); 
     } catch (error) {
       console.error("Lỗi khi đăng bài:", error);
-      alert("Đăng bài thất bại, vui lòng thử lại!");
+      toast.error("Đăng bài thất bại, vui lòng thử lại!");
     } finally {
       setIsPosting(false);
     }
@@ -133,11 +137,11 @@ export default function Home() {
   const handleAddFriend = async (friendId: number) => {
     try {
       await api.post(`/friends/request/${friendId}`);
-      alert('Đã gửi lời mời kết bạn!');
+      toast.success('Đã gửi lời mời kết bạn!');
       setRequestedUserIds(prev => new Set(prev).add(friendId));
     } catch (err: any) {
       console.error("Lỗi kết bạn:", err);
-      alert(err.response?.data?.detail || "Gửi lời mời thất bại");
+      toast.error(err.response?.data?.detail || "Gửi lời mời thất bại");
     }
   };
 
@@ -168,84 +172,116 @@ export default function Home() {
           
           {/* Post publisher */}
           <div className="glass-card rounded-xl p-4 mb-4">
-            <div className="flex gap-3 items-center mb-3">
-              {currentUser?.avatar_url ? (
-                <img 
-                  src={currentUser.avatar_url} 
-                  alt={currentUser.username} 
-                  className="w-10 h-10 rounded-full object-cover avatar-glow"
-                />
-              ) : (
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full text-white flex items-center justify-center font-bold">
-                  {getInitials(currentUser?.username)}
-                </div>
-              )}
-              <div className="flex-1">
-                <div className="text-sm font-semibold text-[#F0E6FF]">
-                  {currentUser?.username || "Người dùng"}
-                </div>
-                <div className="text-xs text-purple-400/50 flex items-center gap-1">
-                  <span>🌏 Công khai</span>
+            {!isComposing ? (
+              <div className="flex gap-3 items-center">
+                {currentUser?.avatar_url ? (
+                  <img 
+                    src={currentUser.avatar_url} 
+                    alt={currentUser.username} 
+                    className="w-10 h-10 rounded-full object-cover avatar-glow"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full text-white flex items-center justify-center font-bold">
+                    {getInitials(currentUser?.username)}
+                  </div>
+                )}
+                <div 
+                  onClick={() => setIsComposing(true)}
+                  className="flex-1 px-4 py-2.5 bg-white/5 hover:bg-white/10 border border-purple-500/10 text-purple-300/60 rounded-full cursor-pointer transition-colors text-[15px]"
+                >
+                  {currentUser?.username ? currentUser.username : "Bạn"} ơi, bạn đang nghĩ gì thế? ✨
                 </div>
               </div>
-            </div>
-
-            <form onSubmit={handleCreatePost} className="space-y-3">
-              <input
-                type="text"
-                placeholder="Tiêu đề bài viết (tùy chọn)..."
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                className="w-full px-3 py-1.5 input-anime rounded-lg text-sm font-semibold"
-              />
-              <textarea
-                placeholder={`${currentUser?.username ? currentUser.username : "Bạn"} ơi, bạn đang nghĩ gì thế? ✨`}
-                value={newContent}
-                onChange={(e) => setNewContent(e.target.value)}
-                rows={3}
-                className="w-full px-4 py-2.5 input-anime rounded-lg resize-none text-[15px]"
-                required
-              />
-
-              {/* Image attachment preview */}
-              {imagePreview && (
-                <div className="relative border border-purple-500/20 rounded-lg overflow-hidden max-h-[300px] bg-black/20 flex justify-center">
-                  <img src={imagePreview} alt="Preview" className="max-w-full h-auto object-contain max-h-[300px]" />
+            ) : (
+              <>
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div className="flex items-center gap-3">
+                    {currentUser?.avatar_url ? (
+                      <img 
+                        src={currentUser.avatar_url} 
+                        alt={currentUser.username} 
+                        className="w-10 h-10 rounded-full object-cover avatar-glow"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full text-white flex items-center justify-center font-bold">
+                        {getInitials(currentUser?.username)}
+                      </div>
+                    )}
+                    <div className="flex-1">
+                      <div className="text-sm font-semibold text-[#F0E6FF]">
+                        {currentUser?.username || "Người dùng"}
+                      </div>
+                      <div className="text-xs text-purple-400/50 flex items-center gap-1">
+                        <span>🌏 Công khai</span>
+                      </div>
+                    </div>
+                  </div>
                   <button 
-                    type="button"
-                    onClick={() => { setFile(null); setImagePreview(null); }}
-                    className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm focus:outline-none transition-colors"
+                    onClick={() => setIsComposing(false)}
+                    className="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-purple-400/60 transition-colors focus:outline-none"
                   >
                     ✕
                   </button>
                 </div>
-              )}
-              
-              <hr className="border-purple-500/10" />
-              
-              <div className="flex items-center justify-between">
-                {/* Photo attachment icon button */}
-                <label className="flex items-center gap-2 cursor-pointer hover:bg-white/5 px-3 py-2 rounded-lg transition-colors text-purple-300/70">
-                  <span className="text-xl">🖼️</span>
-                  <span className="text-sm font-semibold">Ảnh/Video</span>
-                  <input 
-                    id="file-upload"
-                    type="file" 
-                    accept="image/*"
-                    onChange={handleFileChange}
-                    className="hidden"
-                  />
-                </label>
 
-                <button
-                  type="submit"
-                  disabled={isPosting || !newContent.trim()}
-                  className="px-8 py-2 rounded-lg text-sm shadow-sm transition-all btn-anime"
-                >
-                  {isPosting ? 'Đang đăng...' : '✨ Đăng bài'}
-                </button>
-              </div>
-            </form>
+                <form onSubmit={handleCreatePost} className="space-y-3 animate-slide-up">
+                  <input
+                    type="text"
+                    placeholder="Tiêu đề bài viết (tùy chọn)..."
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    className="w-full px-3 py-1.5 input-anime rounded-lg text-sm font-semibold"
+                  />
+                  <textarea
+                    placeholder="Chia sẻ suy nghĩ của bạn..."
+                    value={newContent}
+                    onChange={(e) => setNewContent(e.target.value)}
+                    rows={3}
+                    className="w-full px-4 py-2.5 input-anime rounded-lg resize-none text-[15px]"
+                    required
+                  />
+
+                  {/* Image attachment preview */}
+                  {imagePreview && (
+                    <div className="relative border border-purple-500/20 rounded-lg overflow-hidden max-h-[300px] bg-black/20 flex justify-center">
+                      <img src={imagePreview} alt="Preview" className="max-w-full h-auto object-contain max-h-[300px]" />
+                      <button 
+                        type="button"
+                        onClick={() => { setFile(null); setImagePreview(null); }}
+                        className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold text-sm focus:outline-none transition-colors"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  )}
+                  
+                  <hr className="border-purple-500/10" />
+                  
+                  <div className="flex items-center justify-between">
+                    {/* Photo attachment icon button */}
+                    <label className="flex items-center gap-2 cursor-pointer hover:bg-white/5 px-3 py-2 rounded-lg transition-colors text-purple-300/70">
+                      <span className="text-xl">🖼️</span>
+                      <span className="text-sm font-semibold">Ảnh/Video</span>
+                      <input 
+                        id="file-upload"
+                        type="file" 
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                    </label>
+
+                    <button
+                      type="submit"
+                      disabled={isPosting || !newContent.trim()}
+                      className="px-8 py-2 rounded-lg text-sm shadow-sm transition-all btn-anime"
+                    >
+                      {isPosting ? 'Đang đăng...' : '✨ Đăng bài'}
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
           </div>
 
           {/* Posts Feed container */}

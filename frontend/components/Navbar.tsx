@@ -226,7 +226,7 @@ export default function Navbar() {
 
             {/* Notifications Dropdown */}
             {showNotifDropdown && (
-              <div className="absolute right-0 mt-2 w-96 glass-card rounded-xl py-2 z-50 animate-slide-up max-h-[480px] overflow-hidden flex flex-col">
+              <div className="absolute right-0 mt-2 w-96 bg-[#1A1528] border border-purple-500/20 shadow-2xl rounded-xl py-2 z-50 animate-slide-up max-h-[480px] overflow-hidden flex flex-col">
                 <div className="flex items-center justify-between px-4 py-2 border-b border-purple-500/10">
                   <h3 className="font-bold text-purple-100 text-[15px]">🔔 Thông báo</h3>
                   {unreadCount > 0 && (
@@ -302,7 +302,7 @@ export default function Navbar() {
 
             {/* User Dropdown Menu */}
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-72 glass-card rounded-xl py-3 z-50 animate-slide-up">
+              <div className="absolute right-0 mt-2 w-72 bg-[#1A1528] border border-purple-500/20 shadow-2xl rounded-xl py-3 z-50 animate-slide-up">
                 <Link 
                   href="/profile" 
                   onClick={() => setShowDropdown(false)}

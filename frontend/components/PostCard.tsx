@@ -4,6 +4,7 @@
 import { useState, useEffect, useRef } from 'react';
 import api from '@/lib/axios';
 import Link from 'next/link';
+import toast from 'react-hot-toast';
 
 interface PostProps {
   post: any;
@@ -66,11 +67,11 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
       });
       setShowShareModal(false);
       setShareContent('');
-      alert("Đã chia sẻ bài viết thành công!");
+      toast.success("Đã chia sẻ bài viết thành công!");
       if (onPostUpdated) onPostUpdated();
     } catch (err: any) {
       console.error("Lỗi khi chia sẻ:", err);
-      alert(err.response?.data?.detail || "Chia sẻ thất bại.");
+      toast.error(err.response?.data?.detail || "Chia sẻ thất bại.");
     } finally {
       setIsSharing(false);
     }
@@ -192,7 +193,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
       if (onPostUpdated) onPostUpdated();
     } catch (error) {
       console.error("Lỗi khi gửi bình luận:", error);
-      alert("Không thể gửi bình luận lúc này!");
+      toast.error("Không thể gửi bình luận lúc này!");
     } finally {
       setIsSubmitting(false);
     }
@@ -202,7 +203,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
     if (!confirm("Bạn có chắc chắn muốn xóa bài viết này không?")) return;
     try {
       await api.delete(`/posts/${post.id}`);
-      alert("Xóa bài viết thành công!");
+      toast.success("Xóa bài viết thành công!");
       if (onPostDeleted) {
         onPostDeleted();
       } else {
@@ -210,7 +211,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
       }
     } catch (err: any) {
       console.error("Lỗi xóa bài viết:", err);
-      alert(err.response?.data?.detail || "Xóa bài viết thất bại.");
+      toast.error(err.response?.data?.detail || "Xóa bài viết thất bại.");
     }
   };
 
@@ -224,7 +225,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
         content: editContent
       });
       setIsEditing(false);
-      alert("Cập nhật bài viết thành công!");
+      toast.success("Cập nhật bài viết thành công!");
       if (onPostUpdated) {
         onPostUpdated();
       } else {
@@ -232,7 +233,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
       }
     } catch (err: any) {
       console.error("Lỗi sửa bài viết:", err);
-      alert(err.response?.data?.detail || "Cập nhật thất bại.");
+      toast.error(err.response?.data?.detail || "Cập nhật thất bại.");
     } finally {
       setIsSavingEdit(false);
     }
@@ -432,13 +433,15 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
           <span>Bình luận</span>
         </button>
 
-        <button 
-          onClick={() => setShowShareModal(true)}
-          className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-semibold text-sm transition-all focus:outline-none text-purple-300/60 hover:bg-white/5 hover:text-purple-200"
-        >
-          <span className="text-lg">↪️</span>
-          <span>Chia sẻ</span>
-        </button>
+        {!isOwner && (
+          <button 
+            onClick={() => setShowShareModal(true)}
+            className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-semibold text-sm transition-all focus:outline-none text-purple-300/60 hover:bg-white/5 hover:text-purple-200"
+          >
+            <span className="text-lg">↪️</span>
+            <span>Chia sẻ</span>
+          </button>
+        )}
       </div>
 
       {/* Comments section */}
@@ -495,58 +498,110 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
             <div className="text-center text-xs text-purple-400/40 py-1.5">Chưa có bình luận nào. Hãy là người đầu tiên bình luận!</div>
           ) : (
             <div className="space-y-3.5 max-h-[400px] overflow-y-auto pr-1">
-              {comments.map((comment, idx) => (
-                <div 
-                  key={comment.id || idx} 
-                  className={`flex gap-2.5 items-start ${comment.parent_id ? 'ml-10 mt-1' : ''}`}
-                >
-                  <Link href={`/profile/${comment.userId || comment.owner?.id}`} className="flex-shrink-0">
-                    {comment.owner?.avatar_url ? (
-                      <img 
-                        src={comment.owner.avatar_url} 
-                        alt={comment.owner.username} 
-                        className="w-8 h-8 rounded-full object-cover border border-purple-500/20 shadow-sm"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 bg-purple-500/20 rounded-full flex items-center justify-center text-xs font-bold text-purple-300">
-                        {(comment.owner?.username || 'U').charAt(0).toUpperCase()}
-                      </div>
-                    )}
-                  </Link>
-                  <div className="flex-1">
-                    <div className="bg-white/[0.05] px-3.5 py-2 rounded-2xl rounded-tl-none inline-block max-w-[90%] shadow-sm relative group border border-purple-500/10">
-                      <Link 
-                        href={`/profile/${comment.userId || comment.owner?.id}`}
-                        className="font-bold text-[13px] text-purple-200 hover:underline block mb-0.5"
-                      >
-                         {comment.owner?.username || `User #${comment.userId}`}
-                      </Link>
-                      <span className="text-[13px] text-purple-100/70 leading-snug whitespace-pre-wrap">{comment.content}</span>
-                      
-                      {/* Comment like count floating bubble */}
-                      {comment.likes_count > 0 && (
-                        <div className="absolute -bottom-2 -right-2 bg-[#1a1030] px-1.5 py-0.5 rounded-full border border-purple-500/20 shadow-sm flex items-center gap-1 text-[10px] text-pink-300/70">
-                          <span>❤️</span>
-                          <span>{comment.likes_count}</span>
+              {comments.filter(c => !c.parent_id).map((comment) => (
+                <div key={comment.id} className="space-y-2">
+                  {/* Top-level comment */}
+                  <div className="flex gap-2.5 items-start">
+                    <Link href={`/profile/${comment.userId || comment.owner?.id}`} className="flex-shrink-0">
+                      {comment.owner?.avatar_url ? (
+                        <img 
+                          src={comment.owner.avatar_url} 
+                          alt={comment.owner.username} 
+                          className="w-8 h-8 rounded-full object-cover border border-purple-500/20 shadow-sm"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 bg-purple-500/20 rounded-full flex items-center justify-center text-xs font-bold text-purple-300">
+                          {(comment.owner?.username || 'U').charAt(0).toUpperCase()}
                         </div>
                       )}
-                    </div>
-                    <div className="text-[11px] font-semibold text-purple-400/40 ml-3.5 mt-1 flex gap-3">
-                      <button 
-                        onClick={() => handleCommentLike(comment.id, comment.is_liked)}
-                        className={`hover:underline ${comment.is_liked ? 'text-pink-400' : ''}`}
-                      >
-                        Thích
-                      </button>
-                      <button 
-                        onClick={() => handleReplyClick(comment.id, comment.owner?.username)}
-                        className="hover:underline"
-                      >
-                        Phản hồi
-                      </button>
-                      <span className="font-normal">Vừa xong</span>
+                    </Link>
+                    <div className="flex-1">
+                      <div className="bg-white/[0.05] px-3.5 py-2 rounded-2xl rounded-tl-none inline-block max-w-[90%] shadow-sm relative group border border-purple-500/10">
+                        <Link 
+                          href={`/profile/${comment.userId || comment.owner?.id}`}
+                          className="font-bold text-[13px] text-purple-200 hover:underline block mb-0.5"
+                        >
+                           {comment.owner?.username || `User #${comment.userId}`}
+                        </Link>
+                        <span className="text-[13px] text-purple-100/70 leading-snug whitespace-pre-wrap">{comment.content}</span>
+                        
+                        {/* Comment like count floating bubble */}
+                        {comment.likes_count > 0 && (
+                          <div className="absolute -bottom-2 -right-2 bg-[#1a1030] px-1.5 py-0.5 rounded-full border border-purple-500/20 shadow-sm flex items-center gap-1 text-[10px] text-pink-300/70">
+                            <span>❤️</span>
+                            <span>{comment.likes_count}</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="text-[11px] font-semibold text-purple-400/40 ml-3.5 mt-1 flex gap-3">
+                        <button 
+                          onClick={() => handleCommentLike(comment.id, comment.is_liked)}
+                          className={`hover:underline ${comment.is_liked ? 'text-pink-400' : ''}`}
+                        >
+                          Thích
+                        </button>
+                        <button 
+                          onClick={() => handleReplyClick(comment.id, comment.owner?.username)}
+                          className="hover:underline"
+                        >
+                          Phản hồi
+                        </button>
+                        <span className="font-normal">Vừa xong</span>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Replies */}
+                  {comments.filter(c => c.parent_id === comment.id).map((reply) => (
+                    <div key={reply.id} className="flex gap-2.5 items-start ml-10 mt-2">
+                      <Link href={`/profile/${reply.userId || reply.owner?.id}`} className="flex-shrink-0">
+                        {reply.owner?.avatar_url ? (
+                          <img 
+                            src={reply.owner.avatar_url} 
+                            alt={reply.owner.username} 
+                            className="w-7 h-7 rounded-full object-cover border border-purple-500/20 shadow-sm"
+                          />
+                        ) : (
+                          <div className="w-7 h-7 bg-purple-500/20 rounded-full flex items-center justify-center text-[10px] font-bold text-purple-300">
+                            {(reply.owner?.username || 'U').charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </Link>
+                      <div className="flex-1">
+                        <div className="bg-white/[0.05] px-3 py-1.5 rounded-2xl rounded-tl-none inline-block max-w-[90%] shadow-sm relative group border border-purple-500/10">
+                          <Link 
+                            href={`/profile/${reply.userId || reply.owner?.id}`}
+                            className="font-bold text-[12px] text-purple-200 hover:underline block mb-0.5"
+                          >
+                             {reply.owner?.username || `User #${reply.userId}`}
+                          </Link>
+                          <span className="text-[12px] text-purple-100/70 leading-snug whitespace-pre-wrap">{reply.content}</span>
+                          
+                          {reply.likes_count > 0 && (
+                            <div className="absolute -bottom-2 -right-2 bg-[#1a1030] px-1.5 py-0.5 rounded-full border border-purple-500/20 shadow-sm flex items-center gap-1 text-[9px] text-pink-300/70">
+                              <span>❤️</span>
+                              <span>{reply.likes_count}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-[10px] font-semibold text-purple-400/40 ml-3.5 mt-1 flex gap-3">
+                          <button 
+                            onClick={() => handleCommentLike(reply.id, reply.is_liked)}
+                            className={`hover:underline ${reply.is_liked ? 'text-pink-400' : ''}`}
+                          >
+                            Thích
+                          </button>
+                          <button 
+                            onClick={() => handleReplyClick(comment.id, reply.owner?.username)}
+                            className="hover:underline"
+                          >
+                            Phản hồi
+                          </button>
+                          <span className="font-normal">Vừa xong</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ))}
             </div>

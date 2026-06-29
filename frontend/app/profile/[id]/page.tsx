@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import api from '@/lib/axios';
 import PostCard from '@/components/PostCard';
+import toast from 'react-hot-toast';
 
 export default function ProfilePage() {
   const { id } = useParams();
@@ -71,15 +72,15 @@ export default function ProfilePage() {
   };
 
   const handleAddFriend = async () => {
-    try { await api.post(`/friends/request/${id}`); alert(`Đã gửi lời mời kết bạn!`); }
-    catch (e: any) { alert(e.response?.data?.detail || "Lỗi"); }
+    try { await api.post(`/friends/request/${id}`); toast.success(`Đã gửi lời mời kết bạn!`); }
+    catch (e: any) { toast.error(e.response?.data?.detail || "Lỗi"); }
   };
 
   const handleSaveBio = async () => {
     if (isSavingBio) return;
     setIsSavingBio(true);
-    try { const r = await api.put('/users/me', { bio: newBio }); setProfileData(r.data); setIsEditingBio(false); alert("Cập nhật thành công!"); }
-    catch (e: any) { alert(e.response?.data?.detail || "Lỗi"); }
+    try { const r = await api.put('/users/me', { bio: newBio }); setProfileData(r.data); setIsEditingBio(false); toast.success("Cập nhật thành công!"); }
+    catch (e: any) { toast.error(e.response?.data?.detail || "Lỗi"); }
     finally { setIsSavingBio(false); }
   };
 
@@ -91,9 +92,9 @@ export default function ProfilePage() {
       const ur = await api.post("/upload", fd, { headers: { "Content-Type": "multipart/form-data" } });
       const body = type === 'avatar' ? { avatar_url: ur.data.url } : { cover_url: ur.data.url };
       const r = await api.put('/users/me', body);
-      setProfileData(r.data); alert("Cập nhật thành công!");
+      setProfileData(r.data); toast.success("Cập nhật thành công!");
       if (type === 'avatar') window.location.reload();
-    } catch { alert("Tải lên thất bại!"); }
+    } catch { toast.error("Tải lên thất bại!"); }
     finally { if (type === 'avatar') setIsUploadingAvatar(false); else setIsUploadingCover(false); }
   };
 

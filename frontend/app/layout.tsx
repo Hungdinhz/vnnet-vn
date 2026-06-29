@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
+import { Toaster } from 'react-hot-toast';
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -23,7 +24,19 @@ export default function RootLayout({
       lang="vi"
       className={`${outfit.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-[#0F0B1E] text-[#E8E0F0]">{children}</body>
+      <body className="min-h-full flex flex-col bg-[#0F0B1E] text-[#E8E0F0]">
+        {children}
+        <Toaster 
+          position="bottom-center"
+          toastOptions={{
+            style: {
+              background: '#1a1030',
+              color: '#F0E6FF',
+              border: '1px solid rgba(168, 85, 247, 0.2)',
+            },
+          }}
+        />
+      </body>
     </html>
   );
 }

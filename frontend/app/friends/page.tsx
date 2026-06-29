@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
+import toast from 'react-hot-toast';
 import api from '@/lib/axios';
 
 function FriendsContent() {
@@ -113,23 +114,23 @@ function FriendsContent() {
   const handleAddFriend = async (friendId: number) => {
     try {
       await api.post(`/friends/request/${friendId}`);
-      alert('Đã gửi lời mời kết bạn thành công!');
+      toast.success('Đã gửi lời mời kết bạn thành công!');
       setRequestedUserIds(prev => new Set(prev).add(friendId));
     } catch (error: any) {
       console.error('Lỗi kết bạn:', error);
-      alert(error.response?.data?.detail || 'Không thể gửi lời mời kết bạn.');
+      toast.error(error.response?.data?.detail || 'Không thể gửi lời mời kết bạn.');
     }
   };
 
   const handleAccept = async (requestId: number) => {
     try {
       await api.post(`/friends/accept/${requestId}`);
-      alert('Đã chấp nhận lời mời kết bạn!');
+      toast.success('Đã chấp nhận lời mời kết bạn!');
       fetchPendingRequests();
       fetchFriendsList();
     } catch (error: any) {
       console.error('Lỗi chấp nhận lời mời:', error);
-      alert(error.response?.data?.detail || 'Không thể chấp nhận lời mời.');
+      toast.error(error.response?.data?.detail || 'Không thể chấp nhận lời mời.');
     }
   };
 
@@ -280,7 +281,7 @@ function FriendsContent() {
                         Chấp nhận
                       </button>
                       <button
-                        onClick={() => alert('Từ chối lời mời này')}
+                        onClick={() => toast.success('Đã từ chối lời mời này')}
                         className="px-5 py-2 bg-white/5 hover:bg-white/10 text-purple-300/70 rounded-lg font-semibold text-xs transition-colors border border-purple-500/10"
                       >
                         Xóa
