@@ -46,6 +46,13 @@ public class Post {
     @JoinColumn(name = "shared_post_id")
     private Post sharedPost;
 
+    @Column(name = "group_id", insertable = false, updatable = false)
+    private Long groupId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "group_id")
+    private Group group;
+
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Like> likes = new ArrayList<>();

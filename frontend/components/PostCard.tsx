@@ -260,10 +260,20 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
           )}
           
           <div>
-            <div className="font-bold text-foreground group-hover:text-accent-purple transition-colors text-[15px] flex items-center gap-1.5">
-              {post.owner?.username || `User #${post.owner_id}`}
+            <div className="font-bold text-foreground group-hover:text-accent-purple transition-colors text-[15px] flex items-center gap-1.5 flex-wrap">
+              <Link href={`/profile/${post.owner_id}`} className="hover:underline">
+                {post.owner?.username || `User #${post.owner_id}`}
+              </Link>
               {isOwner && (
                 <span className="text-[10px] bg-purple-500/20 text-accent-purple font-semibold px-2 py-0.5 rounded-full border border-purple-500/30">Bạn</span>
+              )}
+              {post.group_id && (
+                <>
+                  <span className="text-muted/60 text-xs mx-0.5">▶</span>
+                  <Link href={`/groups/${post.group_id}`} className="hover:underline text-accent-purple">
+                    {post.group_name || `Nhóm #${post.group_id}`}
+                  </Link>
+                </>
               )}
             </div>
             <div className="text-xs text-muted/50 flex items-center gap-1">

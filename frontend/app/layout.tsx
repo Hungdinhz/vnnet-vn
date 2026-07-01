@@ -24,6 +24,7 @@ export default function RootLayout({
     <html
       lang="vi"
       className={`${outfit.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-300">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>

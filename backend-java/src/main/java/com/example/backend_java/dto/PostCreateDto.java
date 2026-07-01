@@ -18,4 +18,7 @@ public class PostCreateDto {
 
     @JsonProperty("shared_post_id")
     private Long sharedPostId;
+
+    @JsonProperty("group_id")
+    private Long groupId;
 }

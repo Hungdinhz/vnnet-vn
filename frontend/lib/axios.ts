@@ -31,4 +31,23 @@ api.interceptors.request.use(
   }
 );
 
+// Interceptor cho response: Xử lý lỗi 401/403 (Token hết hạn/Không hợp lệ)
+api.interceptors.response.use(
+  (response) => {
+    return response;
+  },
+  (error) => {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      if (typeof window !== 'undefined') {
+        // Chỉ logout nếu đang ở trang không phải trang login/register
+        if (!window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default api;

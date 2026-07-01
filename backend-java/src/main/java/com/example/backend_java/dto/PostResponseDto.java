@@ -43,6 +43,12 @@ public class PostResponseDto {
     @JsonProperty("shared_post")
     private PostResponseDto sharedPost;
 
+    @JsonProperty("group_id")
+    private Long groupId;
+
+    @JsonProperty("group_name")
+    private String groupName;
+
     @Data
     @Builder
     @NoArgsConstructor @AllArgsConstructor

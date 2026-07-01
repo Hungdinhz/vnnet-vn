@@ -6,6 +6,7 @@ import com.example.backend_java.dto.PostUpdateDto;
 import com.example.backend_java.entity.Post;
 import com.example.backend_java.entity.User;
 import com.example.backend_java.repository.CommentRepository;
+import com.example.backend_java.repository.GroupRepository;
 import com.example.backend_java.repository.LikeRepository;
 import com.example.backend_java.repository.PostRepository;
 import com.example.backend_java.repository.UserRepository;
@@ -28,16 +29,19 @@ public class PostService {
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final FriendshipRepository friendshipRepository;
+    private final GroupRepository groupRepository;
 
     public PostService(PostRepository postRepository, LikeRepository likeRepository,
                        CommentRepository commentRepository, UserRepository userRepository,
-                       JwtTokenProvider jwtTokenProvider, FriendshipRepository friendshipRepository) {
+                       JwtTokenProvider jwtTokenProvider, FriendshipRepository friendshipRepository,
+                       GroupRepository groupRepository) {
         this.postRepository = postRepository;
         this.likeRepository = likeRepository;
         this.commentRepository = commentRepository;
         this.userRepository = userRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.friendshipRepository = friendshipRepository;
+        this.groupRepository = groupRepository;
     }
 
     // Tạo bài viết mới (tương đương crud_post.create_post)
@@ -48,6 +52,12 @@ public class PostService {
                     .orElseThrow(() -> new ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy bài viết để chia sẻ"));
         }
 
+        com.example.backend_java.entity.Group group = null;
+        if (dto.getGroupId() != null) {
+            group = groupRepository.findById(dto.getGroupId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại"));
+        }
+
         Post post = Post.builder()
                 .title(dto.getTitle())
                 .content(dto.getContent())
@@ -55,6 +65,7 @@ public class PostService {
                 .owner(currentUser)
                 .sharedPostId(dto.getSharedPostId())
                 .sharedPost(sharedPost)
+                .group(group)
                 .build();
 
         post = postRepository.save(post);
@@ -188,7 +199,7 @@ public class PostService {
     }
 
     // Chuyển đổi Post entity → PostResponseDto
-    private PostResponseDto toResponseDto(Post post, Long currentUserId) {
+    public PostResponseDto toResponseDto(Post post, Long currentUserId) {
         long likesCount = likeRepository.countByPostId(post.getId());
         long commentsCount = commentRepository.countByPostId(post.getId());
         boolean isLiked = currentUserId != null && likeRepository.existsByUserIdAndPostId(currentUserId, post.getId());
@@ -230,6 +241,8 @@ public class PostService {
                 .commentsCount((int) commentsCount)
                 .isLiked(isLiked)
                 .sharedPost(sharedPostDto)
+                .groupId(post.getGroup() != null ? post.getGroup().getId() : null)
+                .groupName(post.getGroup() != null ? post.getGroup().getName() : null)
                 .build();
     }
 }

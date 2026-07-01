@@ -43,6 +43,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/posts").permitAll()
                 .requestMatchers(HttpMethod.GET, "/posts/{id}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/posts/{id}/comments").permitAll()
+                .requestMatchers(HttpMethod.GET, "/groups").permitAll()
+                .requestMatchers(HttpMethod.GET, "/groups/{id}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/groups/{id}/posts").permitAll()
                 .requestMatchers(HttpMethod.POST, "/upload").permitAll()
                 .requestMatchers("/").permitAll()
                 // --- PROTECTED endpoints (cần token) ---
