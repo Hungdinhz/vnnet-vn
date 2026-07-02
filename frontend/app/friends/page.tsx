@@ -19,7 +19,9 @@ function FriendsContent() {
   const [suggestedUsers, setSuggestedUsers] = useState<any[]>([]);
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [friends, setFriends] = useState<any[]>([]);
+  const [friendshipMap, setFriendshipMap] = useState<Record<number, number>>({}); // userId -> friendshipId
   const [isLoading, setIsLoading] = useState(false);
+  const [confirmUnfriend, setConfirmUnfriend] = useState<number | null>(null); // userId to confirm unfriend
 
   // Read tab parameter if present
   useEffect(() => {
@@ -82,7 +84,15 @@ function FriendsContent() {
         return;
       }
 
-      const friendIds = friendships.map((f: any) => (f.user_id === me.id ? f.friend_id : f.user_id));
+      // Build friendship map: friendUserId -> friendshipId
+      const fMap: Record<number, number> = {};
+      const friendIds = friendships.map((f: any) => {
+        const friendUserId = f.user_id === me.id ? f.friend_id : f.user_id;
+        fMap[friendUserId] = f.id;
+        return friendUserId;
+      });
+      setFriendshipMap(fMap);
+
       const uniqueIds = Array.from(new Set(
         friendIds
           .map((id: any) => Number(id))
@@ -131,6 +141,36 @@ function FriendsContent() {
     } catch (error: any) {
       console.error('Lỗi chấp nhận lời mời:', error);
       toast.error(error.response?.data?.detail || 'Không thể chấp nhận lời mời.');
+    }
+  };
+
+  // Từ chối lời mời kết bạn — gọi API thực
+  const handleReject = async (requestId: number) => {
+    try {
+      await api.delete(`/friends/request/${requestId}`);
+      toast.success('Đã từ chối lời mời kết bạn');
+      setPendingRequests(prev => prev.filter(r => r.id !== requestId));
+    } catch (error: any) {
+      console.error('Lỗi từ chối lời mời:', error);
+      toast.error(error.response?.data?.detail || 'Không thể từ chối lời mời.');
+    }
+  };
+
+  // Hủy kết bạn — gọi API thực
+  const handleUnfriend = async (userId: number) => {
+    const friendshipId = friendshipMap[userId];
+    if (!friendshipId) {
+      toast.error('Không tìm thấy thông tin kết bạn');
+      return;
+    }
+    try {
+      await api.delete(`/friends/${friendshipId}`);
+      toast.success('Đã hủy kết bạn');
+      setFriends(prev => prev.filter(f => f.id !== userId));
+      setConfirmUnfriend(null);
+    } catch (error: any) {
+      console.error('Lỗi hủy kết bạn:', error);
+      toast.error(error.response?.data?.detail || 'Không thể hủy kết bạn.');
     }
   };
 
@@ -281,10 +321,10 @@ function FriendsContent() {
                         Chấp nhận
                       </button>
                       <button
-                        onClick={() => toast.success('Đã từ chối lời mời này')}
-                        className="px-5 py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 text-accent-purple/70 rounded-lg font-semibold text-xs transition-colors border border-purple-500/10"
+                        onClick={() => handleReject(r.id)}
+                        className="px-5 py-2 bg-black/5 dark:bg-white/5 hover:bg-rose-500/10 text-accent-purple/70 hover:text-rose-400 rounded-lg font-semibold text-xs transition-colors border border-purple-500/10"
                       >
-                        Xóa
+                        Từ chối
                       </button>
                     </div>
                   </div>
@@ -327,12 +367,39 @@ function FriendsContent() {
                         <p className="text-xs text-muted/40 truncate max-w-[180px] mt-0.5 mb-4">{user.email}</p>
                       </div>
 
-                      <button 
-                        onClick={() => router.push(`/profile/${user.id}`)}
-                        className="w-full py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 text-secondary font-bold rounded-lg text-xs transition-colors border border-purple-500/10"
-                      >
-                        Xem trang cá nhân
-                      </button>
+                      <div className="w-full space-y-2">
+                        <button 
+                          onClick={() => router.push(`/profile/${user.id}`)}
+                          className="w-full py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 text-secondary font-bold rounded-lg text-xs transition-colors border border-purple-500/10"
+                        >
+                          Xem trang cá nhân
+                        </button>
+                        
+                        {/* Unfriend button with confirmation */}
+                        {confirmUnfriend === user.id ? (
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleUnfriend(user.id)}
+                              className="flex-1 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold rounded-lg text-xs transition-colors border border-rose-500/20"
+                            >
+                              ✓ Xác nhận
+                            </button>
+                            <button
+                              onClick={() => setConfirmUnfriend(null)}
+                              className="flex-1 py-2 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-xs transition-colors border border-purple-500/10"
+                            >
+                              Hủy
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => setConfirmUnfriend(user.id)}
+                            className="w-full py-2 hover:bg-rose-500/10 text-muted/40 hover:text-rose-400 font-semibold rounded-lg text-xs transition-colors border border-transparent hover:border-rose-500/20"
+                          >
+                            Hủy kết bạn
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))
@@ -341,6 +408,7 @@ function FriendsContent() {
           )}
         </main>
       </div>
+
     </div>
   );
 }

@@ -47,6 +47,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/groups/{id}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/groups/{id}/posts").permitAll()
                 .requestMatchers(HttpMethod.POST, "/upload").permitAll()
+                .requestMatchers(HttpMethod.GET, "/search").permitAll()
                 .requestMatchers("/").permitAll()
                 // --- PROTECTED endpoints (cần token) ---
                 .anyRequest().authenticated()

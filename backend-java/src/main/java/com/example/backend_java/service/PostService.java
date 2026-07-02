@@ -1,5 +1,6 @@
 package com.example.backend_java.service;
 
+import com.example.backend_java.dto.PagedResponseDto;
 import com.example.backend_java.dto.PostCreateDto;
 import com.example.backend_java.dto.PostResponseDto;
 import com.example.backend_java.dto.PostUpdateDto;
@@ -74,7 +75,7 @@ public class PostService {
 
     // Lấy danh sách bài viết (tương đương crud_post.get_posts)
     // currentUserId có thể null nếu chưa đăng nhập
-    public List<PostResponseDto> getPosts(int skip, int limit, Long currentUserId) {
+    public PagedResponseDto<PostResponseDto> getPosts(int page, int size, Long currentUserId) {
         List<Post> posts = postRepository.findAllByOrderByIdDesc();
 
         // Convert all to DTOs first so we can sort them using DTO metadata (likesCount, commentsCount)
@@ -119,10 +120,21 @@ public class PostService {
             });
         }
 
-        // Áp dụng phân trang thủ công (skip + limit)
-        int fromIndex = Math.min(skip, dtos.size());
-        int toIndex = Math.min(skip + limit, dtos.size());
-        return dtos.subList(fromIndex, toIndex);
+        // Áp dụng phân trang
+        int totalElements = dtos.size();
+        int totalPages = (int) Math.ceil((double) totalElements / size);
+        int fromIndex = Math.min(page * size, totalElements);
+        int toIndex = Math.min(fromIndex + size, totalElements);
+        List<PostResponseDto> pageContent = dtos.subList(fromIndex, toIndex);
+
+        return PagedResponseDto.<PostResponseDto>builder()
+                .content(pageContent)
+                .page(page)
+                .size(size)
+                .totalElements(totalElements)
+                .totalPages(totalPages)
+                .hasNext(page < totalPages - 1)
+                .build();
     }
 
     // Lấy chi tiết bài viết theo ID

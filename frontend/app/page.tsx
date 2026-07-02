@@ -1,7 +1,7 @@
 // app/page.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
@@ -18,6 +18,13 @@ export default function Home() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [suggestedUsers, setSuggestedUsers] = useState<any[]>([]);
 
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [hasNext, setHasNext] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
   const [file, setFile] = useState<File | null>(null); 
@@ -25,14 +32,28 @@ export default function Home() {
   const [isPosting, setIsPosting] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (pageNum: number = 0, reset: boolean = false) => {
+    if (reset) {
+      setIsLoading(true);
+    } else {
+      setIsLoadingMore(true);
+    }
     try {
-      const response = await api.get('/posts'); 
-      setPosts(response.data); 
+      const response = await api.get(`/posts?page=${pageNum}&size=10`);
+      const data = response.data;
+      
+      if (reset) {
+        setPosts(data.content || []);
+      } else {
+        setPosts(prev => [...prev, ...(data.content || [])]);
+      }
+      setHasNext(data.has_next || false);
+      setPage(pageNum);
     } catch (error) {
       console.error("Lỗi khi tải bài viết:", error);
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   };
 
@@ -64,7 +85,7 @@ export default function Home() {
     };
 
     fetchMe();
-    fetchPosts();
+    fetchPosts(0, true);
   }, [router]);
 
   useEffect(() => {
@@ -72,6 +93,20 @@ export default function Home() {
       fetchSuggestedUsers();
     }
   }, [currentUser]);
+
+  // Infinite scroll observer
+  const lastPostCallback = useCallback((node: HTMLDivElement | null) => {
+    if (isLoadingMore) return;
+    if (observerRef.current) observerRef.current.disconnect();
+
+    observerRef.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasNext && !isLoadingMore) {
+        fetchPosts(page + 1, false);
+      }
+    }, { threshold: 0.1 });
+
+    if (node) observerRef.current.observe(node);
+  }, [isLoadingMore, hasNext, page]);
 
   // Handle image preview
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -125,7 +160,7 @@ export default function Home() {
       if (fileInput) fileInput.value = '';
       
       toast.success("Đăng bài viết thành công!");
-      fetchPosts(); 
+      fetchPosts(0, true); 
     } catch (error) {
       console.error("Lỗi khi đăng bài:", error);
       toast.error("Đăng bài thất bại, vui lòng thử lại!");
@@ -298,14 +333,40 @@ export default function Home() {
                   <p className="text-sm text-muted/50 mt-1">Hãy bắt đầu chia sẻ câu chuyện đầu tiên! ✨</p>
                 </div>
               ) : (
-                posts.map((post, index) => (
-                  <PostCard 
-                    key={post.id || index} 
-                    post={post} 
-                    onPostDeleted={fetchPosts}
-                    onPostUpdated={fetchPosts}
-                  /> 
-                ))
+                <>
+                  {posts.map((post, index) => (
+                    <PostCard 
+                      key={post.id || index} 
+                      post={post} 
+                      onPostDeleted={() => fetchPosts(0, true)}
+                      onPostUpdated={() => fetchPosts(0, true)}
+                    /> 
+                  ))}
+
+                  {/* Infinite scroll trigger */}
+                  {hasNext && (
+                    <div ref={lastPostCallback} className="flex justify-center items-center py-6">
+                      {isLoadingMore ? (
+                        <div className="flex items-center gap-3 glass-card px-6 py-3 rounded-full">
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-500"></div>
+                          <span className="text-sm text-muted/50 font-medium">Đang tải thêm...</span>
+                        </div>
+                      ) : (
+                        <div className="h-4"></div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* End of feed */}
+                  {!hasNext && posts.length > 0 && (
+                    <div className="text-center py-6">
+                      <div className="glass-card inline-flex items-center gap-2 px-6 py-3 rounded-full">
+                        <span className="text-lg">✨</span>
+                        <span className="text-sm text-muted/50 font-medium">Bạn đã xem hết bài viết</span>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}

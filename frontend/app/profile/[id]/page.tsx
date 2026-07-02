@@ -18,6 +18,8 @@ export default function ProfilePage() {
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [isFriend, setIsFriend] = useState(false);
+  const [friendshipId, setFriendshipId] = useState<number | null>(null);
+  const [showUnfriendConfirm, setShowUnfriendConfirm] = useState(false);
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [newBio, setNewBio] = useState('');
   const [isSavingBio, setIsSavingBio] = useState(false);
@@ -54,11 +56,14 @@ export default function ProfilePage() {
         const fRes = await api.get('/friends/list');
         const friendships = fRes.data || [];
         const targetId = Number(id);
-        const isMatched = friendships.some((f: any) => 
+        const matchedFriendship = friendships.find((f: any) => 
            (f.user_id === myId && f.friend_id === targetId) || 
            (f.friend_id === myId && f.user_id === targetId)
         );
-        setIsFriend(isMatched);
+        setIsFriend(!!matchedFriendship);
+        if (matchedFriendship) {
+          setFriendshipId(matchedFriendship.id);
+        }
       } catch (e) { console.error(e); }
     };
     fetchSelf(); fetchProfile(); fetchUserPosts(); fetchActivity();
@@ -74,6 +79,19 @@ export default function ProfilePage() {
   const handleAddFriend = async () => {
     try { await api.post(`/friends/request/${id}`); toast.success(`Đã gửi lời mời kết bạn!`); }
     catch (e: any) { toast.error(e.response?.data?.detail || "Lỗi"); }
+  };
+
+  const handleUnfriend = async () => {
+    if (!friendshipId) return;
+    try {
+      await api.delete(`/friends/${friendshipId}`);
+      toast.success('Đã hủy kết bạn');
+      setIsFriend(false);
+      setFriendshipId(null);
+      setShowUnfriendConfirm(false);
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || 'Không thể hủy kết bạn');
+    }
   };
 
   const handleSaveBio = async () => {
@@ -153,8 +171,17 @@ export default function ProfilePage() {
                         </button>
                       ) : isFriend ? (
                         <div className="flex items-center gap-2">
-                          <button disabled className="flex items-center gap-2 px-6 py-2.5 bg-black/10 dark:bg-white/10 text-secondary font-bold rounded-lg text-sm border border-purple-500/20 shadow-sm cursor-default">✅ Bạn bè</button>
-                          <button onClick={() => router.push(`/messages?userId=${id}`)} className="flex items-center gap-2 px-6 py-2.5 btn-anime rounded-lg text-sm shadow-md">💬 Nhắn tin</button>
+                          {showUnfriendConfirm ? (
+                            <>
+                              <button onClick={handleUnfriend} className="flex items-center gap-2 px-5 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold rounded-lg text-sm border border-rose-500/20 transition-colors">✓ Xác nhận hủy</button>
+                              <button onClick={() => setShowUnfriendConfirm(false)} className="flex items-center gap-2 px-5 py-2.5 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-sm border border-purple-500/10 transition-colors">Hủy</button>
+                            </>
+                          ) : (
+                            <>
+                              <button onClick={() => setShowUnfriendConfirm(true)} className="flex items-center gap-2 px-6 py-2.5 bg-black/5 dark:bg-white/5 hover:bg-rose-500/10 text-secondary hover:text-rose-400 font-bold rounded-lg text-sm border border-purple-500/20 hover:border-rose-500/20 shadow-sm transition-colors">✅ Bạn bè</button>
+                              <button onClick={() => router.push(`/messages?userId=${id}`)} className="flex items-center gap-2 px-6 py-2.5 btn-anime rounded-lg text-sm shadow-md">💬 Nhắn tin</button>
+                            </>
+                          )}
                         </div>
                       ) : (
                         <button onClick={handleAddFriend} className="flex items-center gap-2 px-6 py-2.5 btn-anime rounded-lg text-sm shadow-md">👋 Thêm bạn bè</button>

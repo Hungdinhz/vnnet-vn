@@ -12,6 +12,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/posts")
@@ -37,14 +38,14 @@ public class PostController {
         return ResponseEntity.ok(postService.createPost(dto, currentUser));
     }
 
-    // GET /posts - Danh sách bài viết (optional token cho is_liked)
+    // GET /posts - Danh sách bài viết (optional token cho is_liked, hỗ trợ phân trang)
     @GetMapping("")
-    public ResponseEntity<List<PostResponseDto>> getPosts(
-            @RequestParam(defaultValue = "0") int skip,
-            @RequestParam(defaultValue = "100") int limit,
+    public ResponseEntity<PagedResponseDto<PostResponseDto>> getPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
             @RequestHeader(value = "Authorization", required = false) String authHeader) {
         Long currentUserId = postService.resolveCurrentUserId(authHeader);
-        return ResponseEntity.ok(postService.getPosts(skip, limit, currentUserId));
+        return ResponseEntity.ok(postService.getPosts(page, size, currentUserId));
     }
 
     // GET /posts/{post_id} - Chi tiết bài viết

@@ -116,6 +116,36 @@ public class FriendService {
                 .collect(Collectors.toList());
     }
 
+    // Hủy kết bạn — cả 2 người trong friendship đều có quyền
+    public void unfriend(Long friendshipId, Long currentUserId) {
+        Friendship friendship = friendshipRepository.findById(friendshipId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy quan hệ bạn bè"));
+
+        // Kiểm tra user có quyền hủy kết bạn
+        if (!friendship.getUserId().equals(currentUserId) && !friendship.getFriendId().equals(currentUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền thực hiện hành động này");
+        }
+
+        friendshipRepository.delete(friendship);
+    }
+
+    // Từ chối lời mời kết bạn — chỉ người nhận mới có quyền
+    public void rejectFriendRequest(Long requestId, Long currentUserId) {
+        Friendship friendship = friendshipRepository.findById(requestId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy lời mời kết bạn"));
+
+        // Chỉ người nhận mới có quyền từ chối
+        if (!friendship.getFriendId().equals(currentUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền từ chối lời mời này");
+        }
+
+        if (!"pending".equals(friendship.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Lời mời này đã được xử lý");
+        }
+
+        friendshipRepository.delete(friendship);
+    }
+
     private FriendshipResponseDto toResponseDto(Friendship friendship) {
         return FriendshipResponseDto.builder()
                 .id(friendship.getId())

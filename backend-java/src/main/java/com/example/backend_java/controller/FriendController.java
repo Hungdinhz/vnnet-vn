@@ -58,4 +58,24 @@ public class FriendController {
         User currentUser = (User) authentication.getPrincipal();
         return ResponseEntity.ok(friendService.getSuggestions(currentUser.getId()));
     }
+
+    // DELETE /friends/{friendshipId} - Hủy kết bạn
+    @DeleteMapping("/{friendshipId}")
+    public ResponseEntity<com.example.backend_java.dto.MessageDto> unfriend(
+            @PathVariable Long friendshipId,
+            Authentication authentication) {
+        User currentUser = (User) authentication.getPrincipal();
+        friendService.unfriend(friendshipId, currentUser.getId());
+        return ResponseEntity.ok(new com.example.backend_java.dto.MessageDto("Đã hủy kết bạn thành công"));
+    }
+
+    // DELETE /friends/request/{requestId} - Từ chối lời mời kết bạn
+    @DeleteMapping("/request/{requestId}")
+    public ResponseEntity<com.example.backend_java.dto.MessageDto> rejectRequest(
+            @PathVariable Long requestId,
+            Authentication authentication) {
+        User currentUser = (User) authentication.getPrincipal();
+        friendService.rejectFriendRequest(requestId, currentUser.getId());
+        return ResponseEntity.ok(new com.example.backend_java.dto.MessageDto("Đã từ chối lời mời kết bạn"));
+    }
 }
