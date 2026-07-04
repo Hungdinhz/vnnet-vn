@@ -22,16 +22,12 @@ public class CommentLike {
     @Column(name = "comment_id", insertable = false, updatable = false)
     private Long commentId;
 
-    @Column(name = "user_id", insertable = false, updatable = false)
+    @Column(name = "user_id", nullable = false)
     private Long userId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "comment_id", nullable = false)
     private Comment comment;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
 
     @CreationTimestamp
     @Column(name = "created_at")

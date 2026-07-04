@@ -46,6 +46,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/groups").permitAll()
                 .requestMatchers(HttpMethod.GET, "/groups/{id}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/groups/{id}/posts").permitAll()
+                .requestMatchers(HttpMethod.GET, "/groups/{id}/members").permitAll()
                 .requestMatchers(HttpMethod.POST, "/upload").permitAll()
                 .requestMatchers(HttpMethod.GET, "/search").permitAll()
                 .requestMatchers("/").permitAll()

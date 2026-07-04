@@ -104,6 +104,7 @@ public class InteractionService {
     }
 
     // Lấy danh sách bình luận theo post
+    @Transactional(readOnly = true)
     public List<CommentResponseDto> getCommentsByPost(Long postId, Long currentUserId) {
         return commentRepository.findByPostId(postId).stream()
                 .map(comment -> {
@@ -114,7 +115,7 @@ public class InteractionService {
                     int likesCount = comment.getLikes() != null ? comment.getLikes().size() : 0;
                     boolean isLiked = false;
                     if (currentUserId != null && comment.getLikes() != null) {
-                        isLiked = comment.getLikes().stream().anyMatch(l -> l.getUserId().equals(currentUserId));
+                        isLiked = comment.getLikes().stream().anyMatch(l -> java.util.Objects.equals(l.getUserId(), currentUserId));
                     }
 
                     return CommentResponseDto.builder()

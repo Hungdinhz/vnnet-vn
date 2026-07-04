@@ -34,7 +34,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGenericException(Exception ex) {
         ex.printStackTrace();
+        String errorMsg = ex.getClass().getSimpleName() + ": " + (ex.getMessage() != null ? ex.getMessage() : "Unknown");
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("detail", "Có lỗi xảy ra từ máy chủ. Vui lòng thử lại."));
+                .body(Map.of("detail", "Có lỗi xảy ra từ máy chủ: " + errorMsg));
     }
 }

@@ -1,8 +1,6 @@
 package com.example.backend_java.service;
 
-import com.example.backend_java.dto.CreateGroupRequest;
-import com.example.backend_java.dto.GroupDTO;
-import com.example.backend_java.dto.PostResponseDto;
+import com.example.backend_java.dto.*;
 import com.example.backend_java.entity.Group;
 import com.example.backend_java.entity.GroupMember;
 import com.example.backend_java.entity.Post;
@@ -10,6 +8,7 @@ import com.example.backend_java.entity.User;
 import com.example.backend_java.repository.GroupMemberRepository;
 import com.example.backend_java.repository.GroupRepository;
 import com.example.backend_java.repository.PostRepository;
+import com.example.backend_java.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,14 +23,17 @@ public class GroupService {
     private final GroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
     private final PostRepository postRepository;
-    private final PostService postService; // For converting Post to PostResponseDto
+    private final PostService postService;
+    private final UserRepository userRepository;
 
     public GroupService(GroupRepository groupRepository, GroupMemberRepository groupMemberRepository, 
-                        PostRepository postRepository, PostService postService) {
+                        PostRepository postRepository, PostService postService,
+                        UserRepository userRepository) {
         this.groupRepository = groupRepository;
         this.groupMemberRepository = groupMemberRepository;
         this.postRepository = postRepository;
         this.postService = postService;
+        this.userRepository = userRepository;
     }
 
     @Transactional
@@ -113,13 +115,121 @@ public class GroupService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại");
         }
         
-        // Optional: Check if user is a member to view posts (for private groups)
-        // For now, groups are public
-        
         List<Post> posts = postRepository.findByGroupIdOrderByIdDesc(groupId);
         return posts.stream()
                 .map(p -> postService.toResponseDto(p, currentUserId))
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<GroupMemberDTO> getGroupMembers(Long groupId) {
+        if (!groupRepository.existsById(groupId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại");
+        }
+        
+        List<GroupMember> members = groupMemberRepository.findByGroupId(groupId);
+        return members.stream().map(m -> {
+            User u = m.getUser() != null ? m.getUser() : userRepository.findById(m.getUserId()).orElse(null);
+            return GroupMemberDTO.builder()
+                    .id(m.getId())
+                    .groupId(groupId)
+                    .userId(m.getUserId())
+                    .username(u != null ? u.getUsername() : "Unknown")
+                    .avatarUrl(u != null ? u.getAvatarUrl() : null)
+                    .bio(u != null ? u.getBio() : null)
+                    .role(m.getRole())
+                    .joinedAt(m.getJoinedAt())
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void updateMemberRole(Long groupId, Long targetUserId, String newRole, User currentUser) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại"));
+
+        GroupMember currentMember = groupMemberRepository.findByGroupIdAndUserId(groupId, currentUser.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không thuộc nhóm này"));
+
+        if (!"ADMIN".equals(currentMember.getRole()) && !currentUser.getId().equals(group.getCreatorId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ Quản trị viên mới có quyền đổi vai trò");
+        }
+
+        GroupMember targetMember = groupMemberRepository.findByGroupIdAndUserId(groupId, targetUserId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Thành viên không tồn tại trong nhóm"));
+
+        targetMember.setRole(newRole);
+        groupMemberRepository.save(targetMember);
+    }
+
+    @Transactional
+    public void removeMember(Long groupId, Long targetUserId, User currentUser) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại"));
+
+        // Creator cannot be removed
+        if (targetUserId.equals(group.getCreatorId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không thể xóa Trưởng nhóm");
+        }
+
+        GroupMember currentMember = groupMemberRepository.findByGroupIdAndUserId(groupId, currentUser.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không thuộc nhóm này"));
+
+        if (!"ADMIN".equals(currentMember.getRole()) && !currentUser.getId().equals(group.getCreatorId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ Quản trị viên mới có quyền xóa thành viên");
+        }
+
+        groupMemberRepository.deleteByGroupIdAndUserId(groupId, targetUserId);
+    }
+
+    @Transactional
+    public GroupDTO updateGroup(Long groupId, UpdateGroupRequest request, User currentUser) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại"));
+
+        GroupMember currentMember = groupMemberRepository.findByGroupIdAndUserId(groupId, currentUser.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không thuộc nhóm này"));
+
+        if (!"ADMIN".equals(currentMember.getRole()) && !currentUser.getId().equals(group.getCreatorId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ Quản trị viên mới có quyền chỉnh sửa nhóm");
+        }
+
+        if (request.getName() != null && !request.getName().isBlank()) {
+            group.setName(request.getName());
+        }
+        if (request.getDescription() != null) {
+            group.setDescription(request.getDescription());
+        }
+        if (request.getCoverUrl() != null && !request.getCoverUrl().isBlank()) {
+            group.setCoverUrl(request.getCoverUrl());
+        }
+
+        group = groupRepository.save(group);
+        return toDto(group, currentUser.getId());
+    }
+
+    @Transactional
+    public void deleteGroup(Long groupId, User currentUser) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại"));
+
+        if (!currentUser.getId().equals(group.getCreatorId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ Trưởng nhóm mới có quyền xóa nhóm");
+        }
+
+        // Delete group members
+        List<GroupMember> members = groupMemberRepository.findByGroupId(groupId);
+        groupMemberRepository.deleteAll(members);
+
+        // Disassociate or delete posts
+        List<Post> posts = postRepository.findByGroupIdOrderByIdDesc(groupId);
+        for (Post p : posts) {
+            p.setGroup(null);
+            p.setGroupId(null);
+            postRepository.save(p);
+        }
+
+        groupRepository.delete(group);
     }
 
     private GroupDTO toDto(Group group, Long currentUserId) {
@@ -128,10 +238,17 @@ public class GroupService {
         String userRole = null;
         
         for (GroupMember m : members) {
-            if (m.getUserId().equals(currentUserId)) {
+            if (currentUserId != null && m.getUserId().equals(currentUserId)) {
                 isJoined = true;
                 userRole = m.getRole();
                 break;
+            }
+        }
+
+        if (currentUserId != null && currentUserId.equals(group.getCreatorId())) {
+            isJoined = true;
+            if (userRole == null) {
+                userRole = "ADMIN";
             }
         }
         

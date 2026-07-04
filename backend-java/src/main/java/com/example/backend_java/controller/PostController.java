@@ -96,7 +96,7 @@ public class PostController {
         // Nếu là hành động LIKE (không phải hủy) thì tạo thông báo
         if ("Đã Like bài viết thành công".equals(result.getMessage())) {
             notificationService.createNotification(
-                    post.getOwner() != null ? post.getOwner().getId() : null, currentUser.getId(), "like", postId);
+                    post.getOwnerId(), currentUser.getId(), "like", postId);
         }
 
         return ResponseEntity.ok(result);
@@ -115,7 +115,7 @@ public class PostController {
 
         // Tạo thông báo cho người viết bài
         notificationService.createNotification(
-                post.getOwner() != null ? post.getOwner().getId() : null, currentUser.getId(), "comment", postId);
+                post.getOwnerId(), currentUser.getId(), "comment", postId);
 
         return ResponseEntity.ok(comment);
     }

@@ -107,4 +107,44 @@ public class GroupController {
         Long userId = getCurrentUserIdSilently(token);
         return ResponseEntity.ok(groupService.getGroupPosts(id, userId));
     }
+
+    @GetMapping("/{id}/members")
+    public ResponseEntity<List<com.example.backend_java.dto.GroupMemberDTO>> getGroupMembers(@PathVariable Long id) {
+        return ResponseEntity.ok(groupService.getGroupMembers(id));
+    }
+
+    @PutMapping("/{id}/members/{userId}/role")
+    public ResponseEntity<?> updateMemberRole(@PathVariable Long id,
+                                              @PathVariable Long userId,
+                                              @RequestBody com.example.backend_java.dto.UpdateGroupRoleRequest request,
+                                              @RequestHeader(value = "Authorization", required = false) String token) {
+        User user = getCurrentUser(token);
+        groupService.updateMemberRole(id, userId, request.getRole(), user);
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/{id}/members/{userId}")
+    public ResponseEntity<?> removeMember(@PathVariable Long id,
+                                          @PathVariable Long userId,
+                                          @RequestHeader(value = "Authorization", required = false) String token) {
+        User user = getCurrentUser(token);
+        groupService.removeMember(id, userId, user);
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<GroupDTO> updateGroup(@PathVariable Long id,
+                                                @RequestBody com.example.backend_java.dto.UpdateGroupRequest request,
+                                                @RequestHeader(value = "Authorization", required = false) String token) {
+        User user = getCurrentUser(token);
+        return ResponseEntity.ok(groupService.updateGroup(id, request, user));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteGroup(@PathVariable Long id,
+                                         @RequestHeader(value = "Authorization", required = false) String token) {
+        User user = getCurrentUser(token);
+        groupService.deleteGroup(id, user);
+        return ResponseEntity.ok().build();
+    }
 }
