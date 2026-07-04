@@ -72,6 +72,15 @@ public class UserController {
         return ResponseEntity.ok(userService.updateProfile(currentUser, dto));
     }
 
+    // PUT /users/change-password - Đổi mật khẩu (cần token)
+    @PutMapping("/change-password")
+    public ResponseEntity<com.example.backend_java.dto.MessageDto> changePassword(
+            @RequestBody com.example.backend_java.dto.ChangePasswordDto dto,
+            Authentication authentication) {
+        User currentUser = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(userService.changePassword(currentUser, dto));
+    }
+
     // GET /users/ - Danh sách tất cả user
     @GetMapping({"", "/"})
     public ResponseEntity<List<UserResponseDto>> listUsers() {

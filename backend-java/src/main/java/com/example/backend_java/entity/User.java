@@ -32,6 +32,21 @@ public class User {
     @Column(name = "cover_url")
     private String coverUrl;
 
+    @Column(name = "full_name")
+    private String fullName;
+
+    @Column(name = "location")
+    private String location;
+
+    @Column(name = "workplace")
+    private String workplace;
+
+    @Column(name = "website")
+    private String website;
+
+    @Column(name = "phone")
+    private String phone;
+
     @Column(columnDefinition = "TEXT")
     private String bio;
 

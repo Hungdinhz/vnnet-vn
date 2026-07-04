@@ -18,5 +18,13 @@ public class UserUpdateDto {
     @JsonProperty("cover_url")
     private String coverUrl;
 
+    @JsonProperty("full_name")
+    private String fullName;
+
+    private String location;
+    private String workplace;
+    private String website;
+    private String phone;
+
     private String bio;
 }

@@ -112,9 +112,43 @@ public class UserService {
         if (dto.getBio() != null) {
             user.setBio(dto.getBio());
         }
+        if (dto.getFullName() != null) {
+            user.setFullName(dto.getFullName());
+        }
+        if (dto.getLocation() != null) {
+            user.setLocation(dto.getLocation());
+        }
+        if (dto.getWorkplace() != null) {
+            user.setWorkplace(dto.getWorkplace());
+        }
+        if (dto.getWebsite() != null) {
+            user.setWebsite(dto.getWebsite());
+        }
+        if (dto.getPhone() != null) {
+            user.setPhone(dto.getPhone());
+        }
 
         user = userRepository.save(user);
         return toResponseDto(user);
+    }
+
+    // Đổi mật khẩu
+    public com.example.backend_java.dto.MessageDto changePassword(User currentUser, com.example.backend_java.dto.ChangePasswordDto dto) {
+        User user = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        if (!passwordEncoder.matches(dto.getCurrentPassword(), user.getHashedPassword())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu hiện tại không chính xác!");
+        }
+
+        if (dto.getNewPassword() == null || dto.getNewPassword().length() < 6) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu mới phải có ít nhất 6 ký tự!");
+        }
+
+        user.setHashedPassword(passwordEncoder.encode(dto.getNewPassword()));
+        userRepository.save(user);
+
+        return new com.example.backend_java.dto.MessageDto("Đổi mật khẩu thành công!");
     }
 
     // Quên mật khẩu
@@ -155,6 +189,11 @@ public class UserService {
                 .email(user.getEmail())
                 .avatarUrl(user.getAvatarUrl())
                 .coverUrl(user.getCoverUrl())
+                .fullName(user.getFullName())
+                .location(user.getLocation())
+                .workplace(user.getWorkplace())
+                .website(user.getWebsite())
+                .phone(user.getPhone())
                 .bio(user.getBio())
                 .build();
     }
