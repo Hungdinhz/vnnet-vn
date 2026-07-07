@@ -283,7 +283,7 @@ export default function SettingsPage() {
                               value={username}
                               onChange={e => setUsername(e.target.value)}
                               className="w-full pl-8 pr-4 py-2.5 input-anime rounded-xl text-sm font-medium"
-                              placeholder="v.d. hungdinhz"
+                              placeholder="v.d. alex_nguyen"
                               required
                             />
                           </div>
@@ -296,7 +296,7 @@ export default function SettingsPage() {
                             value={fullName}
                             onChange={e => setFullName(e.target.value)}
                             className="w-full px-4 py-2.5 input-anime rounded-xl text-sm font-medium"
-                            placeholder="v.d. Đinh Hùng"
+                            placeholder="v.d. Nguyễn Văn A"
                           />
                         </div>
                       </div>
@@ -335,7 +335,7 @@ export default function SettingsPage() {
                             value={workplace}
                             onChange={e => setWorkplace(e.target.value)}
                             className="w-full px-4 py-2.5 input-anime rounded-xl text-sm font-medium"
-                            placeholder="v.d. Software Engineer tại VnNet"
+                            placeholder="v.d. Kỹ sư phần mềm / Đại học Bách Khoa"
                           />
                         </div>
 
