@@ -35,6 +35,7 @@ export default function Sidebar() {
     { name: 'Livestream', icon: '📺', path: '/livestream' },
     { name: 'Chợ', icon: '🛒', path: '/marketplace' },
     { name: 'Nhóm', icon: '🏘️', path: '/groups' },
+    { name: 'Bản đồ', icon: '🗺️', path: '/map' },
   ];
 
   const secondaryItems = [

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.example.backend_java.repository.FriendshipRepository;
+import com.example.backend_java.repository.GroupMemberRepository;
 
 @Service
 public class PostService {
@@ -31,11 +32,12 @@ public class PostService {
     private final JwtTokenProvider jwtTokenProvider;
     private final FriendshipRepository friendshipRepository;
     private final GroupRepository groupRepository;
+    private final GroupMemberRepository groupMemberRepository;
 
     public PostService(PostRepository postRepository, LikeRepository likeRepository,
                        CommentRepository commentRepository, UserRepository userRepository,
                        JwtTokenProvider jwtTokenProvider, FriendshipRepository friendshipRepository,
-                       GroupRepository groupRepository) {
+                       GroupRepository groupRepository, GroupMemberRepository groupMemberRepository) {
         this.postRepository = postRepository;
         this.likeRepository = likeRepository;
         this.commentRepository = commentRepository;
@@ -43,6 +45,7 @@ public class PostService {
         this.jwtTokenProvider = jwtTokenProvider;
         this.friendshipRepository = friendshipRepository;
         this.groupRepository = groupRepository;
+        this.groupMemberRepository = groupMemberRepository;
     }
 
     // Tạo bài viết mới (tương đương crud_post.create_post)
@@ -78,8 +81,16 @@ public class PostService {
     public PagedResponseDto<PostResponseDto> getPosts(int page, int size, Long currentUserId) {
         List<Post> posts = postRepository.findAllByOrderByIdDesc();
 
-        // Convert all to DTOs first so we can sort them using DTO metadata (likesCount, commentsCount)
+        java.util.Set<Long> joinedGroupIds = new java.util.HashSet<>();
+        if (currentUserId != null) {
+            joinedGroupIds = groupMemberRepository.findByUserId(currentUserId).stream()
+                    .map(com.example.backend_java.entity.GroupMember::getGroupId)
+                    .collect(Collectors.toSet());
+        }
+
+        final java.util.Set<Long> finalJoinedGroupIds = joinedGroupIds;
         List<PostResponseDto> dtos = posts.stream()
+                .filter(post -> post.getGroupId() == null || finalJoinedGroupIds.contains(post.getGroupId()))
                 .map(post -> toResponseDto(post, currentUserId))
                 .collect(Collectors.toList());
 
