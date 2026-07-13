@@ -13,12 +13,13 @@ import java.util.List;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
 
-    // Lấy tất cả bài viết không thuộc nhóm nào, sắp xếp theo id giảm dần
-    @Query("SELECT p FROM Post p WHERE p.groupId IS NULL ORDER BY p.id DESC")
+    // Lấy tất cả bài viết (bao gồm cả bài trong nhóm), sắp xếp theo id giảm dần
+    // Bài viết nhóm sẽ được lọc ở tầng service tùy theo quyền truy cập của user
+    @Query("SELECT p FROM Post p ORDER BY p.id DESC")
     List<Post> findAllByOrderByIdDesc();
 
-    // Lấy bài viết theo owner (chỉ lấy bài viết trên trang cá nhân, không thuộc nhóm)
-    @Query("SELECT p FROM Post p WHERE p.ownerId = :ownerId AND p.groupId IS NULL ORDER BY p.id DESC")
+    // Lấy bài viết theo owner (bao gồm bài trong nhóm mà user đăng)
+    @Query("SELECT p FROM Post p WHERE p.ownerId = :ownerId ORDER BY p.id DESC")
     List<Post> findByOwnerIdOrderByIdDesc(@Param("ownerId") Long ownerId);
 
     // Lấy bài viết trong một nhóm cụ thể

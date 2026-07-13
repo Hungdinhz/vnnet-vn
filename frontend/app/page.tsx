@@ -46,7 +46,7 @@ export default function Home() {
       setIsLoadingMore(true);
     }
     try {
-      const response = await api.get(`/posts?page=${pageNum}&size=10`);
+      const response = await api.get(`/posts?page=${pageNum}&size=20`);
       const data = response.data;
       
       if (reset) {
