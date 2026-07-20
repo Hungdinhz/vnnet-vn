@@ -1,26 +1,17 @@
 package com.example.backend_java.service;
 
-import com.example.backend_java.dto.PagedResponseDto;
-import com.example.backend_java.dto.PostCreateDto;
-import com.example.backend_java.dto.PostResponseDto;
-import com.example.backend_java.dto.PostUpdateDto;
+import com.example.backend_java.dto.*;
 import com.example.backend_java.entity.Post;
+import com.example.backend_java.entity.PostMention;
 import com.example.backend_java.entity.User;
-import com.example.backend_java.repository.CommentRepository;
-import com.example.backend_java.repository.GroupRepository;
-import com.example.backend_java.repository.LikeRepository;
-import com.example.backend_java.repository.PostRepository;
-import com.example.backend_java.repository.UserRepository;
+import com.example.backend_java.repository.*;
 import com.example.backend_java.security.JwtTokenProvider;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
-
-import com.example.backend_java.repository.FriendshipRepository;
-import com.example.backend_java.repository.GroupMemberRepository;
 
 @Service
 public class PostService {
@@ -33,11 +24,14 @@ public class PostService {
     private final FriendshipRepository friendshipRepository;
     private final GroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
+    private final PostMentionRepository postMentionRepository;
+    private final NotificationService notificationService;
 
     public PostService(PostRepository postRepository, LikeRepository likeRepository,
                        CommentRepository commentRepository, UserRepository userRepository,
                        JwtTokenProvider jwtTokenProvider, FriendshipRepository friendshipRepository,
-                       GroupRepository groupRepository, GroupMemberRepository groupMemberRepository) {
+                       GroupRepository groupRepository, GroupMemberRepository groupMemberRepository,
+                       PostMentionRepository postMentionRepository, NotificationService notificationService) {
         this.postRepository = postRepository;
         this.likeRepository = likeRepository;
         this.commentRepository = commentRepository;
@@ -46,6 +40,8 @@ public class PostService {
         this.friendshipRepository = friendshipRepository;
         this.groupRepository = groupRepository;
         this.groupMemberRepository = groupMemberRepository;
+        this.postMentionRepository = postMentionRepository;
+        this.notificationService = notificationService;
     }
 
     // Tạo bài viết mới (tương đương crud_post.create_post)
@@ -73,6 +69,23 @@ public class PostService {
                 .build();
 
         post = postRepository.save(post);
+
+        // Lưu mentions (tag bạn bè)
+        if (dto.getMentionedUserIds() != null && !dto.getMentionedUserIds().isEmpty()) {
+            for (Long mentionedUserId : dto.getMentionedUserIds()) {
+                if (!mentionedUserId.equals(currentUser.getId())) {
+                    PostMention mention = PostMention.builder()
+                            .post(post)
+                            .mentionedUserId(mentionedUserId)
+                            .build();
+                    postMentionRepository.save(mention);
+                    // Gửi thông báo cho người được tag
+                    notificationService.createNotification(
+                            mentionedUserId, currentUser.getId(), "mention", post.getId());
+                }
+            }
+        }
+
         return toResponseDto(post, currentUser.getId());
     }
 
@@ -227,6 +240,38 @@ public class PostService {
         long commentsCount = commentRepository.countByPostId(post.getId());
         boolean isLiked = currentUserId != null && likeRepository.existsByUserIdAndPostId(currentUserId, post.getId());
 
+        // Build reactions summary map
+        Map<String, Integer> reactionsSummary = new LinkedHashMap<>();
+        List<Object[]> reactionCounts = likeRepository.countReactionsByPostId(post.getId());
+        for (Object[] row : reactionCounts) {
+            String type = (String) row[0];
+            int count = ((Number) row[1]).intValue();
+            reactionsSummary.put(type != null ? type : "like", count);
+        }
+
+        // Get current user's reaction
+        String myReaction = null;
+        if (currentUserId != null) {
+            var myLike = likeRepository.findByUserIdAndPostId(currentUserId, post.getId());
+            if (myLike.isPresent()) {
+                myReaction = myLike.get().getReactionType();
+            }
+        }
+
+        // Get mentioned users
+        List<PostResponseDto.UserOutDto> mentionedUsers = postMentionRepository.findByPostId(post.getId()).stream()
+                .map(m -> {
+                    User mu = userRepository.findById(m.getMentionedUserId()).orElse(null);
+                    if (mu == null) return null;
+                    return PostResponseDto.UserOutDto.builder()
+                            .id(mu.getId())
+                            .username(mu.getUsername())
+                            .avatarUrl(mu.getAvatarUrl())
+                            .build();
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
         User owner = post.getOwner();
         
         PostResponseDto sharedPostDto = null;
@@ -263,9 +308,27 @@ public class PostService {
                 .likesCount((int) likesCount)
                 .commentsCount((int) commentsCount)
                 .isLiked(isLiked)
+                .myReaction(myReaction)
+                .reactionsSummary(reactionsSummary)
                 .sharedPost(sharedPostDto)
                 .groupId(post.getGroup() != null ? post.getGroup().getId() : null)
                 .groupName(post.getGroup() != null ? post.getGroup().getName() : null)
+                .mentionedUsers(mentionedUsers.isEmpty() ? null : mentionedUsers)
                 .build();
+    }
+
+    // Lấy danh sách reactions chi tiết
+    public List<ReactionResponseDto> getReactions(Long postId) {
+        return likeRepository.findAllByPostId(postId).stream()
+                .map(like -> {
+                    User user = userRepository.findById(like.getUserId()).orElse(null);
+                    return ReactionResponseDto.builder()
+                            .userId(like.getUserId())
+                            .username(user != null ? user.getUsername() : "Unknown")
+                            .avatarUrl(user != null ? user.getAvatarUrl() : null)
+                            .reactionType(like.getReactionType())
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 }

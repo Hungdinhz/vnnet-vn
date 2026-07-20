@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 @Data
 @Builder
@@ -40,6 +42,12 @@ public class PostResponseDto {
     @Builder.Default
     private boolean isLiked = false;
 
+    @JsonProperty("my_reaction")
+    private String myReaction;
+
+    @JsonProperty("reactions_summary")
+    private Map<String, Integer> reactionsSummary;
+
     @JsonProperty("shared_post")
     private PostResponseDto sharedPost;
 
@@ -48,6 +56,9 @@ public class PostResponseDto {
 
     @JsonProperty("group_name")
     private String groupName;
+
+    @JsonProperty("mentioned_users")
+    private List<UserOutDto> mentionedUsers;
 
     @Data
     @Builder

@@ -83,23 +83,30 @@ public class PostController {
         return ResponseEntity.ok(new MessageDto("Bài viết đã được xóa thành công"));
     }
 
-    // POST /posts/{post_id}/like - Toggle like (cần token)
+    // POST /posts/{post_id}/like - Toggle reaction (cần token)
     @PostMapping("/{postId}/like")
-    public ResponseEntity<MessageDto> toggleLike(
+    public ResponseEntity<MessageDto> toggleReaction(
             @PathVariable Long postId,
+            @RequestParam(value = "type", defaultValue = "like") String reactionType,
             Authentication authentication) {
         User currentUser = (User) authentication.getPrincipal();
         Post post = postService.getPostEntity(postId);
 
-        MessageDto result = interactionService.toggleLike(currentUser.getId(), postId, post);
+        MessageDto result = interactionService.toggleReaction(currentUser.getId(), postId, post, reactionType);
 
-        // Nếu là hành động LIKE (không phải hủy) thì tạo thông báo
-        if ("Đã Like bài viết thành công".equals(result.getMessage())) {
+        // Tạo thông báo nếu là hành động react mới (không phải bỏ react)
+        if (!result.getMessage().startsWith("Đã bỏ")) {
             notificationService.createNotification(
                     post.getOwnerId(), currentUser.getId(), "like", postId);
         }
 
         return ResponseEntity.ok(result);
+    }
+
+    // GET /posts/{post_id}/reactions - Xem danh sách reactions chi tiết
+    @GetMapping("/{postId}/reactions")
+    public ResponseEntity<List<ReactionResponseDto>> getReactions(@PathVariable Long postId) {
+        return ResponseEntity.ok(postService.getReactions(postId));
     }
 
     // POST /posts/{post_id}/comments - Thêm bình luận (cần token)

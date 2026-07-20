@@ -4,20 +4,17 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "likes", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"user_id", "post_id"}, name = "_user_post_uc")
+@Table(name = "post_mentions", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"post_id", "mentioned_user_id"}, name = "_post_mention_uc")
 })
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class Like {
+public class PostMention {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
 
     @Column(name = "post_id", insertable = false, updatable = false)
     private Long postId;
@@ -26,7 +23,10 @@ public class Like {
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 
-    @Column(name = "reaction_type", length = 20)
-    @Builder.Default
-    private String reactionType = "like";
+    @Column(name = "mentioned_user_id", nullable = false)
+    private Long mentionedUserId;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mentioned_user_id", insertable = false, updatable = false)
+    private User mentionedUser;
 }

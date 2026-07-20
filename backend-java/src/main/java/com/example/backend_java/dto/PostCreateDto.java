@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class PostCreateDto {
 
@@ -21,4 +23,8 @@ public class PostCreateDto {
 
     @JsonProperty("group_id")
     private Long groupId;
+
+    @JsonProperty("mentioned_user_ids")
+    private List<Long> mentionedUserIds;
 }
+

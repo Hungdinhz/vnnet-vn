@@ -32,21 +32,36 @@ public class InteractionService {
         this.commentLikeRepository = commentLikeRepository;
     }
 
-    // Toggle Like (Thích / Bỏ thích) bài viết
+    // Toggle Reaction (React / Đổi loại / Bỏ react) bài viết
     @Transactional
-    public MessageDto toggleLike(Long userId, Long postId, Post post) {
+    public MessageDto toggleReaction(Long userId, Long postId, Post post, String reactionType) {
+        if (reactionType == null || reactionType.isBlank()) {
+            reactionType = "like";
+        }
+
         Optional<Like> existingLike = likeRepository.findByUserIdAndPostId(userId, postId);
 
         if (existingLike.isPresent()) {
-            likeRepository.delete(existingLike.get());
-            return new MessageDto("Đã hủy Like bài viết");
+            Like like = existingLike.get();
+            if (like.getReactionType().equals(reactionType)) {
+                // Same reaction → toggle off (remove)
+                likeRepository.delete(like);
+                return new MessageDto("Đã bỏ reaction bài viết");
+            } else {
+                // Different reaction → update
+                like.setReactionType(reactionType);
+                likeRepository.save(like);
+                return new MessageDto("Đã đổi reaction thành " + reactionType);
+            }
         } else {
+            // No existing reaction → create new
             Like newLike = Like.builder()
                     .userId(userId)
                     .post(post)
+                    .reactionType(reactionType)
                     .build();
             likeRepository.save(newLike);
-            return new MessageDto("Đã Like bài viết thành công");
+            return new MessageDto("Đã react " + reactionType + " bài viết");
         }
     }
 
