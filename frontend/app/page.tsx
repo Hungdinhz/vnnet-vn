@@ -8,6 +8,7 @@ import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import api from '@/lib/axios';
 import PostCard from '@/components/PostCard';
+import StoryBar from '@/components/StoryBar';
 import toast from 'react-hot-toast';
 
 export default function Home() {
@@ -36,6 +37,12 @@ export default function Home() {
   // Destination group
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [showGroupDropdown, setShowGroupDropdown] = useState(false);
+
+  // Tag friends
+  const [taggedFriends, setTaggedFriends] = useState<any[]>([]);
+  const [showTagDropdown, setShowTagDropdown] = useState(false);
+  const [friendsList, setFriendsList] = useState<any[]>([]);
+  const [tagSearch, setTagSearch] = useState('');
 
   const [requestedUserIds, setRequestedUserIds] = useState<Set<number>>(new Set());
 
@@ -106,8 +113,18 @@ export default function Home() {
     if (currentUser) {
       fetchSuggestedUsers();
       fetchMyGroups();
+      fetchFriendsList();
     }
   }, [currentUser]);
+
+  const fetchFriendsList = async () => {
+    try {
+      const res = await api.get('/friends');
+      setFriendsList(res.data || []);
+    } catch (err) {
+      console.error("Lỗi tải danh sách bạn bè:", err);
+    }
+  };
 
   // Infinite scroll observer
   const lastPostCallback = useCallback((node: HTMLDivElement | null) => {
@@ -162,7 +179,8 @@ export default function Home() {
         title: newTitle || "Bài viết mới",
         content: newContent,
         image_url: uploadedImageUrl,
-        group_id: selectedGroupId
+        group_id: selectedGroupId,
+        mentioned_user_ids: taggedFriends.map(f => f.id)
       });
 
       // Clear form
@@ -172,6 +190,7 @@ export default function Home() {
       setImagePreview(null);
       setIsComposing(false);
       setSelectedGroupId(null);
+      setTaggedFriends([]);
       
       const fileInput = document.getElementById('file-upload') as HTMLInputElement;
       if (fileInput) fileInput.value = '';
@@ -259,6 +278,9 @@ export default function Home() {
               </Link>
             </div>
           </div>
+
+          {/* Stories Bar */}
+          <StoryBar />
 
           {/* Stories / Joined Groups Circle Row */}
           {myGroups.length > 0 && (
@@ -441,6 +463,72 @@ export default function Home() {
                       />
                     </label>
 
+                    {/* Tag Friends Button */}
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowTagDropdown(!showTagDropdown)}
+                        className={`flex items-center gap-2 hover:bg-purple-500/10 border border-purple-500/15 px-4 py-2.5 rounded-xl transition-all text-xs font-bold ${
+                          taggedFriends.length > 0 ? 'text-accent-pink bg-pink-500/5' : 'text-accent-purple/90'
+                        }`}
+                      >
+                        <span className="text-base">🏷️</span>
+                        <span>Tag bạn bè {taggedFriends.length > 0 ? `(${taggedFriends.length})` : ''}</span>
+                      </button>
+
+                      {showTagDropdown && (
+                        <div className="absolute bottom-full left-0 mb-2 w-72 glass-card rounded-xl py-2 shadow-2xl z-50 animate-slide-up max-h-64 overflow-y-auto">
+                          <div className="px-3 pb-2 border-b border-purple-500/10">
+                            <input
+                              type="text"
+                              placeholder="Tìm bạn bè..."
+                              value={tagSearch}
+                              onChange={(e) => setTagSearch(e.target.value)}
+                              className="w-full px-3 py-1.5 input-anime rounded-lg text-xs"
+                              autoFocus
+                            />
+                          </div>
+                          {friendsList
+                            .filter(f => {
+                              const name = (f.friend_username || f.username || '').toLowerCase();
+                              return name.includes(tagSearch.toLowerCase()) && !taggedFriends.find(t => t.id === (f.friend_id || f.id));
+                            })
+                            .slice(0, 10)
+                            .map((friend) => {
+                              const friendId = friend.friend_id || friend.id;
+                              const friendName = friend.friend_username || friend.username;
+                              const friendAvatar = friend.friend_avatar_url || friend.avatar_url;
+                              return (
+                                <button
+                                  key={friendId}
+                                  type="button"
+                                  onClick={() => {
+                                    setTaggedFriends(prev => [...prev, { id: friendId, username: friendName, avatar_url: friendAvatar }]);
+                                    setTagSearch('');
+                                  }}
+                                  className="w-full text-left px-3 py-2 hover:bg-purple-500/10 flex items-center gap-2.5 transition-colors"
+                                >
+                                  {friendAvatar ? (
+                                    <img src={friendAvatar} alt={friendName} className="w-7 h-7 rounded-full object-cover" />
+                                  ) : (
+                                    <div className="w-7 h-7 bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full flex items-center justify-center text-[10px] font-bold text-white">
+                                      {(friendName || 'U').charAt(0).toUpperCase()}
+                                    </div>
+                                  )}
+                                  <span className="text-xs font-semibold text-foreground">{friendName}</span>
+                                </button>
+                              );
+                            })}
+                          {friendsList.filter(f => {
+                            const name = (f.friend_username || f.username || '').toLowerCase();
+                            return name.includes(tagSearch.toLowerCase()) && !taggedFriends.find(t => t.id === (f.friend_id || f.id));
+                          }).length === 0 && (
+                            <p className="text-center text-xs text-muted/40 py-3">Không tìm thấy bạn bè</p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
                     <button
                       type="submit"
                       disabled={isPosting || !newContent.trim()}
@@ -449,6 +537,31 @@ export default function Home() {
                       {isPosting ? 'Đang gửi...' : '✨ Đăng lên'}
                     </button>
                   </div>
+
+                  {/* Tagged Friends Chips */}
+                  {taggedFriends.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {taggedFriends.map(f => (
+                        <span key={f.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/10 border border-purple-500/20 rounded-full text-[11px] font-semibold text-accent-purple">
+                          {f.avatar_url ? (
+                            <img src={f.avatar_url} alt={f.username} className="w-4 h-4 rounded-full object-cover" />
+                          ) : (
+                            <span className="w-4 h-4 bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full flex items-center justify-center text-[8px] text-white font-bold">
+                              {(f.username || 'U').charAt(0).toUpperCase()}
+                            </span>
+                          )}
+                          {f.username}
+                          <button
+                            type="button"
+                            onClick={() => setTaggedFriends(prev => prev.filter(t => t.id !== f.id))}
+                            className="text-pink-400 hover:text-pink-300 transition-colors text-[10px] ml-0.5"
+                          >
+                            ✕
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </form>
               </div>
             )}
