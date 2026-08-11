@@ -298,7 +298,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
       
       {/* Header section */}
       <div className="flex items-center justify-between gap-3 mb-3.5">
-        <Link href={`/profile/${post.owner_id || post.owner?.id}`} className="flex items-center gap-3 group">
+        <div className="flex items-center gap-3 group">
           {post.owner?.avatar_url ? (
             <img 
               src={post.owner.avatar_url} 
@@ -346,7 +346,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
               <span title="Công khai">🌏</span>
             </div>
           </div>
-        </Link>
+        </div>
 
         {/* Options Menu for Owner */}
         {isOwner && (

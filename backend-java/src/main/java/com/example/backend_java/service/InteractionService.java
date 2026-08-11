@@ -43,7 +43,9 @@ public class InteractionService {
 
         if (existingLike.isPresent()) {
             Like like = existingLike.get();
-            if (like.getReactionType().equals(reactionType)) {
+            // Null-safe: treat null reactionType as "like"
+            String currentType = like.getReactionType() != null ? like.getReactionType() : "like";
+            if (currentType.equals(reactionType)) {
                 // Same reaction → toggle off (remove)
                 likeRepository.delete(like);
                 return new MessageDto("Đã bỏ reaction bài viết");

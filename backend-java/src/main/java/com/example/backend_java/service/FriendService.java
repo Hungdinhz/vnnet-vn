@@ -64,7 +64,7 @@ public class FriendService {
     // Lấy danh sách bạn bè - tương đương crud_friend.get_friends_list
     public List<FriendshipResponseDto> getFriendsList(Long userId) {
         return friendshipRepository.findAcceptedFriendships(userId).stream()
-                .map(this::toResponseDto)
+                .map(f -> toResponseDto(f, userId))
                 .collect(Collectors.toList());
     }
 
@@ -146,12 +146,25 @@ public class FriendService {
         friendshipRepository.delete(friendship);
     }
 
-    private FriendshipResponseDto toResponseDto(Friendship friendship) {
+    private FriendshipResponseDto toResponseDto(Friendship friendship, Long currentUserId) {
+        // Determine who the "friend" is (the other person)
+        Long friendUserId = friendship.getUserId().equals(currentUserId) 
+                ? friendship.getFriendId() 
+                : friendship.getUserId();
+        
+        User friendUser = userRepository.findById(friendUserId).orElse(null);
+
         return FriendshipResponseDto.builder()
                 .id(friendship.getId())
                 .userId(friendship.getUserId())
                 .friendId(friendship.getFriendId())
                 .status(friendship.getStatus())
+                .friendUsername(friendUser != null ? friendUser.getUsername() : "Unknown")
+                .friendAvatarUrl(friendUser != null ? friendUser.getAvatarUrl() : null)
                 .build();
+    }
+
+    private FriendshipResponseDto toResponseDto(Friendship friendship) {
+        return toResponseDto(friendship, null);
     }
 }
