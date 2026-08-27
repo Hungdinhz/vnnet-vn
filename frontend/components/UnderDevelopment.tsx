@@ -11,20 +11,20 @@ interface UnderDevelopmentProps {
 export default function UnderDevelopment({ title, icon }: UnderDevelopmentProps) {
   return (
     <div className="w-full flex items-center justify-center py-12 md:py-20 animate-slide-up">
-      <div className="glass-card rounded-2xl p-8 md:p-12 max-w-lg w-full text-center relative overflow-hidden border border-purple-500/15">
+      <div className="glass-card rounded-2xl p-8 md:p-12 max-w-lg w-full text-center relative overflow-hidden border border-indigo-500/15">
         {/* Neon light effect background */}
-        <div className="absolute -right-16 -top-16 w-36 h-36 bg-gradient-to-br from-accent-purple/35 to-accent-pink/35 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute -left-16 -bottom-16 w-36 h-36 bg-gradient-to-tr from-accent-cyan/25 to-purple-500/25 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -right-16 -top-16 w-36 h-36 bg-gradient-to-br from-accent-primary/20 to-accent-secondary/20 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -left-16 -bottom-16 w-36 h-36 bg-gradient-to-tr from-accent-primary/15 to-accent-secondary/15 rounded-full blur-2xl pointer-events-none" />
 
         <div className="relative z-10 space-y-6">
           {/* Animated Big Icon */}
-          <div className="w-24 h-24 mx-auto bg-gradient-to-br from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-2xl flex items-center justify-center text-5xl shadow-lg shadow-purple-500/5 animate-float">
+          <div className="w-24 h-24 mx-auto bg-gradient-to-br from-indigo-500/10 to-indigo-600/10 border border-indigo-500/20 rounded-2xl flex items-center justify-center text-5xl shadow-lg shadow-indigo-500/5 animate-float">
             {icon}
           </div>
 
           {/* Title & Badge */}
           <div className="space-y-2">
-            <span className="px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-[10px] md:text-xs font-bold text-accent-purple tracking-widest uppercase inline-block">
+            <span className="px-3.5 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-[10px] md:text-xs font-bold text-accent-purple tracking-widest uppercase inline-block">
               🚧 ĐANG PHÁT TRIỂN
             </span>
             <h2 className="text-xl md:text-2xl font-black tracking-tight text-foreground">

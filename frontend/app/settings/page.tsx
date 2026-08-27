@@ -181,11 +181,11 @@ export default function SettingsPage() {
         <main className="flex-1 max-w-5xl py-4 md:py-6 mx-auto w-full">
           
           {/* Header Banner */}
-          <div className="glass-card rounded-2xl p-6 mb-6 relative overflow-hidden animate-slide-up border border-purple-500/15">
+          <div className="glass-card rounded-2xl p-6 mb-6 relative overflow-hidden animate-slide-up border border-indigo-500/15">
             <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-gradient-to-br from-accent-purple/20 to-accent-pink/20 rounded-full blur-3xl pointer-events-none" />
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
               <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 to-pink-500 flex items-center justify-center text-white text-2xl shadow-lg shadow-purple-500/25">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-600 to-indigo-500 flex items-center justify-center text-white text-2xl shadow-lg shadow-indigo-500/25">
                   ⚙️
                 </div>
                 <div>
@@ -212,14 +212,14 @@ export default function SettingsPage() {
               
               {/* Left Column: Navigation Tabs */}
               <div className="lg:col-span-4 space-y-2">
-                <div className="glass-card rounded-2xl p-3 border border-purple-500/10 space-y-1">
+                <div className="glass-card rounded-2xl p-3 border border-indigo-500/10 space-y-1">
                   {tabs.map((tab) => (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id as SettingsTab)}
                       className={`w-full flex items-start gap-3 p-3 rounded-xl text-left transition-all duration-200 ${
                         activeTab === tab.id
-                          ? 'bg-purple-500/15 border border-purple-500/30 text-foreground font-semibold shadow-sm'
+                          ? 'bg-indigo-500/15 border border-indigo-500/30 text-foreground font-semibold shadow-sm'
                           : 'hover:bg-white/[0.04] dark:hover:bg-white/[0.04] text-muted hover:text-foreground border border-transparent'
                       }`}
                     >
@@ -233,14 +233,14 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Profile Card Mini Preview Side Widget */}
-                <div className="glass-card rounded-2xl p-4 border border-purple-500/10 space-y-3">
+                <div className="glass-card rounded-2xl p-4 border border-indigo-500/10 space-y-3">
                   <span className="text-xs font-bold text-accent-purple/80 uppercase tracking-wider block">👁️ Xem trước thẻ hồ sơ</span>
                   <div className="rounded-xl overflow-hidden bg-black/20 border border-white/5 relative">
-                    <div className="h-20 w-full bg-gradient-to-r from-purple-600/40 via-pink-500/30 to-cyan-500/30 relative">
+                    <div className="h-20 w-full bg-gradient-to-r from-indigo-600/30 via-indigo-500/25 to-slate-500/20 relative">
                       {coverUrl && <img src={coverUrl} alt="Cover Preview" className="w-full h-full object-cover" />}
                     </div>
                     <div className="p-3 pt-0 relative">
-                      <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-background shadow-md -mt-7 mb-2 bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
+                      <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-background shadow-md -mt-7 mb-2 bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg">
                         {avatarUrl ? <img src={avatarUrl} alt="Avatar Preview" className="w-full h-full object-cover" /> : getInitials(fullName || username)}
                       </div>
                       <h4 className="font-bold text-sm text-foreground line-clamp-1">{fullName || username || 'Tên hiển thị'}</h4>
@@ -258,12 +258,12 @@ export default function SettingsPage() {
 
               {/* Right Column: Tab Content */}
               <div className="lg:col-span-8">
-                <div className="glass-card rounded-2xl p-6 border border-purple-500/10">
+                <div className="glass-card rounded-2xl p-6 border border-indigo-500/10">
 
                   {/* TAB 1: PROFILE INFO */}
                   {activeTab === 'profile' && (
                     <form onSubmit={handleSaveProfile} className="space-y-5 animate-fade-in">
-                      <div className="border-b border-purple-500/10 pb-3 flex justify-between items-center">
+                      <div className="border-b border-indigo-500/10 pb-3 flex justify-between items-center">
                         <div>
                           <h2 className="text-lg font-bold text-foreground flex items-center gap-2">👤 Thông tin cá nhân</h2>
                           <p className="text-xs text-muted/60">Cập nhật thông tin chi tiết được hiển thị trên trang cá nhân của bạn</p>
@@ -316,7 +316,7 @@ export default function SettingsPage() {
                         />
                       </div>
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-purple-500/10">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-indigo-500/10">
                         <div>
                           <label className="block text-xs font-semibold text-accent-purple/80 mb-1.5">📍 Quê quán / Thành phố</label>
                           <input
@@ -362,11 +362,11 @@ export default function SettingsPage() {
                         </div>
                       </div>
 
-                      <div className="pt-4 border-t border-purple-500/10 flex justify-end gap-3">
+                      <div className="pt-4 border-t border-indigo-500/10 flex justify-end gap-3">
                         <button
                           type="button"
                           onClick={() => router.push('/')}
-                          className="px-5 py-2.5 text-xs font-bold text-muted/60 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors border border-purple-500/10"
+                          className="px-5 py-2.5 text-xs font-bold text-muted/60 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors border border-indigo-500/10"
                         >
                           Hủy
                         </button>
@@ -384,20 +384,20 @@ export default function SettingsPage() {
                   {/* TAB 2: MEDIA (AVATAR & COVER) */}
                   {activeTab === 'media' && (
                     <div className="space-y-6 animate-fade-in">
-                      <div className="border-b border-purple-500/10 pb-3">
+                      <div className="border-b border-indigo-500/10 pb-3">
                         <h2 className="text-lg font-bold text-foreground flex items-center gap-2">🖼️ Quản lý Ảnh đại diện & Ảnh bìa</h2>
                         <p className="text-xs text-muted/60">Tải lên hình ảnh sắc nét để tạo dấu ấn cá nhân trên mạng xã hội</p>
                       </div>
 
                       {/* Avatar Section */}
-                      <div className="glass-card rounded-xl p-5 border border-purple-500/10">
+                      <div className="glass-card rounded-xl p-5 border border-indigo-500/10">
                         <label className="block text-xs font-bold text-accent-purple uppercase tracking-wider mb-3">📸 Ảnh đại diện (Avatar)</label>
                         <div className="flex flex-col sm:flex-row items-center gap-5">
-                          <div className="w-24 h-24 rounded-full overflow-hidden flex-shrink-0 bg-white/[0.03] border-4 border-purple-500/20 shadow-xl relative group">
+                          <div className="w-24 h-24 rounded-full overflow-hidden flex-shrink-0 bg-white/[0.03] border-4 border-indigo-500/20 shadow-xl relative group">
                             {avatarUrl ? (
                               <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                             ) : (
-                              <div className="w-full h-full bg-gradient-to-br from-purple-600 to-pink-500 rounded-full flex items-center justify-center font-bold text-white text-2xl">
+                              <div className="w-full h-full bg-gradient-to-br from-indigo-600 to-indigo-500 rounded-full flex items-center justify-center font-bold text-white text-2xl">
                                 {getInitials(fullName || username)}
                               </div>
                             )}
@@ -420,7 +420,7 @@ export default function SettingsPage() {
                                 <button
                                   type="button"
                                   onClick={() => setAvatarUrl('')}
-                                  className="px-4 py-2.5 text-xs font-semibold text-rose-400 hover:bg-rose-500/10 rounded-xl transition-colors border border-rose-500/20"
+                                  className="px-4 py-2.5 text-xs font-semibold text-red-400 hover:bg-red-500/10 rounded-xl transition-colors border border-red-500/20"
                                 >
                                   ✕ Gỡ bỏ ảnh
                                 </button>
@@ -431,9 +431,9 @@ export default function SettingsPage() {
                       </div>
 
                       {/* Cover Photo Section */}
-                      <div className="glass-card rounded-xl p-5 border border-purple-500/10 space-y-3">
+                      <div className="glass-card rounded-xl p-5 border border-indigo-500/10 space-y-3">
                         <label className="block text-xs font-bold text-accent-purple uppercase tracking-wider">🌄 Ảnh bìa (Cover Image)</label>
-                        <div className="h-44 w-full rounded-xl overflow-hidden bg-gradient-to-r from-purple-900/40 via-pink-900/30 to-cyan-900/20 relative flex items-center justify-center border border-purple-500/20 shadow-inner">
+                        <div className="h-44 w-full rounded-xl overflow-hidden bg-gradient-to-r from-purple-900/40 via-pink-900/30 to-cyan-900/20 relative flex items-center justify-center border border-indigo-500/20 shadow-inner">
                           {coverUrl ? (
                             <img src={coverUrl} alt="Cover" className="w-full h-full object-cover" />
                           ) : (
@@ -459,7 +459,7 @@ export default function SettingsPage() {
                             <button
                               type="button"
                               onClick={() => setCoverUrl('')}
-                              className="text-xs font-semibold text-rose-400 hover:underline"
+                              className="text-xs font-semibold text-red-400 hover:underline"
                             >
                               ✕ Xóa ảnh bìa
                             </button>
@@ -483,13 +483,13 @@ export default function SettingsPage() {
                   {/* TAB 3: SECURITY & PASSWORD */}
                   {activeTab === 'security' && (
                     <form onSubmit={handleChangePassword} className="space-y-6 animate-fade-in">
-                      <div className="border-b border-purple-500/10 pb-3">
+                      <div className="border-b border-indigo-500/10 pb-3">
                         <h2 className="text-lg font-bold text-foreground flex items-center gap-2">🔐 Bảo mật & Mật khẩu</h2>
                         <p className="text-xs text-muted/60">Thay đổi mật khẩu đăng nhập để bảo vệ an toàn cho tài khoản</p>
                       </div>
 
                       {/* Account Email Info */}
-                      <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl p-4 flex items-center justify-between">
+                      <div className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-4 flex items-center justify-between">
                         <div>
                           <span className="text-xs font-semibold text-accent-purple/80 block">Email tài khoản đăng ký</span>
                           <span className="text-sm font-bold text-foreground font-mono">{currentUser?.email || 'N/A'}</span>
@@ -545,7 +545,7 @@ export default function SettingsPage() {
                         </div>
                       </div>
 
-                      <div className="pt-4 border-t border-purple-500/10 flex justify-end">
+                      <div className="pt-4 border-t border-indigo-500/10 flex justify-end">
                         <button
                           type="submit"
                           disabled={isChangingPassword}
@@ -560,7 +560,7 @@ export default function SettingsPage() {
                   {/* TAB 4: APPEARANCE & PREFERENCES */}
                   {activeTab === 'appearance' && (
                     <div className="space-y-6 animate-fade-in">
-                      <div className="border-b border-purple-500/10 pb-3">
+                      <div className="border-b border-indigo-500/10 pb-3">
                         <h2 className="text-lg font-bold text-foreground flex items-center gap-2">🎨 Giao diện & Trải nghiệm</h2>
                         <p className="text-xs text-muted/60">Tùy chỉnh phong cách hiển thị và chế độ màu sắc ưa thích</p>
                       </div>
@@ -581,7 +581,7 @@ export default function SettingsPage() {
                               }}
                               className={`p-4 rounded-xl border flex flex-col items-center gap-2 text-center transition-all ${
                                 t.active
-                                  ? 'bg-purple-500/20 border-purple-500 text-foreground font-bold shadow-md'
+                                  ? 'bg-indigo-500/20 border-indigo-500 text-foreground font-bold shadow-md'
                                   : 'bg-black/5 dark:bg-white/5 border-transparent text-muted hover:text-foreground'
                               }`}
                             >
@@ -592,7 +592,7 @@ export default function SettingsPage() {
                         </div>
                       </div>
 
-                      <div className="pt-4 border-t border-purple-500/10 space-y-4">
+                      <div className="pt-4 border-t border-indigo-500/10 space-y-4">
                         <label className="block text-xs font-bold text-accent-purple uppercase tracking-wider">Ngôn ngữ giao diện</label>
                         <select className="w-full px-4 py-2.5 input-anime rounded-xl text-sm font-medium bg-background">
                           <option value="vi">🇻🇳 Tiếng Việt (Mặc định)</option>
@@ -605,7 +605,7 @@ export default function SettingsPage() {
                   {/* TAB 5: PRIVACY & NOTIFICATIONS */}
                   {activeTab === 'privacy' && (
                     <div className="space-y-6 animate-fade-in">
-                      <div className="border-b border-purple-500/10 pb-3">
+                      <div className="border-b border-indigo-500/10 pb-3">
                         <h2 className="text-lg font-bold text-foreground flex items-center gap-2">🛡️ Quyền riêng tư & Thông báo</h2>
                         <p className="text-xs text-muted/60">Kiểm soát ai có thể tương tác và nhận các thông báo quan trọng</p>
                       </div>
@@ -619,7 +619,7 @@ export default function SettingsPage() {
                           { key: 'comments', label: 'Bình luận mới', desc: 'Thông báo khi ai đó bình luận bài viết của bạn' },
                           { key: 'friendRequests', label: 'Lời mời kết bạn', desc: 'Thông báo khi có ai đó gửi lời mời kết bạn' },
                         ].map((item) => (
-                          <div key={item.key} className="flex items-center justify-between p-3.5 rounded-xl bg-black/5 dark:bg-white/5 border border-purple-500/10">
+                          <div key={item.key} className="flex items-center justify-between p-3.5 rounded-xl bg-black/5 dark:bg-white/5 border border-indigo-500/10">
                             <div>
                               <div className="text-xs font-bold text-foreground">{item.label}</div>
                               <div className="text-[11px] text-muted/60">{item.desc}</div>
@@ -631,7 +631,7 @@ export default function SettingsPage() {
                                 setNotifications({ ...notifications, [item.key]: e.target.checked });
                                 toast.success("Đã cập nhật cài đặt thông báo!");
                               }}
-                              className="w-5 h-5 accent-purple-500 rounded cursor-pointer"
+                              className="w-5 h-5 accent-indigo-500 rounded cursor-pointer"
                             />
                           </div>
                         ))}

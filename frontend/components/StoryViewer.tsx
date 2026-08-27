@@ -212,7 +212,7 @@ export default function StoryViewer({ storyGroups, initialGroupIndex, currentUse
             {currentGroup.avatar_url ? (
               <img src={currentGroup.avatar_url} alt={currentGroup.username} className="w-9 h-9 rounded-full object-cover border-2 border-white/30" />
             ) : (
-              <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-sm font-bold text-white border-2 border-white/30">
+              <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full flex items-center justify-center text-sm font-bold text-white border-2 border-white/30">
                 {getInitials(currentGroup.username)}
               </div>
             )}
@@ -232,7 +232,7 @@ export default function StoryViewer({ storyGroups, initialGroupIndex, currentUse
               </button>
               <button 
                 onClick={(e) => { e.stopPropagation(); handleDelete(); }}
-                className="w-8 h-8 bg-white/10 hover:bg-rose-500/30 rounded-full flex items-center justify-center text-white text-sm transition-colors backdrop-blur-sm"
+                className="w-8 h-8 bg-white/10 hover:bg-red-500/30 rounded-full flex items-center justify-center text-white text-sm transition-colors backdrop-blur-sm"
               >
                 🗑️
               </button>
@@ -248,7 +248,7 @@ export default function StoryViewer({ storyGroups, initialGroupIndex, currentUse
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className={`w-full h-full bg-gradient-to-br ${currentStory.background_color || 'from-purple-600 to-pink-500'} flex items-center justify-center p-8`}>
+          <div className={`w-full h-full bg-gradient-to-br ${currentStory.background_color || 'from-indigo-600 to-indigo-500'} flex items-center justify-center p-8`}>
             <p className={`text-white text-center leading-relaxed drop-shadow-lg ${
               currentStory.text_style === 'bold' ? 'text-3xl font-extrabold' :
               currentStory.text_style === 'italic' ? 'text-2xl italic font-light' :
@@ -287,7 +287,7 @@ export default function StoryViewer({ storyGroups, initialGroupIndex, currentUse
                     {v.avatar_url ? (
                       <img src={v.avatar_url} alt={v.username} className="w-9 h-9 rounded-full object-cover" />
                     ) : (
-                      <div className="w-9 h-9 bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full flex items-center justify-center text-sm font-bold text-white">
+                      <div className="w-9 h-9 bg-gradient-to-br from-indigo-500/50 to-indigo-600/50 rounded-full flex items-center justify-center text-sm font-bold text-white">
                         {getInitials(v.username)}
                       </div>
                     )}

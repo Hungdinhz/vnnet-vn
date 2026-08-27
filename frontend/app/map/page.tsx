@@ -12,7 +12,7 @@ import Link from 'next/link';
 const MapComponent = dynamic(() => import('@/components/MapComponent'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full bg-slate-900/50 flex flex-col items-center justify-center rounded-2xl border border-purple-500/10 gap-3">
+    <div className="w-full h-full bg-slate-900/50 flex flex-col items-center justify-center rounded-2xl border border-indigo-500/10 gap-3">
       <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-accent-purple"></div>
       <p className="text-sm text-secondary font-medium animate-pulse">Đang tải bản đồ thế giới...</p>
     </div>
@@ -310,12 +310,12 @@ export default function MapPage() {
 
               {/* Filters */}
               {currentUser && (
-                <div className="flex gap-1.5 mt-3 border-t border-purple-500/10 pt-3">
+                <div className="flex gap-1.5 mt-3 border-t border-indigo-500/10 pt-3">
                   <button
                     onClick={() => setFilterType('all')}
                     className={`flex-1 py-1 px-3 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
                       filterType === 'all' 
-                        ? 'bg-purple-500/10 text-accent-purple border border-purple-500/20' 
+                        ? 'bg-indigo-500/10 text-accent-purple border border-indigo-500/20' 
                         : 'text-secondary hover:bg-black/5 dark:hover:bg-white/5'
                     }`}
                   >
@@ -325,7 +325,7 @@ export default function MapPage() {
                     onClick={() => setFilterType('my')}
                     className={`flex-1 py-1 px-3 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
                       filterType === 'my' 
-                        ? 'bg-purple-500/10 text-accent-purple border border-purple-500/20' 
+                        ? 'bg-indigo-500/10 text-accent-purple border border-indigo-500/20' 
                         : 'text-secondary hover:bg-black/5 dark:hover:bg-white/5'
                     }`}
                   >
@@ -339,18 +339,18 @@ export default function MapPage() {
             <div className="flex-1 overflow-y-auto pr-1">
               {selectedEvent ? (
                 /* Detail View */
-                <div className="glass-card rounded-2xl p-4 flex flex-col gap-4 animate-slide-up h-fit border border-purple-500/20">
-                  <div className="flex items-center justify-between border-b border-purple-500/10 pb-3">
+                <div className="glass-card rounded-2xl p-4 flex flex-col gap-4 animate-slide-up h-fit border border-indigo-500/20">
+                  <div className="flex items-center justify-between border-b border-indigo-500/10 pb-3">
                     <button 
                       onClick={() => setSelectedEvent(null)}
-                      className="text-xs font-bold text-accent-cyan flex items-center gap-1.5 hover:underline cursor-pointer"
+                      className="text-xs font-bold text-accent-primary flex items-center gap-1.5 hover:underline cursor-pointer"
                     >
                       ← Danh sách sự kiện
                     </button>
                     {isOrganizer(selectedEvent) && (
                       <button 
                         onClick={() => handleDeleteEvent(selectedEvent.id)}
-                        className="text-xs font-bold text-rose-400 hover:text-rose-300 cursor-pointer"
+                        className="text-xs font-bold text-red-400 hover:text-rose-300 cursor-pointer"
                         title="Xóa sự kiện"
                       >
                         🗑️ Xóa sự kiện
@@ -361,13 +361,13 @@ export default function MapPage() {
                   {/* Header Title */}
                   <div>
                     <h2 className="text-lg font-bold text-foreground leading-snug">{selectedEvent.title}</h2>
-                    <p className="text-xs text-accent-pink font-semibold mt-1 flex items-center gap-1.5">
+                    <p className="text-xs text-accent-primary font-semibold mt-1 flex items-center gap-1.5">
                       📅 {formatDate(selectedEvent.event_date)}
                     </p>
                   </div>
 
                   {/* Address */}
-                  <div className="bg-black/10 dark:bg-black/30 rounded-xl p-3 border border-purple-500/5">
+                  <div className="bg-black/10 dark:bg-black/30 rounded-xl p-3 border border-indigo-500/5">
                     <div className="text-xs font-bold text-secondary mb-1">📍 Địa điểm</div>
                     <div className="text-xs text-foreground font-medium leading-relaxed">{selectedEvent.location_name}</div>
                     <div className="text-[10px] text-muted mt-1.5 font-mono">
@@ -376,7 +376,7 @@ export default function MapPage() {
                   </div>
 
                   {/* Organizer info */}
-                  <div className="flex items-center gap-3 border-t border-b border-purple-500/10 py-3">
+                  <div className="flex items-center gap-3 border-t border-b border-indigo-500/10 py-3">
                     {selectedEvent.organizer_avatar_url ? (
                       <img 
                         src={selectedEvent.organizer_avatar_url} 
@@ -384,7 +384,7 @@ export default function MapPage() {
                         className="w-10 h-10 rounded-full object-cover avatar-glow"
                       />
                     ) : (
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full text-white flex items-center justify-center font-bold text-sm">
+                      <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full text-white flex items-center justify-center font-bold text-sm">
                         {selectedEvent.organizer_name?.charAt(0).toUpperCase() || '?'}
                       </div>
                     )}
@@ -398,14 +398,14 @@ export default function MapPage() {
                       {selectedEvent.organizer_type === 'GROUP' ? (
                         <Link 
                           href={`/groups/${selectedEvent.organizer_id}`}
-                          className="px-3 py-1 bg-purple-500/10 hover:bg-purple-500/25 border border-purple-500/20 text-xs font-semibold rounded-lg text-accent-purple"
+                          className="px-3 py-1 bg-indigo-500/10 hover:bg-indigo-500/25 border border-indigo-500/20 text-xs font-semibold rounded-lg text-accent-purple"
                         >
                           Ghé nhóm
                         </Link>
                       ) : (
                         <Link 
                           href={`/profile/${selectedEvent.organizer_id}`}
-                          className="px-3 py-1 bg-purple-500/10 hover:bg-purple-500/25 border border-purple-500/20 text-xs font-semibold rounded-lg text-accent-purple"
+                          className="px-3 py-1 bg-indigo-500/10 hover:bg-indigo-500/25 border border-indigo-500/20 text-xs font-semibold rounded-lg text-accent-purple"
                         >
                           Trang cá nhân
                         </Link>
@@ -416,7 +416,7 @@ export default function MapPage() {
                   {/* Description */}
                   <div>
                     <div className="text-xs font-bold text-secondary mb-1.5">📝 Chi tiết sự kiện</div>
-                    <p className="text-xs text-secondary leading-relaxed whitespace-pre-line bg-black/5 dark:bg-white/[0.01] p-3 rounded-xl border border-purple-500/5">
+                    <p className="text-xs text-secondary leading-relaxed whitespace-pre-line bg-black/5 dark:bg-white/[0.01] p-3 rounded-xl border border-indigo-500/5">
                       {selectedEvent.description || "Chưa có mô tả chi tiết cho sự kiện này."}
                     </p>
                   </div>
@@ -449,12 +449,12 @@ export default function MapPage() {
                           key={ev.id}
                           onClick={() => handleSelectEvent(ev)}
                           className={`glass-card glass-card-hover rounded-xl p-3.5 flex gap-3.5 cursor-pointer transition-all duration-300 border ${
-                            isSel ? 'border-pink-500/40 bg-pink-500/5' : 'border-purple-500/10'
+                            isSel ? 'border-indigo-500/40 bg-indigo-500/5' : 'border-indigo-500/10'
                           }`}
                         >
                           {/* Calendar block */}
-                          <div className="w-12 h-14 bg-gradient-to-br from-purple-500/20 to-pink-500/10 border border-purple-500/20 rounded-xl flex flex-col items-center justify-center flex-shrink-0">
-                            <span className="text-[10px] text-accent-pink font-extrabold uppercase">{dm.month}</span>
+                          <div className="w-12 h-14 bg-gradient-to-br from-indigo-500/15 to-indigo-600/10 border border-indigo-500/20 rounded-xl flex flex-col items-center justify-center flex-shrink-0">
+                            <span className="text-[10px] text-accent-primary font-extrabold uppercase">{dm.month}</span>
                             <span className="text-lg font-black text-foreground">{dm.day}</span>
                           </div>
 
@@ -462,7 +462,7 @@ export default function MapPage() {
                           <div className="flex-1 min-w-0 flex flex-col justify-center">
                             <h3 className="font-bold text-foreground text-xs leading-snug truncate mb-1">{ev.title}</h3>
                             <p className="text-[10px] text-muted truncate mb-1">📍 {ev.location_name}</p>
-                            <p className="text-[9px] text-accent-cyan font-bold truncate">👑 {ev.organizer_name}</p>
+                            <p className="text-[9px] text-accent-primary font-bold truncate">👑 {ev.organizer_name}</p>
                           </div>
                         </div>
                       );
@@ -494,10 +494,10 @@ export default function MapPage() {
       {/* Event Creation Form Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="glass-card rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-slide-up border border-purple-500/20">
+          <div className="glass-card rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden animate-slide-up border border-indigo-500/20">
             
             {/* Header */}
-            <div className="border-b border-purple-500/10 px-5 py-4 flex items-center justify-between bg-black/10 dark:bg-white/[0.01]">
+            <div className="border-b border-indigo-500/10 px-5 py-4 flex items-center justify-between bg-black/10 dark:bg-white/[0.01]">
               <div>
                 <h3 className="font-bold text-foreground text-sm">Tạo Sự Kiện Bản Đồ Mới</h3>
                 <p className="text-[10px] text-muted">Điền thông tin và nhấp chọn điểm trên bản đồ</p>
@@ -542,9 +542,9 @@ export default function MapPage() {
               </div>
 
               {/* Coordinates and Location picker */}
-              <div className="bg-black/10 dark:bg-black/30 p-4 rounded-xl border border-purple-500/10 mb-4 flex flex-col gap-3">
+              <div className="bg-black/10 dark:bg-black/30 p-4 rounded-xl border border-indigo-500/10 mb-4 flex flex-col gap-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-bold text-accent-cyan uppercase tracking-wider">Vị trí bản đồ *</span>
+                  <span className="text-[11px] font-bold text-accent-primary uppercase tracking-wider">Vị trí bản đồ *</span>
                   <span className="text-[10px] text-muted italic">Click bản đồ để chọn tọa độ</span>
                 </div>
                 
@@ -558,7 +558,7 @@ export default function MapPage() {
                       required
                       readOnly
                       placeholder="Chọn trên bản đồ"
-                      className="w-full px-3 py-2 bg-black/20 border border-purple-500/10 text-muted rounded-lg text-xs font-mono"
+                      className="w-full px-3 py-2 bg-black/20 border border-indigo-500/10 text-muted rounded-lg text-xs font-mono"
                       value={newLat}
                     />
                   </div>
@@ -570,7 +570,7 @@ export default function MapPage() {
                       required
                       readOnly
                       placeholder="Chọn trên bản đồ"
-                      className="w-full px-3 py-2 bg-black/20 border border-purple-500/10 text-muted rounded-lg text-xs font-mono"
+                      className="w-full px-3 py-2 bg-black/20 border border-indigo-500/10 text-muted rounded-lg text-xs font-mono"
                       value={newLng}
                     />
                   </div>
@@ -642,7 +642,7 @@ export default function MapPage() {
                       <input 
                         type="text" 
                         readOnly
-                        className="px-3 py-2.5 bg-black/20 border border-purple-500/10 text-muted rounded-xl text-xs flex-1 cursor-not-allowed font-medium"
+                        className="px-3 py-2.5 bg-black/20 border border-indigo-500/10 text-muted rounded-xl text-xs flex-1 cursor-not-allowed font-medium"
                         value={currentUser?.username || "Đang tải..."}
                       />
                     )}
@@ -651,7 +651,7 @@ export default function MapPage() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex gap-3 border-t border-purple-500/10 pt-4 mt-2">
+              <div className="flex gap-3 border-t border-indigo-500/10 pt-4 mt-2">
                 <button 
                   type="button" 
                   onClick={() => {

@@ -11,16 +11,16 @@ interface StoryCreatorProps {
 }
 
 const GRADIENT_PRESETS = [
-  { name: 'Tím hồng', value: 'from-purple-600 to-pink-500' },
-  { name: 'Xanh tím', value: 'from-blue-600 to-purple-600' },
-  { name: 'Cam đỏ', value: 'from-orange-500 to-rose-500' },
+  { name: 'Xanh dương', value: 'from-indigo-500 to-indigo-700' },
+  { name: 'Xanh tím', value: 'from-blue-600 to-indigo-600' },
+  { name: 'Cam đỏ', value: 'from-orange-500 to-red-500' },
   { name: 'Xanh lá', value: 'from-emerald-500 to-teal-600' },
-  { name: 'Xanh dương', value: 'from-cyan-500 to-blue-600' },
-  { name: 'Hồng tím', value: 'from-pink-500 to-violet-600' },
+  { name: 'Biển', value: 'from-cyan-500 to-blue-600' },
+  { name: 'Tím đậm', value: 'from-indigo-600 to-violet-700' },
   { name: 'Vàng cam', value: 'from-yellow-400 to-orange-500' },
   { name: 'Đen xám', value: 'from-gray-800 to-gray-900' },
-  { name: 'Indigo', value: 'from-indigo-500 to-purple-700' },
-  { name: 'Rose Gold', value: 'from-rose-400 to-amber-300' },
+  { name: 'Slate', value: 'from-slate-600 to-slate-800' },
+  { name: 'Ấm áp', value: 'from-amber-400 to-orange-500' },
 ];
 
 const TEXT_STYLES = [
@@ -93,7 +93,7 @@ export default function StoryCreator({ onClose, onCreated }: StoryCreatorProps) 
     <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="glass-card rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-hidden animate-slide-up">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-purple-500/10">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-indigo-500/10">
           <h3 className="font-extrabold text-foreground text-lg">📖 Tạo Story</h3>
           <button
             onClick={onClose}
@@ -131,7 +131,7 @@ export default function StoryCreator({ onClose, onCreated }: StoryCreatorProps) 
 
         <div className="p-5 space-y-4 overflow-y-auto max-h-[60vh]">
           {/* Preview */}
-          <div className="relative w-full aspect-[9/16] max-h-[320px] rounded-2xl overflow-hidden shadow-lg border border-purple-500/10">
+          <div className="relative w-full aspect-[9/16] max-h-[320px] rounded-2xl overflow-hidden shadow-lg border border-indigo-500/10">
             {mode === 'image' && imagePreview ? (
               <div className="w-full h-full relative">
                 <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
@@ -165,7 +165,7 @@ export default function StoryCreator({ onClose, onCreated }: StoryCreatorProps) 
 
           {/* Image upload */}
           {mode === 'image' && (
-            <label className="flex items-center justify-center gap-2 cursor-pointer border-2 border-dashed border-purple-500/20 hover:border-purple-500/40 rounded-xl py-4 transition-colors text-accent-purple/70 text-sm font-bold">
+            <label className="flex items-center justify-center gap-2 cursor-pointer border-2 border-dashed border-indigo-500/20 hover:border-indigo-500/40 rounded-xl py-4 transition-colors text-accent-purple/70 text-sm font-bold">
               <span className="text-xl">📷</span>
               <span>{imageFile ? 'Đổi ảnh khác' : 'Chọn ảnh từ thiết bị'}</span>
               <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
@@ -202,8 +202,8 @@ export default function StoryCreator({ onClose, onCreated }: StoryCreatorProps) 
                       onClick={() => setTextStyle(style.value)}
                       className={`flex-1 py-2 rounded-xl text-sm transition-all border ${
                         textStyle === style.value
-                          ? 'border-purple-500 bg-purple-500/10 text-accent-purple font-bold'
-                          : 'border-purple-500/10 text-muted/60 hover:bg-black/5 dark:hover:bg-white/5'
+                          ? 'border-indigo-500 bg-indigo-500/10 text-accent-purple font-bold'
+                          : 'border-indigo-500/10 text-muted/60 hover:bg-black/5 dark:hover:bg-white/5'
                       } ${
                         style.value === 'bold' ? 'font-extrabold' :
                         style.value === 'italic' ? 'italic' : ''
@@ -219,7 +219,7 @@ export default function StoryCreator({ onClose, onCreated }: StoryCreatorProps) 
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3.5 border-t border-purple-500/10 flex gap-3">
+        <div className="px-5 py-3.5 border-t border-indigo-500/10 flex gap-3">
           <button
             onClick={onClose}
             className="flex-1 py-2.5 rounded-xl text-xs font-bold text-muted/60 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"

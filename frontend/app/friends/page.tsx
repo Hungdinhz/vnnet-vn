@@ -192,12 +192,12 @@ function FriendsContent() {
             <h1 className="text-2xl font-extrabold gradient-text mb-4 tracking-tight">Bạn bè</h1>
 
             {/* Navigation Tabs */}
-            <div className="flex items-center gap-2 border-b border-purple-500/10 pb-2">
+            <div className="flex items-center gap-2 border-b border-indigo-500/10 pb-2">
               <button
                 onClick={() => setActiveTab('suggestions')}
                 className={`px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
                   activeTab === 'suggestions' 
-                    ? 'bg-purple-500/15 text-accent-purple shadow-sm' 
+                    ? 'bg-indigo-500/15 text-accent-purple shadow-sm' 
                     : 'text-muted/50 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-accent-purple'
                 }`}
               >
@@ -207,7 +207,7 @@ function FriendsContent() {
                 onClick={() => setActiveTab('requests')}
                 className={`px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none relative ${
                   activeTab === 'requests' 
-                    ? 'bg-purple-500/15 text-accent-purple shadow-sm' 
+                    ? 'bg-indigo-500/15 text-accent-purple shadow-sm' 
                     : 'text-muted/50 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-accent-purple'
                 }`}
               >
@@ -222,7 +222,7 @@ function FriendsContent() {
                 onClick={() => setActiveTab('list')}
                 className={`px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
                   activeTab === 'list' 
-                    ? 'bg-purple-500/15 text-accent-purple shadow-sm' 
+                    ? 'bg-indigo-500/15 text-accent-purple shadow-sm' 
                     : 'text-muted/50 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-accent-purple'
                 }`}
               >
@@ -234,7 +234,7 @@ function FriendsContent() {
           {/* Loader or Content */}
           {isLoading ? (
             <div className="flex justify-center items-center py-20 glass-card rounded-xl">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
             </div>
           ) : activeTab === 'suggestions' ? (
             
@@ -249,7 +249,7 @@ function FriendsContent() {
                   <div key={user.id || idx} className="glass-card glass-card-hover rounded-xl overflow-hidden flex flex-col justify-between transition-all duration-300">
                     
                     {/* Header Background */}
-                    <div className="h-20 bg-gradient-to-r from-purple-600/40 via-pink-500/30 to-cyan-500/20" />
+                    <div className="h-20 bg-gradient-to-r from-indigo-600/30 via-indigo-500/20 to-slate-500/15" />
                     
                     <div className="p-4 flex flex-col items-center text-center -mt-10 flex-1 justify-between">
                       <div className="flex flex-col items-center">
@@ -261,12 +261,12 @@ function FriendsContent() {
                               className="w-full h-full rounded-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full flex items-center justify-center text-xl font-bold text-secondary">
+                            <div className="w-full h-full bg-gradient-to-br from-indigo-500/50 to-indigo-600/50 rounded-full flex items-center justify-center text-xl font-bold text-secondary">
                               {getInitials(user.username)}
                             </div>
                           )}
                         </Link>
-                        <Link href={`/profile/${user.id}`} className="font-bold text-foreground text-[15px] hover:text-pink-300 transition-colors">
+                        <Link href={`/profile/${user.id}`} className="font-bold text-foreground text-[15px] hover:text-indigo-300 transition-colors">
                           {user.username}
                         </Link>
                         <p className="text-xs text-muted/40 truncate max-w-[180px] mt-0.5 mb-4">{user.email}</p>
@@ -275,7 +275,7 @@ function FriendsContent() {
                       {requestedUserIds.has(user.id) ? (
                         <button
                           disabled
-                          className="w-full py-2 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-xs shadow-sm transition-colors border border-purple-500/10 cursor-not-allowed"
+                          className="w-full py-2 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-xs shadow-sm transition-colors border border-indigo-500/10 cursor-not-allowed"
                         >
                           Đã gửi yêu cầu
                         </button>
@@ -304,7 +304,7 @@ function FriendsContent() {
                 pendingRequests.map((r: any) => (
                   <div key={r.id} className="glass-card glass-card-hover p-4 rounded-xl flex items-center justify-between gap-4 transition-all duration-300">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full text-white flex items-center justify-center font-bold shadow-lg">
+                      <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full text-white flex items-center justify-center font-bold shadow-lg">
                         {getInitials(r.sender_username)}
                       </div>
                       <div>
@@ -322,7 +322,7 @@ function FriendsContent() {
                       </button>
                       <button
                         onClick={() => handleReject(r.id)}
-                        className="px-5 py-2 bg-black/5 dark:bg-white/5 hover:bg-rose-500/10 text-accent-purple/70 hover:text-rose-400 rounded-lg font-semibold text-xs transition-colors border border-purple-500/10"
+                        className="px-5 py-2 bg-black/5 dark:bg-white/5 hover:bg-red-500/10 text-accent-purple/70 hover:text-red-400 rounded-lg font-semibold text-xs transition-colors border border-indigo-500/10"
                       >
                         Từ chối
                       </button>
@@ -344,7 +344,7 @@ function FriendsContent() {
                   <div key={user.id || idx} className="glass-card glass-card-hover rounded-xl overflow-hidden flex flex-col justify-between transition-all duration-300">
                     
                     {/* Header Background */}
-                    <div className="h-20 bg-gradient-to-r from-cyan-600/30 via-purple-500/30 to-pink-500/20" />
+                    <div className="h-20 bg-gradient-to-r from-indigo-600/25 via-indigo-500/20 to-slate-500/15" />
                     
                     <div className="p-4 flex flex-col items-center text-center -mt-10 flex-1 justify-between">
                       <div className="flex flex-col items-center">
@@ -356,12 +356,12 @@ function FriendsContent() {
                               className="w-full h-full rounded-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-purple-500/50 to-cyan-500/50 rounded-full flex items-center justify-center text-xl font-bold text-secondary">
+                            <div className="w-full h-full bg-gradient-to-br from-indigo-500/50 to-indigo-600/50 rounded-full flex items-center justify-center text-xl font-bold text-secondary">
                               {getInitials(user.username)}
                             </div>
                           )}
                         </Link>
-                        <Link href={`/profile/${user.id}`} className="font-bold text-foreground text-[15px] hover:text-pink-300 transition-colors">
+                        <Link href={`/profile/${user.id}`} className="font-bold text-foreground text-[15px] hover:text-indigo-300 transition-colors">
                           {user.username}
                         </Link>
                         <p className="text-xs text-muted/40 truncate max-w-[180px] mt-0.5 mb-4">{user.email}</p>
@@ -370,7 +370,7 @@ function FriendsContent() {
                       <div className="w-full space-y-2">
                         <button 
                           onClick={() => router.push(`/profile/${user.id}`)}
-                          className="w-full py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 text-secondary font-bold rounded-lg text-xs transition-colors border border-purple-500/10"
+                          className="w-full py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 text-secondary font-bold rounded-lg text-xs transition-colors border border-indigo-500/10"
                         >
                           Xem trang cá nhân
                         </button>
@@ -380,13 +380,13 @@ function FriendsContent() {
                           <div className="flex gap-2">
                             <button
                               onClick={() => handleUnfriend(user.id)}
-                              className="flex-1 py-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold rounded-lg text-xs transition-colors border border-rose-500/20"
+                              className="flex-1 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-lg text-xs transition-colors border border-red-500/20"
                             >
                               ✓ Xác nhận
                             </button>
                             <button
                               onClick={() => setConfirmUnfriend(null)}
-                              className="flex-1 py-2 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-xs transition-colors border border-purple-500/10"
+                              className="flex-1 py-2 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-xs transition-colors border border-indigo-500/10"
                             >
                               Hủy
                             </button>
@@ -394,7 +394,7 @@ function FriendsContent() {
                         ) : (
                           <button
                             onClick={() => setConfirmUnfriend(user.id)}
-                            className="w-full py-2 hover:bg-rose-500/10 text-muted/40 hover:text-rose-400 font-semibold rounded-lg text-xs transition-colors border border-transparent hover:border-rose-500/20"
+                            className="w-full py-2 hover:bg-red-500/10 text-muted/40 hover:text-red-400 font-semibold rounded-lg text-xs transition-colors border border-transparent hover:border-red-500/20"
                           >
                             Hủy kết bạn
                           </button>
@@ -417,7 +417,7 @@ export default function FriendsPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-background flex justify-center items-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
       </div>
     }>
       <FriendsContent />

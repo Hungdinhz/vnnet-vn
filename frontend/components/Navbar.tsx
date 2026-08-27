@@ -214,7 +214,7 @@ export default function Navbar() {
         
         {/* Left: Logo & Search */}
         <div className="flex items-center gap-3 flex-1 md:flex-initial">
-          <Link href="/" className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 via-pink-500 to-cyan-400 hover:shadow-[0_0_20px_rgba(139,92,246,0.5)] transition-all duration-300 shadow-lg">
+          <Link href="/" className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 hover:shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all duration-300 shadow-lg">
             <span className="text-white text-lg font-black tracking-tighter">VN</span>
           </Link>
           
@@ -235,7 +235,7 @@ export default function Navbar() {
 
             {/* Search Dropdown */}
             {showSearchDropdown && searchResults && (
-              <div className="absolute left-0 top-full mt-2 w-96 bg-background border border-purple-500/20 shadow-2xl rounded-xl py-2 z-50 animate-slide-up max-h-[480px] overflow-hidden flex flex-col">
+              <div className="absolute left-0 top-full mt-2 w-96 bg-background border border-indigo-500/15 shadow-2xl rounded-xl py-2 z-50 animate-slide-up max-h-[480px] overflow-hidden flex flex-col">
                 
                 {/* Users section */}
                 {searchResults.users && searchResults.users.length > 0 && (
@@ -253,7 +253,7 @@ export default function Navbar() {
                         {user.avatar_url ? (
                           <img src={user.avatar_url} alt={user.username} className="w-9 h-9 rounded-full object-cover" />
                         ) : (
-                          <div className="w-9 h-9 bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full flex items-center justify-center text-sm font-bold text-secondary">
+                          <div className="w-9 h-9 bg-gradient-to-br from-indigo-500/50 to-indigo-600/50 rounded-full flex items-center justify-center text-sm font-bold text-secondary">
                             {getInitials(user.username)}
                           </div>
                         )}
@@ -269,7 +269,7 @@ export default function Navbar() {
                 {/* Posts section */}
                 {searchResults.posts && searchResults.posts.length > 0 && (
                   <>
-                    <div className="px-4 py-1.5 text-[11px] font-bold text-muted uppercase tracking-wider border-t border-purple-500/10 mt-1">
+                    <div className="px-4 py-1.5 text-[11px] font-bold text-muted uppercase tracking-wider border-t border-indigo-500/10 mt-1">
                       📝 Bài viết ({searchResults.total_posts})
                     </div>
                     {searchResults.posts.map((post: any) => (
@@ -278,7 +278,7 @@ export default function Navbar() {
                         onClick={() => { setShowSearchDropdown(false); router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`); }}
                         className="flex items-center gap-3 px-4 py-2.5 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
                       >
-                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center text-lg flex-shrink-0 border border-purple-500/10">
+                        <div className="w-9 h-9 rounded-lg bg-indigo-500/10 flex items-center justify-center text-lg flex-shrink-0 border border-indigo-500/10">
                           📄
                         </div>
                         <div className="flex-1 min-w-0">
@@ -303,7 +303,7 @@ export default function Navbar() {
                   <Link
                     href={`/search?q=${encodeURIComponent(searchQuery.trim())}`}
                     onClick={() => setShowSearchDropdown(false)}
-                    className="block text-center py-2.5 text-xs font-bold text-accent-pink hover:bg-black/5 dark:hover:bg-white/5 transition-colors border-t border-purple-500/10 mt-1"
+                    className="block text-center py-2.5 text-xs font-bold text-accent-primary hover:bg-black/5 dark:hover:bg-white/5 transition-colors border-t border-indigo-500/10 mt-1"
                   >
                     Xem tất cả kết quả →
                   </Link>
@@ -312,7 +312,7 @@ export default function Navbar() {
                 {/* Loading indicator */}
                 {isSearching && (
                   <div className="absolute top-2 right-3">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-500"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-500"></div>
                   </div>
                 )}
               </div>
@@ -330,8 +330,8 @@ export default function Navbar() {
                 href={item.href} 
                 className={`flex items-center justify-center flex-1 h-full border-b-[3px] transition-all duration-200 ${
                   isActive 
-                    ? 'border-transparent nav-active text-accent-purple' 
-                    : 'border-transparent text-secondary hover:text-accent-purple hover:bg-black/5 dark:hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5'
+                    ? 'border-transparent nav-active text-accent-primary' 
+                    : 'border-transparent text-secondary hover:text-accent-primary hover:bg-black/5 dark:hover:bg-white/5'
                 }`}
                 title={item.label}
               >
@@ -348,7 +348,7 @@ export default function Navbar() {
           <ThemeToggle />
           
           {/* Messages Icon */}
-          <Link href="/messages" className="relative cursor-pointer hover:bg-black/10 dark:hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-black/5 dark:bg-white/5 transition-all duration-200 border border-purple-500/10">
+          <Link href="/messages" className="relative cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 transition-all duration-200 border border-indigo-500/10">
             <span className="text-lg">💬</span>
           </Link>
 
@@ -356,11 +356,11 @@ export default function Navbar() {
           <div className="relative" ref={notifRef}>
             <button 
               onClick={() => { setShowNotifDropdown(!showNotifDropdown); setShowDropdown(false); }}
-              className="relative cursor-pointer hover:bg-black/10 dark:hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-black/5 dark:bg-white/5 transition-all duration-200 border border-purple-500/10 focus:outline-none"
+              className="relative cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 transition-all duration-200 border border-indigo-500/10 focus:outline-none"
             >
               <span className="text-lg">🔔</span>
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 badge-anime animate-pulse border-2 border-[#0F0B1E]">
+                <span className="absolute -top-1 -right-1 badge-anime animate-pulse border-2 border-background">
                   {unreadCount}
                 </span>
               )}
@@ -368,13 +368,13 @@ export default function Navbar() {
 
             {/* Notifications Dropdown */}
             {showNotifDropdown && (
-              <div className="absolute right-0 mt-2 w-96 bg-background border border-purple-500/20 shadow-2xl rounded-xl py-2 z-50 animate-slide-up max-h-[480px] overflow-hidden flex flex-col">
-                <div className="flex items-center justify-between px-4 py-2 border-b border-purple-500/10">
+              <div className="absolute right-0 mt-2 w-96 bg-background border border-indigo-500/15 shadow-2xl rounded-xl py-2 z-50 animate-slide-up max-h-[480px] overflow-hidden flex flex-col">
+                <div className="flex items-center justify-between px-4 py-2 border-b border-indigo-500/10">
                   <h3 className="font-bold text-foreground text-[15px]">🔔 Thông báo</h3>
                   {unreadCount > 0 && (
                     <button 
                       onClick={handleMarkAllRead}
-                      className="text-[11px] text-pink-400 hover:text-pink-300 font-semibold transition-colors"
+                      className="text-[11px] text-accent-primary hover:text-accent-primary/80 font-semibold transition-colors"
                     >
                       Đánh dấu tất cả đã đọc
                     </button>
@@ -398,11 +398,11 @@ export default function Navbar() {
                             if (!notif.is_read) handleMarkAsRead(notif.id);
                             setShowNotifDropdown(false);
                           }}
-                          className={`flex items-start gap-3 px-4 py-3 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 transition-colors border-b border-purple-500/5 ${
-                            !notif.is_read ? 'bg-purple-500/5' : ''
+                          className={`flex items-start gap-3 px-4 py-3 hover:bg-black/5 dark:hover:bg-white/5 transition-colors border-b border-indigo-500/5 ${
+                            !notif.is_read ? 'bg-indigo-500/5' : ''
                           }`}
                         >
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center text-lg flex-shrink-0 border border-purple-500/10">
+                          <div className="w-10 h-10 rounded-full bg-indigo-500/10 flex items-center justify-center text-lg flex-shrink-0 border border-indigo-500/10">
                             {icon}
                           </div>
                           <div className="flex-1 min-w-0">
@@ -412,7 +412,7 @@ export default function Navbar() {
                             <p className="text-[11px] text-muted/40 mt-0.5">{formatTimeAgo(notif.created_at)}</p>
                           </div>
                           {!notif.is_read && (
-                            <div className="w-2.5 h-2.5 rounded-full bg-pink-500 flex-shrink-0 mt-1.5"></div>
+                            <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 flex-shrink-0 mt-1.5"></div>
                           )}
                         </Link>
                       );
@@ -436,7 +436,7 @@ export default function Navbar() {
                   className="w-10 h-10 rounded-full object-cover avatar-glow"
                 />
               ) : (
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full text-white flex items-center justify-center font-bold shadow-lg avatar-glow">
+                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full text-white flex items-center justify-center font-bold shadow-lg avatar-glow">
                   {getInitials(currentUser?.username)}
                 </div>
               )}
@@ -444,11 +444,11 @@ export default function Navbar() {
 
             {/* User Dropdown Menu */}
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-72 bg-background border border-purple-500/20 shadow-2xl rounded-xl py-3 z-50 animate-slide-up">
+              <div className="absolute right-0 mt-2 w-72 bg-background border border-indigo-500/15 shadow-2xl rounded-xl py-3 z-50 animate-slide-up">
                 <Link 
                   href="/profile" 
                   onClick={() => setShowDropdown(false)}
-                  className="flex items-center gap-3 px-4 py-2 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 mx-2 rounded-lg transition-colors"
+                  className="flex items-center gap-3 px-4 py-2 hover:bg-black/5 dark:hover:bg-white/5 mx-2 rounded-lg transition-colors"
                 >
                   {currentUser?.avatar_url ? (
                     <img 
@@ -457,7 +457,7 @@ export default function Navbar() {
                       className="w-12 h-12 rounded-full object-cover avatar-glow"
                     />
                   ) : (
-                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full text-white flex items-center justify-center text-lg font-bold">
+                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full text-white flex items-center justify-center text-lg font-bold">
                       {getInitials(currentUser?.username)}
                     </div>
                   )}
@@ -467,12 +467,12 @@ export default function Navbar() {
                   </div>
                 </Link>
 
-                <hr className="my-2 border-purple-500/10 mx-4" />
+                <hr className="my-2 border-indigo-500/10 mx-4" />
 
                 <Link 
                   href="/friends"
                   onClick={() => setShowDropdown(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 mx-2 rounded-lg transition-colors text-sm font-medium text-left text-secondary"
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-black/5 dark:hover:bg-white/5 mx-2 rounded-lg transition-colors text-sm font-medium text-left text-secondary"
                 >
                   <span className="text-lg">👥</span> Bạn bè
                 </Link>
@@ -480,14 +480,14 @@ export default function Navbar() {
                 <Link 
                   href="/settings"
                   onClick={() => setShowDropdown(false)}
-                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 mx-2 rounded-lg transition-colors text-sm font-medium text-left text-secondary"
+                  className="flex items-center gap-3 px-4 py-2.5 hover:bg-black/5 dark:hover:bg-white/5 mx-2 rounded-lg transition-colors text-sm font-medium text-left text-secondary"
                 >
                   <span className="text-lg">⚙️</span> Cài đặt
                 </Link>
 
                 <button 
                   onClick={handleLogout}
-                  className="w-[calc(100%-1rem)] flex items-center gap-3 px-4 py-2.5 hover:bg-rose-500/10 text-rose-400 mx-2 rounded-lg transition-colors text-sm font-semibold text-left mt-2 focus:outline-none"
+                  className="w-[calc(100%-1rem)] flex items-center gap-3 px-4 py-2.5 hover:bg-red-500/10 text-red-400 mx-2 rounded-lg transition-colors text-sm font-semibold text-left mt-2 focus:outline-none"
                 >
                   <span className="text-lg">🚪</span> Đăng xuất
                 </button>

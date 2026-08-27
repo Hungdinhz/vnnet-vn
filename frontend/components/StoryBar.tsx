@@ -63,8 +63,8 @@ export default function StoryBar() {
         <div className="flex items-center gap-3 overflow-hidden">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="flex flex-col items-center gap-1.5 flex-shrink-0 animate-pulse">
-              <div className="w-16 h-16 rounded-full bg-purple-500/10"></div>
-              <div className="w-12 h-2 rounded bg-purple-500/10"></div>
+              <div className="w-16 h-16 rounded-full bg-indigo-500/10"></div>
+              <div className="w-12 h-2 rounded bg-indigo-500/10"></div>
             </div>
           ))}
         </div>
@@ -85,7 +85,7 @@ export default function StoryBar() {
             onClick={() => setCreatorOpen(true)}
             className="flex flex-col items-center gap-1.5 flex-shrink-0 group cursor-pointer"
           >
-            <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-2 border-dashed border-purple-500/40 flex items-center justify-center group-hover:border-purple-400 group-hover:from-purple-500/30 group-hover:to-pink-500/30 transition-all duration-300">
+            <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500/15 to-indigo-600/15 border-2 border-dashed border-indigo-500/40 flex items-center justify-center group-hover:border-indigo-400 group-hover:from-indigo-500/30 group-hover:to-indigo-600/30 transition-all duration-300">
               <span className="text-2xl group-hover:scale-110 transition-transform">➕</span>
             </div>
             <span className="text-[10px] font-semibold text-muted/60 max-w-[64px] truncate">Tạo story</span>
@@ -100,21 +100,21 @@ export default function StoryBar() {
             >
               <div className={`relative w-16 h-16 rounded-full p-[3px] transition-all duration-300 group-hover:scale-105 ${
                 group.has_unviewed
-                  ? 'bg-gradient-to-br from-purple-500 via-pink-500 to-cyan-400 shadow-lg shadow-purple-500/20'
-                  : 'bg-gradient-to-br from-gray-400/30 to-gray-500/30'
+                  ? 'bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-lg shadow-indigo-500/20'
+                  : 'bg-gradient-to-br from-slate-400/30 to-slate-500/30'
               }`}>
                 <div className="w-full h-full rounded-full bg-background p-[2px]">
                   {group.avatar_url ? (
                     <img src={group.avatar_url} alt={group.username} className="w-full h-full rounded-full object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full flex items-center justify-center text-lg font-bold text-white">
+                    <div className="w-full h-full bg-gradient-to-br from-indigo-500/50 to-indigo-600/50 rounded-full flex items-center justify-center text-lg font-bold text-white">
                       {getInitials(group.username)}
                     </div>
                   )}
                 </div>
                 {/* Story count badge */}
                 {group.stories.length > 1 && (
-                  <div className="absolute -bottom-0.5 -right-0.5 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-[9px] font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-background shadow-sm">
+                  <div className="absolute -bottom-0.5 -right-0.5 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white text-[9px] font-bold rounded-full w-5 h-5 flex items-center justify-center border-2 border-background shadow-sm">
                     {group.stories.length}
                   </div>
                 )}

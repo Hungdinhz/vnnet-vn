@@ -111,8 +111,8 @@ export default function MapComponent({
         className: 'custom-create-marker',
         html: `
           <div class="relative flex flex-col items-center justify-center">
-            <div class="absolute w-8 h-8 bg-cyan-500/20 rounded-full animate-ping"></div>
-            <div class="w-6 h-6 bg-gradient-to-br from-cyan-400 to-blue-500 border-2 border-white rounded-full flex items-center justify-center shadow-[0_0_15px_#22d3ee]">
+            <div class="absolute w-8 h-8 bg-indigo-500/20 rounded-full animate-ping"></div>
+            <div class="w-6 h-6 bg-gradient-to-br from-indigo-400 to-indigo-600 border-2 border-white rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(99,102,241,0.5)]">
               <span class="text-white text-[11px] font-bold">📍</span>
             </div>
           </div>
@@ -142,8 +142,8 @@ export default function MapComponent({
       className: 'custom-user-marker',
       html: `
         <div class="relative flex items-center justify-center">
-          <div class="absolute w-6 h-6 bg-cyan-400/30 rounded-full animate-ping"></div>
-          <div class="w-4 h-4 bg-cyan-400 border-2 border-white rounded-full shadow-[0_0_10px_#22d3ee]"></div>
+          <div class="absolute w-6 h-6 bg-indigo-400/30 rounded-full animate-ping"></div>
+          <div class="w-4 h-4 bg-indigo-400 border-2 border-white rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
         </div>
       `,
       iconSize: [24, 24],
@@ -171,8 +171,8 @@ export default function MapComponent({
         className: `custom-event-marker event-${event.id}`,
         html: `
           <div class="relative flex flex-col items-center justify-center transition-all duration-300 ${isSelected ? 'scale-125' : 'hover:scale-110'}">
-            <div class="absolute w-8 h-8 ${isSelected ? 'bg-pink-500/40' : 'bg-purple-500/25'} rounded-full ${isSelected ? 'animate-pulse' : 'animate-ping'}" style="animation-duration: 2s"></div>
-            <div class="w-6 h-6 bg-gradient-to-br ${isSelected ? 'from-pink-500 to-rose-600' : 'from-purple-500 to-pink-500'} border-2 border-white rounded-full flex items-center justify-center shadow-[0_0_15px_${isSelected ? '#ec4899' : '#a855f7'}]">
+            <div class="absolute w-8 h-8 ${isSelected ? 'bg-indigo-500/40' : 'bg-indigo-500/25'} rounded-full ${isSelected ? 'animate-pulse' : 'animate-ping'}" style="animation-duration: 2s"></div>
+            <div class="w-6 h-6 bg-gradient-to-br ${isSelected ? 'from-indigo-500 to-indigo-700' : 'from-indigo-500 to-indigo-600'} border-2 border-white rounded-full flex items-center justify-center shadow-[0_0_15px_${isSelected ? '#818cf8' : '#6366f1'}]">
               <span class="text-white text-[10px]">${isSelected ? '⭐' : '✨'}</span>
             </div>
           </div>
@@ -286,7 +286,7 @@ export default function MapComponent({
 
           // Draw dual polylines for glowing effect
           const glowPolyline = L.polyline(latlngs, {
-            color: '#a855f7', // Purple glow background
+            color: '#6366f1', // Purple glow background
             weight: 8,
             opacity: 0.35,
             lineCap: 'round',
@@ -294,7 +294,7 @@ export default function MapComponent({
           }).addTo(map);
 
           const frontPolyline = L.polyline(latlngs, {
-            color: '#ec4899', // Pink sakura foreground path
+            color: '#818cf8', // Pink sakura foreground path
             weight: 4,
             opacity: 0.9,
             lineCap: 'round',
@@ -326,7 +326,7 @@ export default function MapComponent({
   }, [routeToEvent, userLocation, onClearRoute]);
 
   return (
-    <div className="relative w-full h-full rounded-2xl overflow-hidden border border-purple-500/10 shadow-2xl">
+    <div className="relative w-full h-full rounded-2xl overflow-hidden border border-indigo-500/10 shadow-2xl">
       {/* Leaflet container */}
       <div ref={mapContainerRef} className="w-full h-full z-0" />
 
@@ -334,7 +334,7 @@ export default function MapComponent({
       <button
         onClick={handleLocateMe}
         disabled={isLocating}
-        className="absolute bottom-5 right-5 z-10 w-11 h-11 bg-background/80 hover:bg-background border border-purple-500/20 rounded-full flex items-center justify-center shadow-lg hover:shadow-purple-500/20 text-xl transition-all hover:scale-105 active:scale-95 text-foreground cursor-pointer focus:outline-none"
+        className="absolute bottom-5 right-5 z-10 w-11 h-11 bg-background/80 hover:bg-background border border-indigo-500/20 rounded-full flex items-center justify-center shadow-lg hover:shadow-indigo-500/20 text-xl transition-all hover:scale-105 active:scale-95 text-foreground cursor-pointer focus:outline-none"
         title="Định vị tôi"
       >
         {isLocating ? (
@@ -346,18 +346,18 @@ export default function MapComponent({
 
       {/* Map guide tooltip */}
       {isCreating && (
-        <div className="absolute top-4 left-4 z-10 glass-card px-4 py-2 rounded-xl text-xs font-semibold text-accent-cyan shadow-lg border border-cyan-500/20 animate-pulse pointer-events-none">
+        <div className="absolute top-4 left-4 z-10 glass-card px-4 py-2 rounded-xl text-xs font-semibold text-accent-primary shadow-lg border border-indigo-500/20 animate-pulse pointer-events-none">
           ℹ️ Click bất kỳ đâu trên bản đồ để chọn tọa độ sự kiện
         </div>
       )}
 
       {/* Routing status info */}
       {routeToEvent && (
-        <div className="absolute top-4 left-4 z-10 glass-card px-4 py-2.5 rounded-xl text-xs font-bold text-accent-pink shadow-lg border border-pink-500/20 flex items-center gap-2">
+        <div className="absolute top-4 left-4 z-10 glass-card px-4 py-2.5 rounded-xl text-xs font-bold text-accent-primary shadow-lg border border-indigo-500/20 flex items-center gap-2">
           <span>🛣️ Đang hiển thị đường đi từ vị trí của bạn</span>
           <button 
             onClick={onClearRoute}
-            className="w-5 h-5 rounded-full bg-pink-500/10 hover:bg-pink-500/30 text-white flex items-center justify-center font-bold text-[10px] cursor-pointer"
+            className="w-5 h-5 rounded-full bg-indigo-500/10 hover:bg-indigo-500/30 text-white flex items-center justify-center font-bold text-[10px] cursor-pointer"
             title="Xóa đường đi"
           >
             ❌
