@@ -230,8 +230,8 @@ export default function Home() {
         <main className="flex-1 max-w-2xl py-4 md:py-6 mx-auto w-full">
           
           {/* Welcome Dashboard Card */}
-          <div className="glass-card rounded-2xl p-5 mb-5 relative overflow-hidden border border-purple-500/10 shadow-lg animate-slide-up">
-            <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-gradient-to-br from-accent-purple/20 to-accent-pink/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="glass-card rounded-2xl p-5 mb-5 relative overflow-hidden border border-indigo-500/10 shadow-lg animate-slide-up">
+            <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-gradient-to-br from-accent-primary/15 to-accent-secondary/10 rounded-full blur-3xl pointer-events-none" />
             <div className="flex justify-between items-center relative z-10">
               <div>
                 <h2 className="text-xl md:text-2xl font-extrabold tracking-tight">
@@ -244,17 +244,17 @@ export default function Home() {
             </div>
 
             {/* Quick stats mini row */}
-            <div className="grid grid-cols-3 gap-2.5 mt-4 pt-4 border-t border-purple-500/10 text-center">
-              <div className="bg-black/10 dark:bg-white/[0.02] p-2 rounded-xl border border-purple-500/5">
+            <div className="grid grid-cols-3 gap-2.5 mt-4 pt-4 border-t border-indigo-500/10 text-center">
+              <div className="bg-black/10 dark:bg-white/[0.02] p-2 rounded-xl border border-indigo-500/5">
                 <span className="block text-xs font-bold text-accent-purple">👥 Bạn bè</span>
                 <span className="text-sm font-extrabold font-mono mt-0.5 block">Đang kết nối</span>
               </div>
-              <div className="bg-black/10 dark:bg-white/[0.02] p-2 rounded-xl border border-purple-500/5">
-                <span className="block text-xs font-bold text-accent-pink">🏘️ Nhóm</span>
+              <div className="bg-black/10 dark:bg-white/[0.02] p-2 rounded-xl border border-indigo-500/5">
+                <span className="block text-xs font-bold text-accent-primary">🏘️ Nhóm</span>
                 <span className="text-sm font-extrabold font-mono mt-0.5 block">{myGroups.length} đã tham gia</span>
               </div>
-              <Link href="/groups" className="bg-black/10 dark:bg-white/[0.02] p-2 rounded-xl border border-purple-500/5 hover:bg-purple-500/10 transition-colors cursor-pointer block">
-                <span className="block text-xs font-bold text-cyan-400">➕ Khám phá</span>
+              <Link href="/groups" className="bg-black/10 dark:bg-white/[0.02] p-2 rounded-xl border border-indigo-500/5 hover:bg-indigo-500/10 transition-colors cursor-pointer block">
+                <span className="block text-xs font-bold text-indigo-400">➕ Khám phá</span>
                 <span className="text-xs font-semibold text-muted mt-1 block">Tìm nhóm mới</span>
               </Link>
             </div>
@@ -262,10 +262,10 @@ export default function Home() {
 
           {/* Stories / Joined Groups Circle Row */}
           {myGroups.length > 0 && (
-            <div className="glass-card rounded-2xl p-4 mb-5 border border-purple-500/10">
+            <div className="glass-card rounded-2xl p-4 mb-5 border border-indigo-500/10">
               <div className="flex items-center justify-between mb-3 px-1">
                 <span className="text-xs font-bold uppercase tracking-wider text-accent-purple/80">👥 Nhóm của bạn ({myGroups.length})</span>
-                <Link href="/groups" className="text-[11px] text-accent-pink font-semibold hover:underline">Tất cả nhóm</Link>
+                <Link href="/groups" className="text-[11px] text-accent-primary font-semibold hover:underline">Tất cả nhóm</Link>
               </div>
               <div className="flex gap-4 overflow-x-auto pb-1.5 scrollbar-thin">
                 {myGroups.map((group) => (
@@ -274,7 +274,7 @@ export default function Home() {
                     href={`/groups/${group.id}`} 
                     className="flex flex-col items-center gap-1.5 flex-shrink-0 group cursor-pointer w-16"
                   >
-                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-purple-500/20 group-hover:border-accent-pink group-hover:scale-105 transition-all avatar-glow relative bg-gradient-to-br from-purple-600/30 to-pink-500/30 flex items-center justify-center font-bold text-white text-sm">
+                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-indigo-500/20 group-hover:border-accent-primary group-hover:scale-105 transition-all avatar-glow relative bg-gradient-to-br from-indigo-600/20 to-indigo-500/20 flex items-center justify-center font-bold text-white text-sm">
                       {group.cover_url ? (
                         <img src={group.cover_url} alt={group.name} className="w-full h-full object-cover" />
                       ) : (
@@ -291,7 +291,7 @@ export default function Home() {
           )}
 
           {/* Smart Post Publisher */}
-          <div className="glass-card rounded-2xl p-4.5 mb-5 border border-purple-500/10 shadow-lg relative">
+          <div className="glass-card rounded-2xl p-4.5 mb-5 border border-indigo-500/10 shadow-lg relative">
             {!isComposing ? (
               <div className="flex gap-3.5 items-center">
                 {currentUser?.avatar_url ? (
@@ -301,20 +301,20 @@ export default function Home() {
                     className="w-10 h-10 rounded-full object-cover avatar-glow"
                   />
                 ) : (
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full text-white flex items-center justify-center font-bold shadow-md">
+                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full text-white flex items-center justify-center font-bold shadow-md">
                     {getInitials(currentUser?.username)}
                   </div>
                 )}
                 <div 
                   onClick={() => setIsComposing(true)}
-                  className="flex-1 px-4 py-3 bg-black/5 dark:bg-white/[0.03] hover:bg-black/10 dark:hover:bg-white/[0.06] border border-purple-500/10 text-accent-purple/60 rounded-full cursor-pointer transition-all text-sm font-medium"
+                  className="flex-1 px-4 py-3 bg-black/5 dark:bg-white/[0.03] hover:bg-black/10 dark:hover:bg-white/[0.06] border border-indigo-500/10 text-accent-purple/60 rounded-full cursor-pointer transition-all text-sm font-medium"
                 >
                   {currentUser?.username ? currentUser.username : "Bạn"} ơi, hôm nay bạn muốn chia sẻ điều gì? ✨
                 </div>
               </div>
             ) : (
               <div className="space-y-4 animate-slide-up">
-                <div className="flex items-center justify-between gap-3 pb-3 border-b border-purple-500/10">
+                <div className="flex items-center justify-between gap-3 pb-3 border-b border-indigo-500/10">
                   <div className="flex items-center gap-3">
                     {currentUser?.avatar_url ? (
                       <img 
@@ -323,7 +323,7 @@ export default function Home() {
                         className="w-10 h-10 rounded-full object-cover avatar-glow"
                       />
                     ) : (
-                      <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full text-white flex items-center justify-center font-bold">
+                      <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full text-white flex items-center justify-center font-bold">
                         {getInitials(currentUser?.username)}
                       </div>
                     )}
@@ -337,7 +337,7 @@ export default function Home() {
                         <button
                           type="button"
                           onClick={() => setShowGroupDropdown(!showGroupDropdown)}
-                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-accent-purple hover:bg-purple-500/20 transition-all text-[11px] font-bold focus:outline-none"
+                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-accent-purple hover:bg-indigo-500/20 transition-all text-[11px] font-bold focus:outline-none"
                         >
                           {selectedGroupId ? (
                             <>👥 Đăng vào nhóm: {myGroups.find(g => g.id === selectedGroupId)?.name || 'Đang chọn'}</>
@@ -355,8 +355,8 @@ export default function Home() {
                                 setSelectedGroupId(null);
                                 setShowGroupDropdown(false);
                               }}
-                              className={`w-full text-left px-3.5 py-2 text-xs font-semibold hover:bg-purple-500/10 flex items-center gap-2 ${
-                                selectedGroupId === null ? 'text-accent-pink' : 'text-foreground'
+                              className={`w-full text-left px-3.5 py-2 text-xs font-semibold hover:bg-indigo-500/10 flex items-center gap-2 ${
+                                selectedGroupId === null ? 'text-accent-primary' : 'text-foreground'
                               }`}
                             >
                               <span>🌏</span> Đăng công khai (Bảng tin)
@@ -370,8 +370,8 @@ export default function Home() {
                                   setSelectedGroupId(group.id);
                                   setShowGroupDropdown(false);
                                 }}
-                                className={`w-full text-left px-3.5 py-2 text-xs font-semibold hover:bg-purple-500/10 flex items-center gap-2 ${
-                                  selectedGroupId === group.id ? 'text-accent-pink' : 'text-foreground'
+                                className={`w-full text-left px-3.5 py-2 text-xs font-semibold hover:bg-indigo-500/10 flex items-center gap-2 ${
+                                  selectedGroupId === group.id ? 'text-accent-primary' : 'text-foreground'
                                 }`}
                               >
                                 <span>👥</span> Nhóm: {group.name}
@@ -414,7 +414,7 @@ export default function Home() {
 
                   {/* Image attachment preview */}
                   {imagePreview && (
-                    <div className="relative border border-purple-500/15 rounded-xl overflow-hidden max-h-[280px] bg-black/25 flex justify-center shadow-inner">
+                    <div className="relative border border-indigo-500/15 rounded-xl overflow-hidden max-h-[280px] bg-black/25 flex justify-center shadow-inner">
                       <img src={imagePreview} alt="Preview" className="max-w-full h-auto object-contain max-h-[280px]" />
                       <button 
                         type="button"
@@ -426,10 +426,10 @@ export default function Home() {
                     </div>
                   )}
                   
-                  <hr className="border-purple-500/10" />
+                  <hr className="border-indigo-500/10" />
                   
                   <div className="flex items-center justify-between">
-                    <label className="flex items-center gap-2 cursor-pointer hover:bg-purple-500/10 dark:bg-white/[0.02] border border-purple-500/15 px-4 py-2.5 rounded-xl transition-all text-accent-purple/90 text-xs font-bold">
+                    <label className="flex items-center gap-2 cursor-pointer hover:bg-indigo-500/10 dark:bg-white/[0.02] border border-indigo-500/15 px-4 py-2.5 rounded-xl transition-all text-accent-purple/90 text-xs font-bold">
                       <span className="text-base">🖼️</span>
                       <span>Thêm ảnh bài viết</span>
                       <input 
@@ -456,14 +456,14 @@ export default function Home() {
 
           {/* Posts Feed container */}
           {isLoading ? (
-            <div className="flex flex-col justify-center items-center py-24 glass-card rounded-2xl gap-3 border border-purple-500/10">
+            <div className="flex flex-col justify-center items-center py-24 glass-card rounded-2xl gap-3 border border-indigo-500/10">
               <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-accent-purple"></div>
               <span className="text-xs text-muted/60 font-semibold">Đang chuẩn bị bảng tin của bạn...</span>
             </div>
           ) : (
             <div className="space-y-5">
               {posts.length === 0 ? (
-                <div className="text-center glass-card p-12 rounded-2xl border border-purple-500/10">
+                <div className="text-center glass-card p-12 rounded-2xl border border-indigo-500/10">
                   <div className="text-4xl mb-3">📰</div>
                   <p className="font-extrabold text-foreground">Bảng tin trống</p>
                   <p className="text-xs text-muted/50 mt-1">Chưa có bài viết phù hợp hiển thị. Hãy kết bạn hoặc tham gia nhóm nhé! ✨</p>
@@ -483,7 +483,7 @@ export default function Home() {
                   {hasNext && (
                     <div ref={lastPostCallback} className="flex justify-center items-center py-6">
                       {isLoadingMore ? (
-                        <div className="flex items-center gap-3 bg-purple-500/15 border border-purple-500/20 px-5 py-3 rounded-full shadow-md">
+                        <div className="flex items-center gap-3 bg-indigo-500/15 border border-indigo-500/20 px-5 py-3 rounded-full shadow-md">
                           <div className="animate-spin rounded-full h-4.5 w-4.5 border-b-2 border-accent-purple"></div>
                           <span className="text-xs text-muted font-bold">Đang tải thêm câu chuyện...</span>
                         </div>
@@ -496,7 +496,7 @@ export default function Home() {
                   {/* End of feed */}
                   {!hasNext && posts.length > 0 && (
                     <div className="text-center py-6">
-                      <div className="glass-card inline-flex items-center gap-2 px-6 py-3 rounded-full border border-purple-500/10">
+                      <div className="glass-card inline-flex items-center gap-2 px-6 py-3 rounded-full border border-indigo-500/10">
                         <span className="text-sm">✨</span>
                         <span className="text-xs text-muted font-bold">Bạn đã xem hết các bài viết mới nhất</span>
                       </div>
@@ -512,16 +512,16 @@ export default function Home() {
         <aside className="w-80 hidden lg:block py-6 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto space-y-5">
           
           {/* My Groups shortcuts widget */}
-          <div className="glass-card rounded-2xl p-4.5 border border-purple-500/10">
+          <div className="glass-card rounded-2xl p-4.5 border border-indigo-500/10">
             <div className="flex justify-between items-center mb-3">
               <h4 className="text-xs font-bold text-accent-purple uppercase tracking-wider flex items-center gap-1.5">
                 👥 Nhóm đã tham gia
               </h4>
-              <Link href="/groups" className="text-[10px] text-accent-pink hover:underline font-bold">Quản lý</Link>
+              <Link href="/groups" className="text-[10px] text-accent-primary hover:underline font-bold">Quản lý</Link>
             </div>
             
             {myGroups.length === 0 ? (
-              <div className="text-center py-4 bg-black/10 dark:bg-white/[0.01] rounded-xl border border-purple-500/5">
+              <div className="text-center py-4 bg-black/10 dark:bg-white/[0.01] rounded-xl border border-indigo-500/5">
                 <span className="text-base block">🏘️</span>
                 <span className="text-[10px] text-muted">Bạn chưa tham gia nhóm nào</span>
                 <Link href="/groups" className="text-[10px] text-accent-purple font-bold hover:underline block mt-1.5">Khám phá ngay ➔</Link>
@@ -532,10 +532,10 @@ export default function Home() {
                   <Link 
                     key={group.id} 
                     href={`/groups/${group.id}`}
-                    className="flex items-center justify-between hover:bg-purple-500/10 p-2 -mx-1.5 rounded-xl transition-all group"
+                    className="flex items-center justify-between hover:bg-indigo-500/10 p-2 -mx-1.5 rounded-xl transition-all group"
                   >
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8.5 h-8.5 rounded-full overflow-hidden bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center font-bold text-white text-xs">
+                      <div className="w-8.5 h-8.5 rounded-full overflow-hidden bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center font-bold text-white text-xs">
                         {group.cover_url ? (
                           <img src={group.cover_url} alt={group.name} className="w-full h-full object-cover" />
                         ) : (
@@ -543,11 +543,11 @@ export default function Home() {
                         )}
                       </div>
                       <div>
-                        <div className="font-bold text-xs text-foreground group-hover:text-accent-pink transition-colors truncate max-w-[130px]">{group.name}</div>
+                        <div className="font-bold text-xs text-foreground group-hover:text-accent-primary transition-colors truncate max-w-[130px]">{group.name}</div>
                         <div className="text-[9px] text-muted/60 mt-0.5">Thành viên tích cực</div>
                       </div>
                     </div>
-                    <span className="text-[10px] font-bold text-accent-purple bg-purple-500/10 px-2 py-0.5 rounded-full">Xem</span>
+                    <span className="text-[10px] font-bold text-accent-purple bg-indigo-500/10 px-2 py-0.5 rounded-full">Xem</span>
                   </Link>
                 ))}
               </div>
@@ -556,12 +556,12 @@ export default function Home() {
 
           {/* Suggestions block */}
           {suggestedUsers.length > 0 && (
-            <div className="glass-card rounded-2xl p-4.5 border border-purple-500/10">
+            <div className="glass-card rounded-2xl p-4.5 border border-indigo-500/10">
               <div className="flex justify-between items-center mb-3">
                 <h4 className="text-xs font-bold text-accent-purple uppercase tracking-wider flex items-center gap-1.5">
                   ✨ Người bạn có thể biết
                 </h4>
-                <Link href="/friends" className="text-[10px] text-accent-pink hover:underline font-bold">Xem tất cả</Link>
+                <Link href="/friends" className="text-[10px] text-accent-primary hover:underline font-bold">Xem tất cả</Link>
               </div>
 
               <div className="space-y-3">
@@ -575,12 +575,12 @@ export default function Home() {
                           className="w-9 h-9 rounded-full object-cover avatar-glow flex-shrink-0"
                         />
                       ) : (
-                        <div className="w-9 h-9 bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full text-white flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0 group-hover:from-purple-500 group-hover:to-pink-500 transition-all">
+                        <div className="w-9 h-9 bg-gradient-to-br from-indigo-500/50 to-indigo-600/50 rounded-full text-white flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0 group-hover:from-indigo-500 group-hover:to-indigo-600 transition-all">
                           {getInitials(user.username)}
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
-                        <div className="font-bold text-xs text-foreground group-hover:text-accent-pink transition-colors truncate">{user.username}</div>
+                        <div className="font-bold text-xs text-foreground group-hover:text-accent-primary transition-colors truncate">{user.username}</div>
                         <div className="text-[9px] text-muted truncate">{user.email}</div>
                       </div>
                     </Link>
@@ -588,14 +588,14 @@ export default function Home() {
                     {requestedUserIds.has(user.id) ? (
                       <button
                         disabled
-                        className="px-2.5 py-1 bg-black/10 dark:bg-white/[0.02] text-muted font-bold text-[10px] rounded-full border border-purple-500/10 cursor-not-allowed flex-shrink-0"
+                        className="px-2.5 py-1 bg-black/10 dark:bg-white/[0.02] text-muted font-bold text-[10px] rounded-full border border-indigo-500/10 cursor-not-allowed flex-shrink-0"
                       >
                         Đã gửi
                       </button>
                     ) : (
                       <button
                         onClick={() => handleAddFriend(user.id)}
-                        className="px-2.5 py-1 bg-purple-500/10 hover:bg-gradient-to-r hover:from-purple-500 hover:to-pink-500 text-accent-purple hover:text-white font-bold text-[10px] rounded-full transition-all flex items-center gap-0.5 border border-purple-500/15 hover:border-transparent flex-shrink-0"
+                        className="px-2.5 py-1 bg-indigo-500/10 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-indigo-600 text-accent-purple hover:text-white font-bold text-[10px] rounded-full transition-all flex items-center gap-0.5 border border-indigo-500/15 hover:border-transparent flex-shrink-0"
                       >
                         Kết bạn
                       </button>
@@ -607,15 +607,15 @@ export default function Home() {
           )}
 
           {/* Trending hashtags card */}
-          <div className="glass-card rounded-2xl p-4.5 border border-purple-500/10">
+          <div className="glass-card rounded-2xl p-4.5 border border-indigo-500/10">
             <h4 className="text-xs font-bold text-accent-purple uppercase tracking-wider mb-3 flex items-center gap-1.5">
               🔥 Xu hướng cộng đồng
             </h4>
             <div className="space-y-2.5">
               {trendingTopics.map((topic, idx) => (
-                <div key={idx} className="flex justify-between items-center hover:bg-purple-500/10 p-2 -mx-1.5 rounded-xl transition-all cursor-pointer group">
+                <div key={idx} className="flex justify-between items-center hover:bg-indigo-500/10 p-2 -mx-1.5 rounded-xl transition-all cursor-pointer group">
                   <div>
-                    <div className="font-bold text-xs text-foreground group-hover:text-accent-pink transition-colors">{topic.tag}</div>
+                    <div className="font-bold text-xs text-foreground group-hover:text-accent-primary transition-colors">{topic.tag}</div>
                     <div className="text-[9px] text-muted/60 mt-0.5">{topic.count}</div>
                   </div>
                   <span className="text-muted/40 text-[10px]">•••</span>

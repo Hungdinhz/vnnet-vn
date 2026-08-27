@@ -111,16 +111,16 @@ function SearchContent() {
               🔍 Kết quả tìm kiếm
             </h1>
             <p className="text-sm text-muted/50 mb-4">
-              Từ khóa: &ldquo;<span className="text-accent-pink font-semibold">{query}</span>&rdquo;
+              Từ khóa: &ldquo;<span className="text-accent-primary font-semibold">{query}</span>&rdquo;
             </p>
 
             {/* Tabs */}
-            <div className="flex items-center gap-2 border-b border-purple-500/10 pb-2">
+            <div className="flex items-center gap-2 border-b border-indigo-500/10 pb-2">
               <button
                 onClick={() => setActiveTab('all')}
                 className={`px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
                   activeTab === 'all'
-                    ? 'bg-purple-500/15 text-accent-purple shadow-sm'
+                    ? 'bg-indigo-500/15 text-accent-purple shadow-sm'
                     : 'text-muted/50 hover:bg-black/5 dark:hover:bg-white/5 hover:text-accent-purple'
                 }`}
               >
@@ -130,7 +130,7 @@ function SearchContent() {
                 onClick={() => setActiveTab('users')}
                 className={`px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
                   activeTab === 'users'
-                    ? 'bg-purple-500/15 text-accent-purple shadow-sm'
+                    ? 'bg-indigo-500/15 text-accent-purple shadow-sm'
                     : 'text-muted/50 hover:bg-black/5 dark:hover:bg-white/5 hover:text-accent-purple'
                 }`}
               >
@@ -140,7 +140,7 @@ function SearchContent() {
                 onClick={() => setActiveTab('posts')}
                 className={`px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
                   activeTab === 'posts'
-                    ? 'bg-purple-500/15 text-accent-purple shadow-sm'
+                    ? 'bg-indigo-500/15 text-accent-purple shadow-sm'
                     : 'text-muted/50 hover:bg-black/5 dark:hover:bg-white/5 hover:text-accent-purple'
                 }`}
               >
@@ -152,7 +152,7 @@ function SearchContent() {
           {/* Loading state */}
           {isLoading && page === 0 ? (
             <div className="flex justify-center items-center py-20 glass-card rounded-xl">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
             </div>
           ) : (
             <>
@@ -163,7 +163,7 @@ function SearchContent() {
                     <div className="flex items-center justify-between mb-3">
                       <h2 className="text-sm font-bold text-muted uppercase tracking-wider">👤 Người dùng ({totalUsers})</h2>
                       {totalUsers > 5 && (
-                        <button onClick={() => setActiveTab('users')} className="text-xs text-accent-pink font-semibold hover:underline">
+                        <button onClick={() => setActiveTab('users')} className="text-xs text-accent-primary font-semibold hover:underline">
                           Xem tất cả →
                         </button>
                       )}
@@ -179,7 +179,7 @@ function SearchContent() {
                         {user.avatar_url ? (
                           <img src={user.avatar_url} alt={user.username} className="w-12 h-12 rounded-full object-cover avatar-glow" />
                         ) : (
-                          <div className="w-12 h-12 bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full flex items-center justify-center text-lg font-bold text-secondary">
+                          <div className="w-12 h-12 bg-gradient-to-br from-indigo-500/50 to-indigo-600/50 rounded-full flex items-center justify-center text-lg font-bold text-secondary">
                             {getInitials(user.username)}
                           </div>
                         )}
@@ -201,7 +201,7 @@ function SearchContent() {
                     <div className="flex items-center justify-between mb-3">
                       <h2 className="text-sm font-bold text-muted uppercase tracking-wider">📝 Bài viết ({totalPosts})</h2>
                       {totalPosts > 5 && (
-                        <button onClick={() => setActiveTab('posts')} className="text-xs text-accent-pink font-semibold hover:underline">
+                        <button onClick={() => setActiveTab('posts')} className="text-xs text-accent-primary font-semibold hover:underline">
                           Xem tất cả →
                         </button>
                       )}
@@ -239,7 +239,7 @@ function SearchContent() {
                   <div className="text-5xl mb-4">😔</div>
                   <h2 className="text-lg font-bold text-foreground mb-2">Không tìm thấy kết quả</h2>
                   <p className="text-sm text-muted/50">
-                    Không có kết quả nào cho &ldquo;<span className="text-accent-pink font-semibold">{query}</span>&rdquo;. Hãy thử từ khóa khác.
+                    Không có kết quả nào cho &ldquo;<span className="text-accent-primary font-semibold">{query}</span>&rdquo;. Hãy thử từ khóa khác.
                   </p>
                 </div>
               )}
@@ -255,7 +255,7 @@ export default function SearchPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-background flex justify-center items-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
       </div>
     }>
       <SearchContent />

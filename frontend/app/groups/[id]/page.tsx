@@ -252,7 +252,7 @@ export default function GroupDetailsPage() {
                       onClick={handleJoinOrLeave}
                       className={`px-6 py-2 rounded-lg font-bold text-sm shadow-md transition-all ${
                         isJoinedOrCreator 
-                          ? 'bg-black/5 dark:bg-white/5 border border-purple-500/20 text-secondary hover:bg-black/10 dark:hover:bg-white/10' 
+                          ? 'bg-black/5 dark:bg-white/5 border border-indigo-500/20 text-secondary hover:bg-black/10 dark:hover:bg-white/10' 
                           : 'btn-anime'
                       }`}
                     >
@@ -266,12 +266,12 @@ export default function GroupDetailsPage() {
               </div>
 
               {/* Group Tabs */}
-              <div className="flex items-center gap-2 mt-6 border-t border-purple-500/10 pt-4">
+              <div className="flex items-center gap-2 mt-6 border-t border-indigo-500/10 pt-4">
                 <button
                   onClick={() => handleTabChange('feed')}
                   className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                     activeTab === 'feed'
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
+                      ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-md'
                       : 'text-muted hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5'
                   }`}
                 >
@@ -281,7 +281,7 @@ export default function GroupDetailsPage() {
                   onClick={() => handleTabChange('members')}
                   className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                     activeTab === 'members'
-                      ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
+                      ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-md'
                       : 'text-muted hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5'
                   }`}
                 >
@@ -292,7 +292,7 @@ export default function GroupDetailsPage() {
                     onClick={() => handleTabChange('settings')}
                     className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                       activeTab === 'settings'
-                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-md'
+                        ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-md'
                         : 'text-muted hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5'
                     }`}
                   >
@@ -314,7 +314,7 @@ export default function GroupDetailsPage() {
                     <p>🌎 Nhóm công khai (tất cả mọi người có thể xem)</p>
                     <p>⏰ Đã tạo vào {new Date(group.createdAt).toLocaleDateString('vi-VN')}</p>
                     {group.userRole && (
-                      <p className="pt-2 border-t border-purple-500/10 font-medium text-accent-purple">
+                      <p className="pt-2 border-t border-indigo-500/10 font-medium text-accent-purple">
                         Vai trò của bạn: {group.creatorId === currentUser?.id ? '👑 Trưởng nhóm' : group.userRole === 'ADMIN' ? '🛡️ Quản trị viên' : '👤 Thành viên'}
                       </p>
                     )}
@@ -328,12 +328,12 @@ export default function GroupDetailsPage() {
                   <div className="glass-card rounded-xl p-4 mb-4">
                     {!isComposing ? (
                       <div className="flex gap-3 items-center">
-                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full text-white flex items-center justify-center font-bold flex-shrink-0">
+                        <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full text-white flex items-center justify-center font-bold flex-shrink-0">
                           {currentUser?.username ? currentUser.username.charAt(0).toUpperCase() : "U"}
                         </div>
                         <div 
                           onClick={() => setIsComposing(true)}
-                          className="flex-1 px-4 py-2.5 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-purple-500/10 text-accent-purple/60 rounded-full cursor-pointer transition-colors text-[15px]"
+                          className="flex-1 px-4 py-2.5 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 border border-indigo-500/10 text-accent-purple/60 rounded-full cursor-pointer transition-colors text-[15px]"
                         >
                           Viết gì đó vào nhóm này...
                         </div>
@@ -363,7 +363,7 @@ export default function GroupDetailsPage() {
                           <button 
                             type="submit" 
                             disabled={isSubmitting}
-                            className="px-6 py-2 btn-anime rounded-lg text-sm font-bold shadow-md shadow-purple-500/20 disabled:opacity-50"
+                            className="px-6 py-2 btn-anime rounded-lg text-sm font-bold shadow-md shadow-indigo-500/20 disabled:opacity-50"
                           >
                             {isSubmitting ? 'Đang đăng...' : '✨ Đăng bài'}
                           </button>
@@ -403,7 +403,7 @@ export default function GroupDetailsPage() {
           {/* TAB 2: MEMBERS LIST */}
           {activeTab === 'members' && (
             <div className="glass-card rounded-xl p-4 md:p-6 space-y-4 animate-slide-up">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-purple-500/10 pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-indigo-500/10 pb-4">
                 <div>
                   <h2 className="text-xl font-bold text-foreground">Danh sách thành viên</h2>
                   <p className="text-xs text-muted">Tổng cộng {group.memberCount} thành viên trong nhóm</p>
@@ -429,12 +429,12 @@ export default function GroupDetailsPage() {
                     const isSelf = m.userId === currentUser?.id;
 
                     return (
-                      <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-black/5 dark:bg-white/5 border border-purple-500/10 hover:border-purple-500/20 transition-all">
+                      <div key={m.id} className="flex items-center justify-between p-3 rounded-xl bg-black/5 dark:bg-white/5 border border-indigo-500/10 hover:border-indigo-500/20 transition-all">
                         <Link href={`/profile/${m.userId}`} className="flex items-center gap-3 group">
                           {m.avatarUrl ? (
-                            <img src={m.avatarUrl} alt={m.username} className="w-12 h-12 rounded-full object-cover border border-purple-500/20" />
+                            <img src={m.avatarUrl} alt={m.username} className="w-12 h-12 rounded-full object-cover border border-indigo-500/20" />
                           ) : (
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white flex items-center justify-center font-bold text-lg">
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 text-white flex items-center justify-center font-bold text-lg">
                               {m.username?.charAt(0).toUpperCase()}
                             </div>
                           )}
@@ -447,7 +447,7 @@ export default function GroupDetailsPage() {
                               {isCreator ? (
                                 <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-500 font-semibold border border-amber-500/20">👑 Trưởng nhóm</span>
                               ) : isAdmin ? (
-                                <span className="px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 font-semibold border border-purple-500/20">🛡️ Quản trị viên</span>
+                                <span className="px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 font-semibold border border-indigo-500/20">🛡️ Quản trị viên</span>
                               ) : (
                                 <span className="px-2 py-0.5 rounded-full bg-black/5 dark:bg-white/10 text-muted font-medium">👤 Thành viên</span>
                               )}
@@ -469,7 +469,7 @@ export default function GroupDetailsPage() {
                             ) : (
                               <button
                                 onClick={() => handleUpdateRole(m.userId, 'ADMIN')}
-                                className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-accent-purple transition-all"
+                                className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-accent-purple transition-all"
                                 title="Thăng cấp lên Quản trị viên"
                               >
                                 🛡️ Thăng QTV
@@ -500,7 +500,7 @@ export default function GroupDetailsPage() {
                 <p className="text-xs text-muted mt-0.5">Chỉnh sửa thông tin nhóm hoặc thực hiện các thao tác quản trị</p>
               </div>
 
-              <form onSubmit={handleSaveSettings} className="space-y-4 border-b border-purple-500/10 pb-6">
+              <form onSubmit={handleSaveSettings} className="space-y-4 border-b border-indigo-500/10 pb-6">
                 <div>
                   <label className="block text-sm font-semibold mb-1.5 text-foreground">Tên nhóm</label>
                   <input

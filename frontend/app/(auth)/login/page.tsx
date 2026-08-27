@@ -55,14 +55,14 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
       {/* Animated background blobs */}
-      <div className="absolute top-1/4 -left-20 w-72 h-72 bg-purple-600/20 rounded-full blur-[100px] animate-float"></div>
-      <div className="absolute bottom-1/4 -right-20 w-72 h-72 bg-pink-600/20 rounded-full blur-[100px] animate-float" style={{ animationDelay: '1.5s' }}></div>
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-cyan-600/10 rounded-full blur-[120px]"></div>
+      <div className="absolute top-1/4 -left-20 w-72 h-72 bg-indigo-600/15 rounded-full blur-[100px] animate-float"></div>
+      <div className="absolute bottom-1/4 -right-20 w-72 h-72 bg-indigo-500/15 rounded-full blur-[100px] animate-float" style={{ animationDelay: '1.5s' }}></div>
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-400/10 rounded-full blur-[120px]"></div>
 
       <div className="glass-card p-8 rounded-2xl shadow-2xl w-full max-w-md relative z-10 animate-slide-up">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-purple-500 via-pink-500 to-cyan-400 shadow-lg shadow-purple-500/30 mb-4">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-lg shadow-indigo-500/30 mb-4">
             <span className="text-white text-2xl font-black">VN</span>
           </div>
           <h2 className="text-3xl font-bold gradient-text">VnNet</h2>
@@ -72,7 +72,7 @@ export default function LoginPage() {
         <h3 className="text-lg font-semibold text-center text-secondary mb-6">Đăng nhập vào tài khoản</h3>
 
         {error && (
-          <div className="bg-rose-500/10 text-rose-400 p-3 rounded-lg mb-4 text-sm text-center border border-rose-500/20">
+          <div className="bg-red-500/10 text-red-400 p-3 rounded-lg mb-4 text-sm text-center border border-red-500/20">
             {error}
           </div>
         )}
@@ -112,12 +112,12 @@ export default function LoginPage() {
         </form>
 
         <div className="mt-6 flex justify-between items-center text-sm">
-          <Link href="/forgot-password" className="text-muted/60 hover:text-pink-400 transition-colors">
+          <Link href="/forgot-password" className="text-muted/60 hover:text-indigo-400 transition-colors">
             Quên mật khẩu?
           </Link>
           <div className="text-muted/50">
             Chưa có tài khoản?{' '}
-            <Link href="/register" className="text-pink-400 hover:text-pink-300 font-medium transition-colors">
+            <Link href="/register" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
               Đăng ký ngay
             </Link>
           </div>

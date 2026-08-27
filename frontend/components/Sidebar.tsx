@@ -50,7 +50,7 @@ export default function Sidebar() {
         {currentUser && (
           <Link 
             href={`/profile/${currentUser.id}`}
-            className={`flex items-center gap-3 p-2.5 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 rounded-xl transition-all ${
+            className={`flex items-center gap-3 p-2.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all ${
               pathname === `/profile/${currentUser.id}` ? 'sidebar-active font-semibold text-foreground' : 'text-secondary hover:text-foreground'
             }`}
           >
@@ -61,7 +61,7 @@ export default function Sidebar() {
                 className="w-9 h-9 rounded-full object-cover avatar-glow"
               />
             ) : (
-              <div className="w-9 h-9 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full text-white flex items-center justify-center font-bold text-sm shadow-lg">
+              <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full text-white flex items-center justify-center font-bold text-sm shadow-lg">
                 {getInitials(currentUser.username)}
               </div>
             )}
@@ -69,7 +69,7 @@ export default function Sidebar() {
           </Link>
         )}
 
-        <hr className="my-2 border-purple-500/10 mx-2" />
+        <hr className="my-2 border-indigo-500/10 mx-2" />
 
         {/* Main menu items */}
         {menuItems.map((item, index) => {
@@ -81,7 +81,7 @@ export default function Sidebar() {
               className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${
                 isActive 
                   ? 'sidebar-active text-foreground font-semibold' 
-                  : 'text-secondary font-medium hover:bg-black/5 dark:hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-foreground'
+                  : 'text-secondary font-medium hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground'
               }`}
             >
               <span className="text-xl">{item.icon}</span>
@@ -90,7 +90,7 @@ export default function Sidebar() {
           );
         })}
 
-        <hr className="my-2 border-purple-500/10 mx-2" />
+        <hr className="my-2 border-indigo-500/10 mx-2" />
 
         {/* Secondary items */}
         {secondaryItems.map((item, index) => {
@@ -102,7 +102,7 @@ export default function Sidebar() {
               className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${
                 isActive 
                   ? 'sidebar-active text-foreground font-semibold' 
-                  : 'text-secondary font-medium hover:bg-black/5 dark:hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-foreground'
+                  : 'text-secondary font-medium hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground'
               }`}
             >
               <span className="text-xl">{item.icon}</span>
@@ -111,10 +111,10 @@ export default function Sidebar() {
           );
         })}
 
-        <hr className="my-2 border-purple-500/10 mx-2" />
+        <hr className="my-2 border-indigo-500/10 mx-2" />
         
         {/* Footer */}
-        <div className="px-3 py-2 text-xs text-purple-500/40 leading-relaxed">
+        <div className="px-3 py-2 text-xs text-indigo-500/40 leading-relaxed">
           <span className="gradient-text font-semibold">VnNet</span> © 2026 ✨
           <br />
           <span className="text-muted">Mạng xã hội thế hệ mới</span>

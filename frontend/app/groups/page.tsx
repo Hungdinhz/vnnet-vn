@@ -166,7 +166,7 @@ export default function GroupsPage() {
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
           <div className="glass-card rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-slide-up">
-            <div className="border-b border-purple-500/10 px-4 py-3 flex items-center justify-between bg-black/5 dark:bg-white/[0.02]">
+            <div className="border-b border-indigo-500/10 px-4 py-3 flex items-center justify-between bg-black/5 dark:bg-white/[0.02]">
               <h3 className="font-bold text-foreground">Tạo nhóm mới</h3>
               <button 
                 onClick={() => setShowCreateModal(false)}

@@ -126,17 +126,17 @@ export default function ProfilePage() {
         <Sidebar />
         <main className="flex-1 p-0 md:p-4 max-w-5xl mx-auto">
           {isLoading ? (
-            <div className="flex justify-center mt-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div></div>
+            <div className="flex justify-center mt-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div></div>
           ) : !profileData ? (
-            <div className="text-center text-purple-400/50 mt-20 font-semibold glass-card p-10 rounded-xl">Không tìm thấy người dùng.</div>
+            <div className="text-center text-indigo-400/50 mt-20 font-semibold glass-card p-10 rounded-xl">Không tìm thấy người dùng.</div>
           ) : (
             <div className="space-y-4">
               {/* Profile Header */}
               <div className="glass-card rounded-b-xl overflow-hidden">
-                <div className="h-64 md:h-80 bg-gradient-to-r from-purple-600/60 via-pink-500/40 to-cyan-500/30 relative group">
-                  {profileData.cover_url ? <img src={profileData.cover_url} alt="Cover" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-r from-purple-600/60 via-pink-500/40 to-cyan-500/30" />}
+                <div className="h-64 md:h-80 bg-gradient-to-r from-indigo-600/50 via-indigo-500/35 to-slate-500/25 relative group">
+                  {profileData.cover_url ? <img src={profileData.cover_url} alt="Cover" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-r from-indigo-600/50 via-indigo-500/35 to-slate-500/25" />}
                   {isOwnProfile && (
-                    <label className="absolute bottom-4 right-4 bg-black/40 backdrop-blur-sm hover:bg-black/60 text-secondary text-xs font-bold px-4 py-2 rounded-lg cursor-pointer transition-colors flex items-center gap-1.5 border border-purple-500/20">
+                    <label className="absolute bottom-4 right-4 bg-black/40 backdrop-blur-sm hover:bg-black/60 text-secondary text-xs font-bold px-4 py-2 rounded-lg cursor-pointer transition-colors flex items-center gap-1.5 border border-indigo-500/20">
                       📷 {isUploadingCover ? "Đang tải..." : "Chỉnh sửa ảnh bìa"}
                       <input type="file" accept="image/*" onChange={e => handleUpload(e, 'cover')} className="hidden" disabled={isUploadingCover} />
                     </label>
@@ -150,7 +150,7 @@ export default function ProfilePage() {
                         {profileData.avatar_url ? (
                           <img src={profileData.avatar_url} alt={profileData.username} className="w-full h-full rounded-full object-cover avatar-glow" />
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-6xl font-bold text-white">{getInitials(profileData.username)}</div>
+                          <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full flex items-center justify-center text-6xl font-bold text-white">{getInitials(profileData.username)}</div>
                         )}
                         {isOwnProfile && (
                           <label className="absolute inset-0 bg-black/45 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer flex flex-col items-center justify-center text-white text-xs font-bold gap-1 border-4 border-[#0F0B1E]">
@@ -161,24 +161,24 @@ export default function ProfilePage() {
                       </div>
                       <div className="md:mb-3">
                         <h1 className="text-3xl font-extrabold gradient-text tracking-tight">{profileData.username}</h1>
-                        <p className="text-sm font-semibold text-purple-400/50 mt-0.5">{profileData.email}</p>
+                        <p className="text-sm font-semibold text-indigo-400/50 mt-0.5">{profileData.email}</p>
                       </div>
                     </div>
                     <div className="md:mb-4">
                       {isOwnProfile ? (
-                        <button onClick={() => setIsEditingBio(!isEditingBio)} className="px-6 py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-secondary font-bold rounded-lg transition-colors text-sm flex items-center gap-1.5 border border-purple-500/20">
+                        <button onClick={() => setIsEditingBio(!isEditingBio)} className="px-6 py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-secondary font-bold rounded-lg transition-colors text-sm flex items-center gap-1.5 border border-indigo-500/20">
                           ✏️ {isEditingBio ? "Đóng" : "Chỉnh sửa tiểu sử"}
                         </button>
                       ) : isFriend ? (
                         <div className="flex items-center gap-2">
                           {showUnfriendConfirm ? (
                             <>
-                              <button onClick={handleUnfriend} className="flex items-center gap-2 px-5 py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold rounded-lg text-sm border border-rose-500/20 transition-colors">✓ Xác nhận hủy</button>
-                              <button onClick={() => setShowUnfriendConfirm(false)} className="flex items-center gap-2 px-5 py-2.5 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-sm border border-purple-500/10 transition-colors">Hủy</button>
+                              <button onClick={handleUnfriend} className="flex items-center gap-2 px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-lg text-sm border border-red-500/20 transition-colors">✓ Xác nhận hủy</button>
+                              <button onClick={() => setShowUnfriendConfirm(false)} className="flex items-center gap-2 px-5 py-2.5 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-sm border border-indigo-500/10 transition-colors">Hủy</button>
                             </>
                           ) : (
                             <>
-                              <button onClick={() => setShowUnfriendConfirm(true)} className="flex items-center gap-2 px-6 py-2.5 bg-black/5 dark:bg-white/5 hover:bg-rose-500/10 text-secondary hover:text-rose-400 font-bold rounded-lg text-sm border border-purple-500/20 hover:border-rose-500/20 shadow-sm transition-colors">✅ Bạn bè</button>
+                              <button onClick={() => setShowUnfriendConfirm(true)} className="flex items-center gap-2 px-6 py-2.5 bg-black/5 dark:bg-white/5 hover:bg-red-500/10 text-secondary hover:text-red-400 font-bold rounded-lg text-sm border border-indigo-500/20 hover:border-red-500/20 shadow-sm transition-colors">✅ Bạn bè</button>
                               <button onClick={() => router.push(`/messages?userId=${id}`)} className="flex items-center gap-2 px-6 py-2.5 btn-anime rounded-lg text-sm shadow-md">💬 Nhắn tin</button>
                             </>
                           )}
@@ -188,19 +188,19 @@ export default function ProfilePage() {
                       )}
                     </div>
                   </div>
-                  <hr className="border-purple-500/10 my-4" />
+                  <hr className="border-indigo-500/10 my-4" />
                   <div className="max-w-2xl">
                     {isEditingBio ? (
                       <div className="space-y-2">
                         <textarea value={newBio} onChange={e => setNewBio(e.target.value)} placeholder="Viết giới thiệu..." maxLength={150} rows={2} className="w-full px-3 py-2 input-anime rounded-lg text-sm resize-none" />
                         <div className="flex justify-end gap-2">
-                          <button onClick={() => setIsEditingBio(false)} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-purple-300/70 rounded-lg text-xs font-semibold">Hủy</button>
+                          <button onClick={() => setIsEditingBio(false)} className="px-3 py-1.5 bg-white/5 hover:bg-white/10 text-indigo-300/70 rounded-lg text-xs font-semibold">Hủy</button>
                           <button onClick={handleSaveBio} disabled={isSavingBio} className="px-4 py-1.5 btn-anime rounded-lg text-xs">{isSavingBio ? "Đang lưu..." : "✨ Lưu"}</button>
                         </div>
                       </div>
                     ) : (
                       <div className="text-center md:text-left">
-                        {profileData.bio ? <div className="text-sm font-medium text-secondary/70 bg-black/[0.03] dark:bg-white/[0.03] px-4 py-3 rounded-lg border border-purple-500/10 inline-block">💡 {profileData.bio}</div>
+                        {profileData.bio ? <div className="text-sm font-medium text-secondary/70 bg-black/[0.03] dark:bg-white/[0.03] px-4 py-3 rounded-lg border border-indigo-500/10 inline-block">💡 {profileData.bio}</div>
                         : <div className="text-xs text-muted/30 italic">Chưa có tiểu sử.</div>}
                       </div>
                     )}
@@ -222,15 +222,15 @@ export default function ProfilePage() {
                   <div className="glass-card rounded-xl p-4">
                     <div className="flex justify-between items-center mb-3">
                       <h3 className="font-bold text-foreground text-[17px]">Ảnh</h3>
-                      <button className="text-xs text-accent-pink hover:underline font-semibold">Xem tất cả</button>
+                      <button className="text-xs text-accent-primary hover:underline font-semibold">Xem tất cả</button>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       {posts.filter(p => p.image_url).slice(0, 6).map((post, idx) => (
-                        <div key={post.id || idx} className="aspect-square bg-white/[0.03] rounded-lg overflow-hidden border border-purple-500/10">
+                        <div key={post.id || idx} className="aspect-square bg-white/[0.03] rounded-lg overflow-hidden border border-indigo-500/10">
                           <img src={post.image_url} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform" />
                         </div>
                       ))}
-                      {posts.filter(p => p.image_url).length === 0 && <div className="col-span-full py-6 text-center text-xs text-purple-400/30">Không có ảnh.</div>}
+                      {posts.filter(p => p.image_url).length === 0 && <div className="col-span-full py-6 text-center text-xs text-indigo-400/30">Không có ảnh.</div>}
                     </div>
                   </div>
 
@@ -255,9 +255,9 @@ export default function ProfilePage() {
                                 <div 
                                   className={`w-full rounded-t-sm transition-all duration-200 group-hover:brightness-125 ${
                                     total === 0 ? 'bg-black/5 dark:bg-white/5' :
-                                    pct > 60 ? 'bg-gradient-to-t from-purple-500 to-pink-400' :
-                                    pct > 30 ? 'bg-gradient-to-t from-purple-500/80 to-purple-400/60' :
-                                    'bg-purple-500/40'
+                                    pct > 60 ? 'bg-gradient-to-t from-indigo-500 to-indigo-500' :
+                                    pct > 30 ? 'bg-gradient-to-t from-indigo-500/80 to-indigo-400/60' :
+                                    'bg-indigo-500/40'
                                   }`}
                                   style={{ height: total === 0 ? '2px' : `${Math.max(pct, 8)}%` }}
                                 ></div>
@@ -270,9 +270,9 @@ export default function ProfilePage() {
                           <span>Hôm nay</span>
                         </div>
                         <div className="flex items-center gap-4 mt-3 text-[11px] text-muted/50">
-                          <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-500 inline-block"></span> Bài viết: {activityData.reduce((s: number, d: any) => s + (d.posts || 0), 0)}</div>
-                          <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-pink-500 inline-block"></span> Bình luận: {activityData.reduce((s: number, d: any) => s + (d.comments || 0), 0)}</div>
-                          <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-cyan-500 inline-block"></span> Lượt thích: {activityData.reduce((s: number, d: any) => s + (d.likes || 0), 0)}</div>
+                          <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span> Bài viết: {activityData.reduce((s: number, d: any) => s + (d.posts || 0), 0)}</div>
+                          <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span> Bình luận: {activityData.reduce((s: number, d: any) => s + (d.comments || 0), 0)}</div>
+                          <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span> Lượt thích: {activityData.reduce((s: number, d: any) => s + (d.likes || 0), 0)}</div>
                         </div>
                       </>
                     )}
@@ -282,10 +282,10 @@ export default function ProfilePage() {
                 <div className="md:col-span-8 space-y-4">
                   <div className="glass-card p-4 rounded-xl flex items-center justify-between">
                     <h3 className="font-bold text-foreground text-[17px]">Bài viết</h3>
-                    <button className="px-3.5 py-1.5 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-muted/70 text-xs font-semibold rounded-lg flex items-center gap-1.5 border border-purple-500/10">⚙️ Bộ lọc</button>
+                    <button className="px-3.5 py-1.5 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-muted/70 text-xs font-semibold rounded-lg flex items-center gap-1.5 border border-indigo-500/10">⚙️ Bộ lọc</button>
                   </div>
                   {isLoadingPosts ? (
-                    <div className="flex justify-center py-12 glass-card rounded-xl"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-500"></div></div>
+                    <div className="flex justify-center py-12 glass-card rounded-xl"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-500"></div></div>
                   ) : posts.length === 0 ? (
                     <div className="text-center glass-card p-12 rounded-xl">
                       <div className="text-3xl mb-2">📝</div>
