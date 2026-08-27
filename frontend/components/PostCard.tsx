@@ -482,14 +482,11 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
 
       {/* Action Buttons */}
       <div className="flex items-center justify-around border-b border-indigo-500/10 pb-1.5 mb-2.5">
-        <button 
-          onClick={handleLike}
-          disabled={isLoadingLike}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-semibold text-sm transition-all focus:outline-none ${
-            isLiked 
-              ? 'text-indigo-400 bg-indigo-500/10 hover:bg-indigo-500/20' 
-              : 'text-accent-purple/60 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-secondary'
-          }`}
+
+        <div 
+          className="relative flex-1"
+          onMouseEnter={handleReactionHover}
+          onMouseLeave={handleReactionLeave}
         >
           <button 
             onClick={() => handleReaction(myReaction || 'like')}
