@@ -20,4 +20,10 @@ public class FriendshipResponseDto {
     private Long friendId;
 
     private String status;
+
+    @JsonProperty("friend_username")
+    private String friendUsername;
+
+    @JsonProperty("friend_avatar_url")
+    private String friendAvatarUrl;
 }

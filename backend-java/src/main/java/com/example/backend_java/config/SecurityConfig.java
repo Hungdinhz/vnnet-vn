@@ -43,6 +43,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/posts").permitAll()
                 .requestMatchers(HttpMethod.GET, "/posts/{id}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/posts/{id}/comments").permitAll()
+                .requestMatchers(HttpMethod.GET, "/posts/{id}/reactions").permitAll()
                 .requestMatchers(HttpMethod.GET, "/groups").permitAll()
                 .requestMatchers(HttpMethod.GET, "/groups/{id}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/groups/{id}/posts").permitAll()
@@ -52,6 +53,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/events/**").permitAll()
                 .requestMatchers("/").permitAll()
                 // --- PROTECTED endpoints (cần token) ---
+                // Stories endpoints (tất cả cần token)
+                .requestMatchers("/stories/**").authenticated()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
