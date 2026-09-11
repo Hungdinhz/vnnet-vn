@@ -29,4 +29,7 @@ public class UserResponseDto {
     private String phone;
 
     private String bio;
+
+    @JsonProperty("is_verified")
+    private Boolean isVerified;
 }

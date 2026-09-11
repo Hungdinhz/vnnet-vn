@@ -56,6 +56,24 @@ public class UserController {
         return ResponseEntity.ok(userService.resetPassword(dto));
     }
 
+    // POST /users/google - Đăng nhập Google
+    @PostMapping("/google")
+    public ResponseEntity<TokenDto> googleLogin(@Valid @RequestBody com.example.backend_java.dto.GoogleLoginDto dto) {
+        return ResponseEntity.ok(userService.googleLogin(dto));
+    }
+
+    // POST /users/verify-email - Xác thực email
+    @PostMapping("/verify-email")
+    public ResponseEntity<TokenDto> verifyEmail(@Valid @RequestBody com.example.backend_java.dto.VerifyOtpDto dto) {
+        return ResponseEntity.ok(userService.verifyEmail(dto));
+    }
+
+    // POST /users/resend-otp - Gửi lại mã OTP
+    @PostMapping("/resend-otp")
+    public ResponseEntity<com.example.backend_java.dto.MessageDto> resendOtp(@Valid @RequestBody com.example.backend_java.dto.ResendOtpDto dto) {
+        return ResponseEntity.ok(userService.resendOtp(dto));
+    }
+
     // GET /users/me - Lấy thông tin user hiện tại (cần token)
     @GetMapping("/me")
     public ResponseEntity<UserResponseDto> getCurrentUser(Authentication authentication) {

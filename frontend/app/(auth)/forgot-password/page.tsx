@@ -1,7 +1,7 @@
 // app/(auth)/forgot-password/page.tsx
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/axios';
@@ -13,22 +13,34 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [resetSuccess, setResetSuccess] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
 
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  useEffect(() => {
+    if (cooldown > 0) {
+      const timer = setInterval(() => setCooldown(prev => prev - 1), 1000);
+      return () => clearInterval(timer);
+    }
+  }, [cooldown]);
+
+  const handleSendOtp = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (cooldown > 0) return;
+    
     setError('');
     setSuccess('');
     setIsLoading(true);
 
     try {
       const response = await api.post('/users/forgot-password', { email });
-      setSuccess(response.data.message || 'Mã OTP đã được gửi!');
+      setSuccess(response.data.message || 'Mã OTP đã được gửi đến email của bạn!');
       setStep(2);
+      setCooldown(60);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Không thể gửi yêu cầu. Vui lòng kiểm tra lại email.');
     } finally {
@@ -39,6 +51,12 @@ export default function ForgotPasswordPage() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    
+    if (newPassword !== confirmNewPassword) {
+      setError('Mật khẩu nhập lại không khớp!');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -114,7 +132,21 @@ export default function ForgotPasswordPage() {
         ) : (
           <form onSubmit={handleResetPassword} className="space-y-4">
             <div>
-              <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Mã OTP</label>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="block text-accent-purple/70 text-sm font-medium">Mã OTP</label>
+                <button
+                  type="button"
+                  onClick={() => handleSendOtp()}
+                  disabled={cooldown > 0 || isLoading}
+                  className={`text-xs font-medium transition-colors ${
+                    cooldown > 0 
+                      ? 'text-muted/40 cursor-not-allowed' 
+                      : 'text-indigo-400 hover:text-indigo-300'
+                  }`}
+                >
+                  {cooldown > 0 ? `Gửi lại sau ${cooldown}s` : 'Gửi lại mã'}
+                </button>
+              </div>
               <input
                 type="text"
                 value={otp}
@@ -137,6 +169,18 @@ export default function ForgotPasswordPage() {
                 minLength={6}
               />
             </div>
+            <div>
+              <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Xác nhận mật khẩu mới</label>
+              <input
+                type="password"
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
+                placeholder="Nhập lại mật khẩu mới..."
+                required
+                minLength={6}
+              />
+            </div>
             <button
               type="submit"
               disabled={isLoading || resetSuccess}
@@ -154,7 +198,14 @@ export default function ForgotPasswordPage() {
           {step === 2 && (
             <button 
               type="button" 
-              onClick={() => setStep(1)} 
+              onClick={() => {
+                setStep(1);
+                setOtp('');
+                setNewPassword('');
+                setConfirmNewPassword('');
+                setError('');
+                setSuccess('');
+              }} 
               className="text-muted/50 hover:text-accent-purple transition-colors"
             >
               Nhập email khác

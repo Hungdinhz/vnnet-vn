@@ -20,11 +20,18 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final OtpService otpService;
+    private final EmailService emailService;
+    private final GoogleAuthService googleAuthService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtTokenProvider jwtTokenProvider,
+                       OtpService otpService, EmailService emailService, GoogleAuthService googleAuthService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.otpService = otpService;
+        this.emailService = emailService;
+        this.googleAuthService = googleAuthService;
     }
 
     // Đăng ký user mới (tương đương crud_user.create_user + register_user API)
@@ -43,9 +50,14 @@ public class UserService {
                 .username(dto.getUsername())
                 .email(dto.getEmail())
                 .hashedPassword(passwordEncoder.encode(dto.getPassword()))
+                .isVerified(false)
                 .build();
 
         user = userRepository.save(user);
+        
+        String otp = otpService.generateOtp(user.getEmail(), com.example.backend_java.entity.TokenType.REGISTER_VERIFICATION, 10);
+        emailService.sendVerificationEmail(user.getEmail(), otp);
+        
         return toResponseDto(user);
     }
 
@@ -61,6 +73,10 @@ public class UserService {
         // Kiểm tra mật khẩu
         if (!passwordEncoder.matches(password, user.getHashedPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sai email hoặc mật khẩu");
+        }
+
+        if (!user.getIsVerified()) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản chưa được kích hoạt. Vui lòng xác minh email của bạn.");
         }
 
         // Tạo JWT token
@@ -156,13 +172,10 @@ public class UserService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng với email này"));
         
-        // Tạo OTP ảo 6 số
-        String otp = String.format("%06d", new java.util.Random().nextInt(999999));
-        user.setResetPasswordOtp(otp);
-        userRepository.save(user);
+        String otp = otpService.generateOtp(user.getEmail(), com.example.backend_java.entity.TokenType.PASSWORD_RESET, 10);
+        emailService.sendPasswordResetEmail(user.getEmail(), otp);
 
-        // Trả về OTP trong response (chỉ dùng cho môi trường dev/demo)
-        return new com.example.backend_java.dto.MessageDto("Mã OTP của bạn là: " + otp);
+        return new com.example.backend_java.dto.MessageDto("Mã OTP đã được gửi đến email của bạn");
     }
 
     // Đặt lại mật khẩu
@@ -170,15 +183,77 @@ public class UserService {
         User user = userRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng với email này"));
 
-        if (user.getResetPasswordOtp() == null || !user.getResetPasswordOtp().equals(dto.getOtp())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã OTP không hợp lệ hoặc đã hết hạn");
-        }
+        otpService.validateOtp(dto.getEmail(), dto.getOtp(), com.example.backend_java.entity.TokenType.PASSWORD_RESET);
 
         user.setHashedPassword(passwordEncoder.encode(dto.getNewPassword()));
-        user.setResetPasswordOtp(null); // Clear OTP after use
         userRepository.save(user);
 
         return new com.example.backend_java.dto.MessageDto("Đặt lại mật khẩu thành công");
+    }
+
+    public TokenDto googleLogin(com.example.backend_java.dto.GoogleLoginDto dto) {
+        com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload payload = googleAuthService.verifyIdToken(dto.getIdToken());
+        String email = payload.getEmail();
+        String googleId = payload.getSubject();
+        String name = (String) payload.get("name");
+        String pictureUrl = (String) payload.get("picture");
+
+        User user = userRepository.findByEmail(email).orElse(null);
+        if (user != null) {
+            if (user.getGoogleId() == null) {
+                user.setGoogleId(googleId);
+                userRepository.save(user);
+            }
+        } else {
+            String username = email.split("@")[0] + "_" + new java.util.Random().nextInt(10000);
+            while (userRepository.existsByUsername(username)) {
+                username = email.split("@")[0] + "_" + new java.util.Random().nextInt(10000);
+            }
+            user = User.builder()
+                    .username(username)
+                    .email(email)
+                    .fullName(name)
+                    .avatarUrl(pictureUrl)
+                    .googleId(googleId)
+                    .isVerified(true)
+                    .hashedPassword(null)
+                    .build();
+            userRepository.save(user);
+        }
+
+        String token = jwtTokenProvider.generateToken(user.getEmail());
+        return TokenDto.builder()
+                .accessToken(token)
+                .tokenType("bearer")
+                .build();
+    }
+
+    public TokenDto verifyEmail(com.example.backend_java.dto.VerifyOtpDto dto) {
+        otpService.validateOtp(dto.getEmail(), dto.getOtp(), com.example.backend_java.entity.TokenType.REGISTER_VERIFICATION);
+        User user = userRepository.findByEmail(dto.getEmail())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng với email này"));
+        
+        user.setIsVerified(true);
+        userRepository.save(user);
+
+        String token = jwtTokenProvider.generateToken(user.getEmail());
+        return TokenDto.builder()
+                .accessToken(token)
+                .tokenType("bearer")
+                .build();
+    }
+
+    public com.example.backend_java.dto.MessageDto resendOtp(com.example.backend_java.dto.ResendOtpDto dto) {
+        com.example.backend_java.entity.TokenType type = com.example.backend_java.entity.TokenType.valueOf(dto.getType());
+        String otp = otpService.generateOtp(dto.getEmail(), type, 10);
+        
+        if (type == com.example.backend_java.entity.TokenType.REGISTER_VERIFICATION) {
+            emailService.sendVerificationEmail(dto.getEmail(), otp);
+        } else if (type == com.example.backend_java.entity.TokenType.PASSWORD_RESET) {
+            emailService.sendPasswordResetEmail(dto.getEmail(), otp);
+        }
+        
+        return new com.example.backend_java.dto.MessageDto("Mã OTP đã được gửi lại thành công");
     }
 
     // Chuyển đổi Entity → DTO
@@ -195,6 +270,7 @@ public class UserService {
                 .website(user.getWebsite())
                 .phone(user.getPhone())
                 .bio(user.getBio())
+                .isVerified(user.getIsVerified())
                 .build();
     }
 }

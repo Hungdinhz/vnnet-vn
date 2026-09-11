@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/axios';
+import GoogleLoginButton from '@/components/GoogleLoginButton';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -37,10 +38,10 @@ export default function RegisterPage() {
         password: password
       });
 
-      setSuccess('Đăng ký thành công! Đang chuyển hướng đến trang đăng nhập...');
+      setSuccess('Đăng ký thành công! Đang chuyển hướng để xác thực email...');
       
       setTimeout(() => {
-        router.push('/login');
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
       }, 2000);
 
     } catch (err: any) {
@@ -137,6 +138,18 @@ export default function RegisterPage() {
             {isLoading ? 'Đang xử lý...' : '✨ Đăng ký tài khoản'}
           </button>
         </form>
+
+        {/* Divider */}
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-white/10"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-4 bg-[#0a0a14] text-muted/50">hoặc</span>
+          </div>
+        </div>
+
+        <GoogleLoginButton onError={(msg) => setError(msg)} />
 
         <div className="mt-6 text-center text-sm text-muted/50">
           Đã có tài khoản?{' '}

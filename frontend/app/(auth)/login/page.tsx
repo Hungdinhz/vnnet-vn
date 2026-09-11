@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/axios'; 
+import GoogleLoginButton from '@/components/GoogleLoginButton';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -39,6 +40,12 @@ export default function LoginPage() {
         setError('Không nhận được token từ server.');
       }
     } catch (err: any) {
+      if (err.response?.status === 403) {
+        // Handle unverified account
+        router.push(`/verify-email?email=${encodeURIComponent(username)}`);
+        return;
+      }
+
       const errorDetail = err.response?.data?.detail;
       
       if (Array.isArray(errorDetail)) {
@@ -110,6 +117,18 @@ export default function LoginPage() {
             {isLoading ? 'Đang xử lý...' : '✨ Đăng nhập'}
           </button>
         </form>
+
+        {/* Divider */}
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-white/10"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-4 bg-[#0a0a14] text-muted/50">hoặc</span>
+          </div>
+        </div>
+
+        <GoogleLoginButton onError={(msg) => setError(msg)} />
 
         <div className="mt-6 flex justify-between items-center text-sm">
           <Link href="/forgot-password" className="text-muted/60 hover:text-indigo-400 transition-colors">
