@@ -5,6 +5,29 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/axios';
+import { checkPasswordRules, validatePassword } from '@/lib/passwordValidation';
+
+function PasswordRequirementsIndicator({ password }: { password: string }) {
+  if (!password) return null;
+  const rules = checkPasswordRules(password);
+  return (
+    <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 space-y-1 text-xs mt-1.5 animate-fade-in">
+      <div className="font-medium text-muted/70 text-[11px] mb-1">Yêu cầu bảo mật:</div>
+      <div className={`flex items-center gap-1.5 transition-colors ${rules.minLength ? 'text-emerald-400 font-medium' : 'text-muted/50'}`}>
+        <span>{rules.minLength ? '✓' : '○'}</span>
+        <span>Tối thiểu 8 ký tự</span>
+      </div>
+      <div className={`flex items-center gap-1.5 transition-colors ${rules.hasUppercase ? 'text-emerald-400 font-medium' : 'text-muted/50'}`}>
+        <span>{rules.hasUppercase ? '✓' : '○'}</span>
+        <span>Ít nhất 1 chữ cái in hoa (A-Z)</span>
+      </div>
+      <div className={`flex items-center gap-1.5 transition-colors ${rules.hasSpecialChar ? 'text-emerald-400 font-medium' : 'text-muted/50'}`}>
+        <span>{rules.hasSpecialChar ? '✓' : '○'}</span>
+        <span>Ít nhất 1 ký tự đặc biệt (!@#$%^&*...)</span>
+      </div>
+    </div>
+  );
+}
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -51,6 +74,12 @@ export default function ForgotPasswordPage() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    const passwordCheck = validatePassword(newPassword);
+    if (!passwordCheck.isValid) {
+      setError(passwordCheck.message!);
+      return;
+    }
     
     if (newPassword !== confirmNewPassword) {
       setError('Mật khẩu nhập lại không khớp!');
@@ -164,10 +193,11 @@ export default function ForgotPasswordPage() {
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
                 className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
-                placeholder="Nhập mật khẩu mới..."
+                placeholder="Tối thiểu 8 ký tự, 1 chữ hoa, 1 ký tự đặc biệt..."
                 required
-                minLength={6}
+                minLength={8}
               />
+              <PasswordRequirementsIndicator password={newPassword} />
             </div>
             <div>
               <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Xác nhận mật khẩu mới</label>

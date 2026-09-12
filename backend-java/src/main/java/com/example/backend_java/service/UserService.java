@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.backend_java.util.EmailValidationUtil;
+import com.example.backend_java.util.PasswordValidationUtil;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -54,6 +55,9 @@ public class UserService {
     public UserResponseDto registerUser(UserCreateDto dto) {
         String email = dto.getEmail().trim().toLowerCase();
         String username = dto.getUsername().trim();
+
+        // 0. Kiểm tra độ mạnh mật khẩu (tối thiểu 8 ký tự, 1 chữ hoa, 1 ký tự đặc biệt)
+        PasswordValidationUtil.validate(dto.getPassword());
 
         // Kiểm tra tính hợp lệ của tên miền email (MX Record)
         if (!EmailValidationUtil.hasMxRecord(email)) {
@@ -217,9 +221,7 @@ public class UserService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu hiện tại không chính xác!");
         }
 
-        if (dto.getNewPassword() == null || dto.getNewPassword().length() < 6) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mật khẩu mới phải có ít nhất 6 ký tự!");
-        }
+        PasswordValidationUtil.validate(dto.getNewPassword());
 
         user.setHashedPassword(passwordEncoder.encode(dto.getNewPassword()));
         userRepository.save(user);
@@ -242,6 +244,8 @@ public class UserService {
     public com.example.backend_java.dto.MessageDto resetPassword(com.example.backend_java.dto.ResetPasswordDto dto) {
         User user = userRepository.findByEmail(dto.getEmail())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng với email này"));
+
+        PasswordValidationUtil.validate(dto.getNewPassword());
 
         otpService.validateOtp(dto.getEmail(), dto.getOtp(), com.example.backend_java.entity.TokenType.PASSWORD_RESET);
 
@@ -356,6 +360,9 @@ public class UserService {
         String fullName = dto.getFullName() != null && !dto.getFullName().trim().isEmpty()
                 ? dto.getFullName().trim()
                 : (String) payload.get("name");
+
+        // Kiểm tra độ mạnh mật khẩu
+        PasswordValidationUtil.validate(dto.getPassword());
 
         // Sinh mã OTP 6 số
         int otpNum = 100000 + secureRandom.nextInt(900000);
