@@ -13,7 +13,7 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${spring.mail.username}")
+    @Value("${spring.mail.username:}")
     private String fromEmail;
 
     public EmailService(JavaMailSender mailSender) {
@@ -35,6 +35,10 @@ public class EmailService {
     }
 
     private void sendHtmlEmail(String to, String subject, String htmlBody) {
+        if (fromEmail == null || fromEmail.isBlank()) {
+            System.err.println("WARN: Chưa cấu hình SPRING_MAIL_USERNAME trong .env, bỏ qua gửi email đến " + to);
+            return;
+        }
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -43,7 +47,7 @@ public class EmailService {
             helper.setSubject(subject);
             helper.setText(htmlBody, true);
             mailSender.send(message);
-        } catch (MessagingException e) {
+        } catch (Exception e) {
             System.err.println("Lỗi khi gửi email đến " + to + ": " + e.getMessage());
         }
     }

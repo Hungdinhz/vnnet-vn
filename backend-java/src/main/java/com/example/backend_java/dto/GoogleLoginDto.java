@@ -13,4 +13,7 @@ import lombok.NoArgsConstructor;
 public class GoogleLoginDto {
     @NotBlank
     private String idToken;
+    
+    // "login" hoặc "register" - mặc định là "login"
+    private String mode;
 }

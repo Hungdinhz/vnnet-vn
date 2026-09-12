@@ -16,11 +16,14 @@ public class GoogleAuthService {
 
     private final String googleClientId;
 
-    public GoogleAuthService(@Value("${google.client-id}") String googleClientId) {
+    public GoogleAuthService(@Value("${google.client-id:}") String googleClientId) {
         this.googleClientId = googleClientId;
     }
 
     public GoogleIdToken.Payload verifyIdToken(String idTokenString) {
+        if (googleClientId == null || googleClientId.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Chưa cấu hình GOOGLE_CLIENT_ID trên server.");
+        }
         try {
             GoogleIdTokenVerifier verifier = new GoogleIdTokenVerifier.Builder(new NetHttpTransport(), new GsonFactory())
                     .setAudience(Collections.singletonList(googleClientId))
@@ -32,6 +35,8 @@ public class GoogleAuthService {
             } else {
                 throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid Google ID token");
             }
+        } catch (ResponseStatusException e) {
+            throw e;
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Failed to verify Google ID token");
         }

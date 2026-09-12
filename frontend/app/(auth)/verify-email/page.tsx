@@ -1,10 +1,11 @@
 // app/(auth)/verify-email/page.tsx
 "use client";
 
-import { useState, useEffect, useRef, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/axios';
+import OtpInput from '@/components/OtpInput';
 
 function VerifyEmailContent() {
   const router = useRouter();
@@ -19,8 +20,6 @@ function VerifyEmailContent() {
   
   const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes
   const [cooldown, setCooldown] = useState(0);
-  
-  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     if (!email) {
@@ -50,50 +49,6 @@ function VerifyEmailContent() {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
-  const handleChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return;
-    
-    const newOtp = [...otp];
-    // Keep only last char if multiple entered
-    newOtp[index] = value.slice(-1);
-    setOtp(newOtp);
-
-    // Auto-focus next
-    if (value && index < 5) {
-      inputRefs.current[index + 1]?.focus();
-    }
-
-    // Auto submit if all filled
-    if (newOtp.every(v => v !== '') && value) {
-      submitOtp(newOtp.join(''));
-    }
-  };
-
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
-  };
-
-  const handlePaste = (e: React.ClipboardEvent) => {
-    e.preventDefault();
-    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6);
-    if (!pastedData) return;
-
-    const newOtp = [...otp];
-    for (let i = 0; i < pastedData.length; i++) {
-      newOtp[i] = pastedData[i];
-    }
-    setOtp(newOtp);
-
-    if (pastedData.length === 6) {
-      inputRefs.current[5]?.focus();
-      submitOtp(newOtp.join(''));
-    } else {
-      inputRefs.current[pastedData.length]?.focus();
-    }
-  };
-
   const submitOtp = async (otpValue: string) => {
     setError('');
     setIsLoading(true);
@@ -119,7 +74,6 @@ function VerifyEmailContent() {
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Mã OTP không đúng hoặc đã hết hạn.');
       setOtp(Array(6).fill(''));
-      inputRefs.current[0]?.focus();
       
       // Trigger shake animation
       setIsShake(true);
@@ -183,22 +137,15 @@ function VerifyEmailContent() {
         )}
 
         <div className="mb-6">
-          <div className={`flex justify-between gap-2 ${isShake ? 'animate-[shake_0.5s_ease-in-out]' : ''}`}>
-            {otp.map((digit, index) => (
-              <input
-                key={index}
-                ref={(el) => { inputRefs.current[index] = el; }}
-                type="text"
-                inputMode="numeric"
-                value={digit}
-                onChange={(e) => handleChange(index, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(index, e)}
-                onPaste={handlePaste}
-                disabled={isLoading}
-                className="w-12 h-14 text-center text-xl font-bold input-anime rounded-xl bg-white/5 border border-indigo-500/20 focus:border-indigo-500/50 outline-none"
-                maxLength={1}
-              />
-            ))}
+          <div className={isShake ? 'animate-[shake_0.5s_ease-in-out]' : ''}>
+            <OtpInput
+              length={6}
+              value={otp}
+              onChange={setOtp}
+              onComplete={submitOtp}
+              disabled={isLoading}
+              inputClassName="input-anime"
+            />
           </div>
         </div>
 

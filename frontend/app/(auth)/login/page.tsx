@@ -119,16 +119,18 @@ export default function LoginPage() {
         </form>
 
         {/* Divider */}
-        <div className="relative my-6">
+        <div className="relative my-6 flex items-center justify-center">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-white/10"></div>
+            <div className="w-full border-t border-slate-200 dark:border-slate-700/60"></div>
           </div>
-          <div className="relative flex justify-center text-sm">
-            <span className="px-4 bg-[#0a0a14] text-muted/50">hoặc</span>
+          <div className="relative px-3 py-0.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-full border border-slate-200/80 dark:border-slate-700/50 shadow-xs">
+            <span className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-medium">hoặc</span>
           </div>
         </div>
 
-        <GoogleLoginButton onError={(msg) => setError(msg)} />
+        <div className="w-full flex justify-center">
+          <GoogleLoginButton onError={(msg) => setError(msg)} />
+        </div>
 
         <div className="mt-6 flex justify-between items-center text-sm">
           <Link href="/forgot-password" className="text-muted/60 hover:text-indigo-400 transition-colors">
