@@ -2,6 +2,7 @@ package com.example.backend_java.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +24,7 @@ public class User {
     @Column(length = 100, unique = true, nullable = false)
     private String email;
 
-    @Column(name = "hashed_password", length = 255, nullable = false)
+    @Column(name = "hashed_password", length = 255, nullable = true)
     private String hashedPassword;
 
     @Column(name = "avatar_url")
@@ -52,6 +53,14 @@ public class User {
 
     @Column(name = "reset_password_otp", length = 10)
     private String resetPasswordOtp;
+
+    @Column(name = "google_id", length = 100, unique = true)
+    private String googleId;
+
+    @ColumnDefault("false")
+    @Column(name = "is_verified", nullable = false)
+    @Builder.Default
+    private Boolean isVerified = false;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default

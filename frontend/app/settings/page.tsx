@@ -7,6 +7,7 @@ import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import toast from 'react-hot-toast';
 import api from '@/lib/axios';
+import { checkPasswordRules, validatePassword } from '@/lib/passwordValidation';
 
 type SettingsTab = 'profile' | 'media' | 'security' | 'appearance' | 'privacy';
 
@@ -131,8 +132,9 @@ export default function SettingsPage() {
       toast.error("Vui lòng nhập mật khẩu hiện tại");
       return;
     }
-    if (newPassword.length < 6) {
-      toast.error("Mật khẩu mới phải từ 6 ký tự trở lên");
+    const check = validatePassword(newPassword);
+    if (!check.isValid) {
+      toast.error(check.message!);
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -527,9 +529,30 @@ export default function SettingsPage() {
                             value={newPassword}
                             onChange={e => setNewPassword(e.target.value)}
                             className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
-                            placeholder="Ít nhất 6 ký tự"
+                            placeholder="Tối thiểu 8 ký tự, 1 chữ hoa, 1 ký tự đặc biệt"
                             required
+                            minLength={8}
                           />
+                          {newPassword && (() => {
+                            const rules = checkPasswordRules(newPassword);
+                            return (
+                              <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 space-y-1 text-xs mt-1.5 animate-fade-in">
+                                <div className="font-medium text-muted/70 text-[11px] mb-0.5">Yêu cầu bảo mật:</div>
+                                <div className={`flex items-center gap-1.5 transition-colors ${rules.minLength ? 'text-emerald-400 font-medium' : 'text-muted/50'}`}>
+                                  <span>{rules.minLength ? '✓' : '○'}</span>
+                                  <span>Tối thiểu 8 ký tự</span>
+                                </div>
+                                <div className={`flex items-center gap-1.5 transition-colors ${rules.hasUppercase ? 'text-emerald-400 font-medium' : 'text-muted/50'}`}>
+                                  <span>{rules.hasUppercase ? '✓' : '○'}</span>
+                                  <span>Ít nhất 1 chữ cái in hoa (A-Z)</span>
+                                </div>
+                                <div className={`flex items-center gap-1.5 transition-colors ${rules.hasSpecialChar ? 'text-emerald-400 font-medium' : 'text-muted/50'}`}>
+                                  <span>{rules.hasSpecialChar ? '✓' : '○'}</span>
+                                  <span>Ít nhất 1 ký tự đặc biệt (!@#$%^&*...)</span>
+                                </div>
+                              </div>
+                            );
+                          })()}
                         </div>
 
                         <div>
