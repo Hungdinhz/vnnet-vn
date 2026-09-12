@@ -90,8 +90,9 @@ function VerifyEmailContent() {
     try {
       await api.post('/users/resend-otp', { email, type: 'REGISTER_VERIFICATION' });
       setCooldown(60);
-      setSuccess('Đã gửi lại mã OTP. Vui lòng kiểm tra email.');
-      setTimeout(() => setSuccess(''), 3000);
+      setOtp(Array(6).fill('')); // Xóa sạch ô nhập OTP khi gửi mã mới
+      setSuccess('Đã gửi lại mã OTP mới. Vui lòng kiểm tra email.');
+      setTimeout(() => setSuccess(''), 4000);
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Không thể gửi lại mã OTP. Vui lòng thử lại sau.');
     }
@@ -136,7 +137,7 @@ function VerifyEmailContent() {
           </div>
         )}
 
-        <div className="mb-6">
+        <div className="mb-4">
           <div className={isShake ? 'animate-[shake_0.5s_ease-in-out]' : ''}>
             <OtpInput
               length={6}
@@ -148,6 +149,15 @@ function VerifyEmailContent() {
             />
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={() => submitOtp(otp.join(''))}
+          disabled={otp.some(v => !v) || isLoading}
+          className="w-full py-2.5 px-4 rounded-xl text-sm font-bold btn-anime mb-4 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? 'Đang xác thực...' : '✨ Xác thực tài khoản'}
+        </button>
 
         <div className="flex flex-col items-center gap-4 text-sm">
           <div className="text-muted/70">
