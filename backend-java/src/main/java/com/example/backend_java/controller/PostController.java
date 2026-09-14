@@ -109,6 +109,12 @@ public class PostController {
         return ResponseEntity.ok(postService.getReactions(postId));
     }
 
+    // GET /posts/trending-hashtags - Lấy top trending hashtags
+    @GetMapping("/trending-hashtags")
+    public ResponseEntity<List<TrendingHashtagDto>> getTrendingHashtags() {
+        return ResponseEntity.ok(postService.getTrendingHashtags());
+    }
+
     // POST /posts/{post_id}/comments - Thêm bình luận (cần token)
     @PostMapping("/{postId}/comments")
     public ResponseEntity<CommentResponseDto> createComment(
@@ -123,6 +129,16 @@ public class PostController {
         // Tạo thông báo cho người viết bài
         notificationService.createNotification(
                 post.getOwnerId(), currentUser.getId(), "comment", postId);
+
+        // Tạo thông báo cho những người được tag trong comment
+        if (dto.getMentionedUserIds() != null && !dto.getMentionedUserIds().isEmpty()) {
+            for (Long mentionedUserId : dto.getMentionedUserIds()) {
+                if (!mentionedUserId.equals(currentUser.getId())) {
+                    notificationService.createNotification(
+                            mentionedUserId, currentUser.getId(), "mention", postId);
+                }
+            }
+        }
 
         return ResponseEntity.ok(comment);
     }

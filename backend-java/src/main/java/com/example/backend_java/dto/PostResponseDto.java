@@ -60,6 +60,9 @@ public class PostResponseDto {
     @JsonProperty("mentioned_users")
     private List<UserOutDto> mentionedUsers;
 
+    @JsonProperty("visibility")
+    private String visibility;
+
     @Data
     @Builder
     @NoArgsConstructor @AllArgsConstructor

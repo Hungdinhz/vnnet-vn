@@ -173,12 +173,12 @@ export default function ProfilePage() {
                         <div className="flex items-center gap-2">
                           {showUnfriendConfirm ? (
                             <>
-                              <button onClick={handleUnfriend} className="flex items-center gap-2 px-5 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-lg text-sm border border-red-500/20 transition-colors">✓ Xác nhận hủy</button>
-                              <button onClick={() => setShowUnfriendConfirm(false)} className="flex items-center gap-2 px-5 py-2.5 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-sm border border-indigo-500/10 transition-colors">Hủy</button>
+                              <button onClick={handleUnfriend} className="flex items-center gap-2 px-5 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-bold rounded-lg text-sm border border-red-500/30 transition-colors">✓ Xác nhận hủy kết bạn</button>
+                              <button onClick={() => setShowUnfriendConfirm(false)} className="flex items-center gap-2 px-5 py-2.5 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-sm border border-indigo-500/10 transition-colors">Không</button>
                             </>
                           ) : (
                             <>
-                              <button onClick={() => setShowUnfriendConfirm(true)} className="flex items-center gap-2 px-6 py-2.5 bg-black/5 dark:bg-white/5 hover:bg-red-500/10 text-secondary hover:text-red-400 font-bold rounded-lg text-sm border border-indigo-500/20 hover:border-red-500/20 shadow-sm transition-colors">✅ Bạn bè</button>
+                              <button onClick={() => setShowUnfriendConfirm(true)} className="flex items-center gap-2 px-6 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-lg text-sm border border-red-500/20 shadow-sm transition-colors cursor-pointer">❌ Hủy kết bạn</button>
                               <button onClick={() => router.push(`/messages?userId=${id}`)} className="flex items-center gap-2 px-6 py-2.5 btn-anime rounded-lg text-sm shadow-md">💬 Nhắn tin</button>
                             </>
                           )}

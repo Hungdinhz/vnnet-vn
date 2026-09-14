@@ -34,9 +34,13 @@ export default function Home() {
   const [isPosting, setIsPosting] = useState(false);
   const [isComposing, setIsComposing] = useState(false);
   
-  // Destination group
+  // Destination & Visibility
   const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
+  const [selectedVisibility, setSelectedVisibility] = useState<'public' | 'friends' | 'private'>('public');
   const [showGroupDropdown, setShowGroupDropdown] = useState(false);
+
+  // Trending
+  const [trendingTopics, setTrendingTopics] = useState<any[]>([]);
 
   // Tag friends
   const [taggedFriends, setTaggedFriends] = useState<any[]>([]);
@@ -109,11 +113,21 @@ export default function Home() {
     fetchPosts(0, true);
   }, [router]);
 
+  const fetchTrendingHashtags = async () => {
+    try {
+      const res = await api.get('/posts/trending-hashtags');
+      setTrendingTopics(res.data || []);
+    } catch (err) {
+      console.error("Lỗi tải xu hướng:", err);
+    }
+  };
+
   useEffect(() => {
     if (currentUser) {
       fetchSuggestedUsers();
       fetchMyGroups();
       fetchFriendsList();
+      fetchTrendingHashtags();
     }
   }, [currentUser]);
 
@@ -180,6 +194,7 @@ export default function Home() {
         content: newContent,
         image_url: uploadedImageUrl,
         group_id: selectedGroupId,
+        visibility: selectedGroupId ? 'public' : selectedVisibility,
         mentioned_user_ids: taggedFriends.map(f => f.id)
       });
 
@@ -190,6 +205,7 @@ export default function Home() {
       setImagePreview(null);
       setIsComposing(false);
       setSelectedGroupId(null);
+      setSelectedVisibility('public');
       setTaggedFriends([]);
       
       const fileInput = document.getElementById('file-upload') as HTMLInputElement;
@@ -228,13 +244,6 @@ export default function Home() {
     if (hour < 18) return 'Chào buổi chiều';
     return 'Chào buổi tối';
   };
-
-  const trendingTopics = [
-    { tag: '#VnNetSocial', count: '1.2K thảo luận' },
-    { tag: '#SpringBoot3', count: '840 bài viết' },
-    { tag: '#NextJS16', count: '652 bài viết' },
-    { tag: '#Taiwind4', count: '419 bài viết' },
-  ];
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
@@ -360,6 +369,10 @@ export default function Home() {
                         >
                           {selectedGroupId ? (
                             <>👥 Đăng vào nhóm: {myGroups.find(g => g.id === selectedGroupId)?.name || 'Đang chọn'}</>
+                          ) : selectedVisibility === 'friends' ? (
+                            <>👥 Đăng với bạn bè</>
+                          ) : selectedVisibility === 'private' ? (
+                            <>🔒 Chỉ mình tôi (Cá nhân)</>
                           ) : (
                             <>🌏 Đăng công khai (Bảng tin)</>
                           )}
@@ -367,35 +380,84 @@ export default function Home() {
                         </button>
 
                         {showGroupDropdown && (
-                          <div className="absolute left-0 mt-1 w-64 glass-card rounded-xl py-1.5 shadow-2xl z-50 animate-slide-up max-h-56 overflow-y-auto">
+                          <div className="absolute left-0 mt-1 w-64 glass-card rounded-xl py-1.5 shadow-2xl z-50 animate-slide-up max-h-64 overflow-y-auto border border-indigo-500/20">
+                            <div className="px-3 py-1 text-[10px] uppercase font-bold text-muted tracking-wider">Phạm vi hiển thị</div>
+                            
                             <button
                               type="button"
                               onClick={() => {
                                 setSelectedGroupId(null);
+                                setSelectedVisibility('public');
                                 setShowGroupDropdown(false);
                               }}
                               className={`w-full text-left px-3.5 py-2 text-xs font-semibold hover:bg-indigo-500/10 flex items-center gap-2 ${
-                                selectedGroupId === null ? 'text-accent-primary' : 'text-foreground'
+                                selectedGroupId === null && selectedVisibility === 'public' ? 'text-accent-primary font-bold' : 'text-foreground'
                               }`}
                             >
-                              <span>🌏</span> Đăng công khai (Bảng tin)
+                              <span>🌏</span>
+                              <div>
+                                <div>Đăng công khai</div>
+                                <div className="text-[10px] text-muted font-normal">Tất cả mọi người đều có thể thấy</div>
+                              </div>
                             </button>
-                            
-                            {myGroups.map((group) => (
-                              <button
-                                key={group.id}
-                                type="button"
-                                onClick={() => {
-                                  setSelectedGroupId(group.id);
-                                  setShowGroupDropdown(false);
-                                }}
-                                className={`w-full text-left px-3.5 py-2 text-xs font-semibold hover:bg-indigo-500/10 flex items-center gap-2 ${
-                                  selectedGroupId === group.id ? 'text-accent-primary' : 'text-foreground'
-                                }`}
-                              >
-                                <span>👥</span> Nhóm: {group.name}
-                              </button>
-                            ))}
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedGroupId(null);
+                                setSelectedVisibility('friends');
+                                setShowGroupDropdown(false);
+                              }}
+                              className={`w-full text-left px-3.5 py-2 text-xs font-semibold hover:bg-indigo-500/10 flex items-center gap-2 ${
+                                selectedGroupId === null && selectedVisibility === 'friends' ? 'text-accent-primary font-bold' : 'text-foreground'
+                              }`}
+                            >
+                              <span>👥</span>
+                              <div>
+                                <div>Bạn bè</div>
+                                <div className="text-[10px] text-muted font-normal">Chỉ bạn bè mới có thể thấy</div>
+                              </div>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedGroupId(null);
+                                setSelectedVisibility('private');
+                                setShowGroupDropdown(false);
+                              }}
+                              className={`w-full text-left px-3.5 py-2 text-xs font-semibold hover:bg-indigo-500/10 flex items-center gap-2 ${
+                                selectedGroupId === null && selectedVisibility === 'private' ? 'text-accent-primary font-bold' : 'text-foreground'
+                              }`}
+                            >
+                              <span>🔒</span>
+                              <div>
+                                <div>Chỉ mình tôi (Cá nhân)</div>
+                                <div className="text-[10px] text-muted font-normal">Chỉ một mình bạn thấy bài viết</div>
+                              </div>
+                            </button>
+
+                            {myGroups.length > 0 && (
+                              <>
+                                <div className="px-3 pt-2 pb-1 text-[10px] uppercase font-bold text-muted tracking-wider border-t border-indigo-500/10 mt-1">Đăng vào nhóm</div>
+                                {myGroups.map((group) => (
+                                  <button
+                                    key={group.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedGroupId(group.id);
+                                      setShowGroupDropdown(false);
+                                    }}
+                                    className={`w-full text-left px-3.5 py-2 text-xs font-semibold hover:bg-indigo-500/10 flex items-center gap-2 ${
+                                      selectedGroupId === group.id ? 'text-accent-primary font-bold' : 'text-foreground'
+                                    }`}
+                                  >
+                                    <span>🏘️</span>
+                                    <span className="truncate">{group.name}</span>
+                                  </button>
+                                ))}
+                              </>
+                            )}
                           </div>
                         )}
                       </div>
@@ -618,120 +680,93 @@ export default function Home() {
           )}
         </main>
 
-        {/* Right Sidebar: Trending & Suggested Groups & Friends */}
+        {/* Right Sidebar: Friends & Trending */}
         <aside className="w-80 hidden lg:block py-6 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto space-y-5">
           
-          {/* My Groups shortcuts widget */}
+          {/* Friends list widget */}
           <div className="glass-card rounded-2xl p-4.5 border border-indigo-500/10">
             <div className="flex justify-between items-center mb-3">
               <h4 className="text-xs font-bold text-accent-purple uppercase tracking-wider flex items-center gap-1.5">
-                👥 Nhóm đã tham gia
+                👥 Bạn bè ({friendsList.length})
               </h4>
-              <Link href="/groups" className="text-[10px] text-accent-primary hover:underline font-bold">Quản lý</Link>
+              <Link href="/friends" className="text-[10px] text-accent-primary hover:underline font-bold">Xem tất cả</Link>
             </div>
-            
-            {myGroups.length === 0 ? (
-              <div className="text-center py-4 bg-black/10 dark:bg-white/[0.01] rounded-xl border border-indigo-500/5">
-                <span className="text-base block">🏘️</span>
-                <span className="text-[10px] text-muted">Bạn chưa tham gia nhóm nào</span>
-                <Link href="/groups" className="text-[10px] text-accent-purple font-bold hover:underline block mt-1.5">Khám phá ngay ➔</Link>
+
+            {friendsList.length === 0 ? (
+              <div className="text-center py-5 bg-black/10 dark:bg-white/[0.01] rounded-xl border border-indigo-500/5">
+                <span className="text-xl block mb-1">🤝</span>
+                <span className="text-[11px] text-muted block">Bạn chưa có người bạn nào</span>
+                <Link href="/friends" className="text-[10px] text-accent-purple font-bold hover:underline block mt-1.5">Tìm bạn bè mới ➔</Link>
               </div>
             ) : (
-              <div className="space-y-2.5 max-h-52 overflow-y-auto pr-0.5">
-                {myGroups.slice(0, 5).map((group) => (
-                  <Link 
-                    key={group.id} 
-                    href={`/groups/${group.id}`}
-                    className="flex items-center justify-between hover:bg-indigo-500/10 p-2 -mx-1.5 rounded-xl transition-all group"
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-8.5 h-8.5 rounded-full overflow-hidden bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center font-bold text-white text-xs">
-                        {group.cover_url ? (
-                          <img src={group.cover_url} alt={group.name} className="w-full h-full object-cover" />
+              <div className={`space-y-2.5 pr-1 ${friendsList.length > 10 ? 'max-h-[380px] overflow-y-auto scrollbar-thin' : ''}`}>
+                {friendsList.map((friend, idx) => {
+                  const friendId = friend.friend_id || friend.id;
+                  const friendName = friend.friend_username || friend.username;
+                  const friendAvatar = friend.friend_avatar_url || friend.avatar_url;
+                  return (
+                    <Link
+                      key={friendId || idx}
+                      href={`/profile/${friendId}`}
+                      className="flex items-center justify-between hover:bg-indigo-500/10 p-2 -mx-1.5 rounded-xl transition-all group"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        {friendAvatar ? (
+                          <img 
+                            src={friendAvatar} 
+                            alt={friendName} 
+                            className="w-9 h-9 rounded-full object-cover avatar-glow flex-shrink-0"
+                          />
                         ) : (
-                          getInitials(group.name)
+                          <div className="w-9 h-9 bg-gradient-to-br from-indigo-500/50 to-indigo-600/50 rounded-full text-white flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0 group-hover:from-indigo-500 group-hover:to-indigo-600 transition-all">
+                            {getInitials(friendName)}
+                          </div>
                         )}
+                        <div className="min-w-0 flex-1">
+                          <div className="font-bold text-xs text-foreground group-hover:text-accent-primary transition-colors truncate">{friendName}</div>
+                          <div className="text-[9px] text-emerald-400/80 flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                            Bạn bè
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <div className="font-bold text-xs text-foreground group-hover:text-accent-primary transition-colors truncate max-w-[130px]">{group.name}</div>
-                        <div className="text-[9px] text-muted/60 mt-0.5">Thành viên tích cực</div>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-bold text-accent-purple bg-indigo-500/10 px-2 py-0.5 rounded-full">Xem</span>
-                  </Link>
-                ))}
+                      <span className="text-[10px] font-bold text-accent-purple bg-indigo-500/10 px-2 py-0.5 rounded-full group-hover:bg-indigo-500/20 flex-shrink-0">
+                        Xem
+                      </span>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </div>
-
-          {/* Suggestions block */}
-          {suggestedUsers.length > 0 && (
-            <div className="glass-card rounded-2xl p-4.5 border border-indigo-500/10">
-              <div className="flex justify-between items-center mb-3">
-                <h4 className="text-xs font-bold text-accent-purple uppercase tracking-wider flex items-center gap-1.5">
-                  ✨ Người bạn có thể biết
-                </h4>
-                <Link href="/friends" className="text-[10px] text-accent-primary hover:underline font-bold">Xem tất cả</Link>
-              </div>
-
-              <div className="space-y-3">
-                {suggestedUsers.map((user, idx) => (
-                  <div key={user.id || idx} className="flex items-center justify-between gap-2.5">
-                    <Link href={`/profile/${user.id}`} className="flex items-center gap-2.5 group flex-1 min-w-0">
-                      {user.avatar_url ? (
-                        <img 
-                          src={user.avatar_url} 
-                          alt={user.username} 
-                          className="w-9 h-9 rounded-full object-cover avatar-glow flex-shrink-0"
-                        />
-                      ) : (
-                        <div className="w-9 h-9 bg-gradient-to-br from-indigo-500/50 to-indigo-600/50 rounded-full text-white flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0 group-hover:from-indigo-500 group-hover:to-indigo-600 transition-all">
-                          {getInitials(user.username)}
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <div className="font-bold text-xs text-foreground group-hover:text-accent-primary transition-colors truncate">{user.username}</div>
-                        <div className="text-[9px] text-muted truncate">{user.email}</div>
-                      </div>
-                    </Link>
-
-                    {requestedUserIds.has(user.id) ? (
-                      <button
-                        disabled
-                        className="px-2.5 py-1 bg-black/10 dark:bg-white/[0.02] text-muted font-bold text-[10px] rounded-full border border-indigo-500/10 cursor-not-allowed flex-shrink-0"
-                      >
-                        Đã gửi
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => handleAddFriend(user.id)}
-                        className="px-2.5 py-1 bg-indigo-500/10 hover:bg-gradient-to-r hover:from-indigo-500 hover:to-indigo-600 text-accent-purple hover:text-white font-bold text-[10px] rounded-full transition-all flex items-center gap-0.5 border border-indigo-500/15 hover:border-transparent flex-shrink-0"
-                      >
-                        Kết bạn
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Trending hashtags card */}
           <div className="glass-card rounded-2xl p-4.5 border border-indigo-500/10">
             <h4 className="text-xs font-bold text-accent-purple uppercase tracking-wider mb-3 flex items-center gap-1.5">
               🔥 Xu hướng cộng đồng
             </h4>
-            <div className="space-y-2.5">
-              {trendingTopics.map((topic, idx) => (
-                <div key={idx} className="flex justify-between items-center hover:bg-indigo-500/10 p-2 -mx-1.5 rounded-xl transition-all cursor-pointer group">
-                  <div>
-                    <div className="font-bold text-xs text-foreground group-hover:text-accent-primary transition-colors">{topic.tag}</div>
-                    <div className="text-[9px] text-muted/60 mt-0.5">{topic.count}</div>
-                  </div>
-                  <span className="text-muted/40 text-[10px]">•••</span>
-                </div>
-              ))}
-            </div>
+            {trendingTopics.length === 0 ? (
+              <div className="text-center py-4 bg-black/10 dark:bg-white/[0.01] rounded-xl border border-indigo-500/5">
+                <span className="text-base block mb-0.5">🏷️</span>
+                <span className="text-[10px] text-muted">Chưa có xu hướng thảo luận nào</span>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {trendingTopics.map((topic, idx) => (
+                  <Link 
+                    key={idx} 
+                    href={`/search?q=${encodeURIComponent(topic.tag)}`}
+                    className="flex justify-between items-center hover:bg-indigo-500/10 p-2 -mx-1.5 rounded-xl transition-all cursor-pointer group"
+                  >
+                    <div>
+                      <div className="font-bold text-xs text-foreground group-hover:text-accent-primary transition-colors">{topic.tag}</div>
+                      <div className="text-[9px] text-muted/60 mt-0.5">{topic.count} bài viết</div>
+                    </div>
+                    <span className="text-accent-primary text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">➔</span>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
         </aside>
 

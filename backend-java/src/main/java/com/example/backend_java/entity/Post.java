@@ -35,6 +35,10 @@ public class Post {
     @Column(name = "image_url")
     private String imageUrl;
 
+    @Column(name = "visibility")
+    @Builder.Default
+    private String visibility = "public";
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id")
     private User owner;

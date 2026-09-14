@@ -25,6 +25,42 @@ const formatDate = (dateString: string) => {
   }
 };
 
+const formatCommentTime = (dateString: string) => {
+  if (!dateString) return "Vừa xong";
+  try {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    if (isNaN(diffMs)) return "Vừa xong";
+    const diffSecs = Math.floor(diffMs / 1000);
+    if (diffSecs < 60) return "Vừa xong";
+    const diffMins = Math.floor(diffSecs / 60);
+    if (diffMins < 60) return `${diffMins} phút trước`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours} giờ trước`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays} ngày trước`;
+    return new Intl.DateTimeFormat('vi-VN', { dateStyle: 'short' }).format(date);
+  } catch {
+    return "Vừa xong";
+  }
+};
+
+const renderCommentContent = (content: string) => {
+  if (!content) return null;
+  const parts = content.split(/(@[a-zA-Z0-9_\p{L}]+)/gu);
+  return parts.map((part, i) => {
+    if (part.startsWith('@')) {
+      return (
+        <span key={i} className="text-accent-primary font-bold hover:underline">
+          {part}
+        </span>
+      );
+    }
+    return part;
+  });
+};
+
 const REACTION_TYPES = [
   { type: 'like', emoji: '❤️', label: 'Thích' },
   { type: 'haha', emoji: '😂', label: 'Haha' },
@@ -52,10 +88,15 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
   const [newComment, setNewComment] = useState(''); 
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [localCommentsCount, setLocalCommentsCount] = useState<number>(post.comments_count ?? 0);
   
-  // States for replying to a comment
+  // States for replying and mentioning in comments
   const [replyingToId, setReplyingToId] = useState<number | null>(null);
   const [replyingToUsername, setReplyingToUsername] = useState<string | null>(null);
+  const [commentMentionedUserIds, setCommentMentionedUserIds] = useState<number[]>([]);
+  const [friendsList, setFriendsList] = useState<any[]>([]);
+  const [showMentionDropdown, setShowMentionDropdown] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState('');
   const commentInputRef = useRef<HTMLInputElement>(null);
   
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
@@ -207,11 +248,20 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
         setIsLoadingComments(false);
       }
     }
+    if (willShow && friendsList.length === 0) {
+      api.get('/friends/list').then(r => setFriendsList(r.data || [])).catch(() => {});
+    }
   };
 
-  const handleReplyClick = (commentId: number, username: string) => {
+  const handleReplyClick = (commentId: number, username?: string, userId?: number) => {
     setReplyingToId(commentId);
-    setReplyingToUsername(username);
+    setReplyingToUsername(username || null);
+    if (username) {
+      setNewComment(`@${username} `);
+      if (userId) {
+        setCommentMentionedUserIds([userId]);
+      }
+    }
     setTimeout(() => {
       if (commentInputRef.current) {
         commentInputRef.current.focus();
@@ -222,6 +272,37 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
   const cancelReply = () => {
     setReplyingToId(null);
     setReplyingToUsername(null);
+    setNewComment('');
+    setCommentMentionedUserIds([]);
+    setShowMentionDropdown(false);
+  };
+
+  const handleCommentInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setNewComment(val);
+
+    const words = val.split(' ');
+    const lastWord = words[words.length - 1] || '';
+    if (lastWord.startsWith('@') && lastWord.length > 1) {
+      setMentionQuery(lastWord.slice(1).toLowerCase());
+      setShowMentionDropdown(true);
+    } else {
+      setShowMentionDropdown(false);
+    }
+  };
+
+  const selectMentionFriend = (friend: any) => {
+    const friendId = friend.friend_id || friend.id;
+    const friendName = friend.friend_username || friend.username;
+    const words = newComment.split(' ');
+    words.pop(); // remove partial mention
+    const updated = [...words, `@${friendName} `].join(' ').trimStart();
+    setNewComment(updated);
+    setCommentMentionedUserIds(prev => Array.from(new Set([...prev, friendId])));
+    setShowMentionDropdown(false);
+    if (commentInputRef.current) {
+      commentInputRef.current.focus();
+    }
   };
 
   const handleCommentSubmit = async (e: React.FormEvent) => {
@@ -232,17 +313,17 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
     try {
       await api.post(`/posts/${post.id}/comments`, {
         content: newComment,
-        parent_id: replyingToId
+        parent_id: replyingToId,
+        mentioned_user_ids: commentMentionedUserIds
       });
 
-      // Reload comments
+      // Reload comments without reloading the entire page
       const commentsRes = await api.get(`/posts/${post.id}/comments`);
       setComments(commentsRes.data);
+      setLocalCommentsCount(prev => prev + 1);
       setNewComment('');
+      setCommentMentionedUserIds([]);
       cancelReply();
-      
-      // Update comment count on post if callback is available
-      if (onPostUpdated) onPostUpdated();
     } catch (error) {
       console.error("Lỗi khi gửi bình luận:", error);
       toast.error("Không thể gửi bình luận lúc này!");
@@ -343,7 +424,9 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
             <div className="text-xs text-muted/50 flex items-center gap-1">
               <span>{formatDate(post.created_at)}</span>
               <span>•</span>
-              <span title="Công khai">🌏</span>
+              <span title={post.visibility === 'friends' ? 'Bạn bè' : post.visibility === 'private' ? 'Chỉ mình tôi' : 'Công khai'}>
+                {post.visibility === 'friends' ? '👥' : post.visibility === 'private' ? '🔒' : '🌏'}
+              </span>
             </div>
           </div>
         </div>
@@ -476,7 +559,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
           )}
         </div>
         <div className="cursor-pointer hover:underline hover:text-accent-purple transition-colors" onClick={toggleComments}>
-          {post.comments_count ?? comments.length} bình luận
+          {localCommentsCount} bình luận
         </div>
       </div>
 
@@ -576,23 +659,60 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
                   ME
                 </div>
               )}
-              <div className="flex-1 flex input-anime rounded-2xl items-center px-3 py-1.5">
-                <input
-                  ref={commentInputRef}
-                  type="text"
-                  value={newComment}
-                  onChange={(e) => setNewComment(e.target.value)}
-                  placeholder={replyingToId ? `Phản hồi ${replyingToUsername}...` : "Viết bình luận..."}
-                  className="flex-1 bg-transparent border-0 text-[13px] focus:outline-none py-1 placeholder-indigo-500/40 text-foreground"
-                  required
-                />
-                <button 
-                  type="submit"
-                  disabled={isSubmitting || !newComment.trim()}
-                  className="text-muted font-bold hover:text-indigo-400 transition-colors disabled:opacity-30 focus:outline-none text-xs px-2"
-                >
-                  {isSubmitting ? "Gửi..." : "Đăng"}
-                </button>
+              <div className="flex-1 relative">
+                <div className="flex input-anime rounded-2xl items-center px-3 py-1.5">
+                  <input
+                    ref={commentInputRef}
+                    type="text"
+                    value={newComment}
+                    onChange={handleCommentInputChange}
+                    placeholder={replyingToId ? `Phản hồi ${replyingToUsername}...` : "Viết bình luận (@ để tag bạn bè)..."}
+                    className="flex-1 bg-transparent border-0 text-[13px] focus:outline-none py-1 placeholder-indigo-500/40 text-foreground"
+                    required
+                  />
+                  <button 
+                    type="submit"
+                    disabled={isSubmitting || !newComment.trim()}
+                    className="text-muted font-bold hover:text-indigo-400 transition-colors disabled:opacity-30 focus:outline-none text-xs px-2"
+                  >
+                    {isSubmitting ? "Gửi..." : "Đăng"}
+                  </button>
+                </div>
+
+                {/* Mention Suggestion Dropdown */}
+                {showMentionDropdown && friendsList.length > 0 && (
+                  <div className="absolute bottom-full left-0 mb-1 w-64 glass-card rounded-xl py-1.5 shadow-2xl z-50 animate-slide-up max-h-48 overflow-y-auto border border-indigo-500/20">
+                    <div className="px-3 py-1 text-[10px] text-muted font-bold uppercase tracking-wider">Gợi ý bạn bè (@)</div>
+                    {friendsList
+                      .filter(f => {
+                        const name = (f.friend_username || f.username || '').toLowerCase();
+                        return name.includes(mentionQuery);
+                      })
+                      .slice(0, 5)
+                      .map(friend => {
+                        const fid = friend.friend_id || friend.id;
+                        const fname = friend.friend_username || friend.username;
+                        const favatar = friend.friend_avatar_url || friend.avatar_url;
+                        return (
+                          <button
+                            key={fid}
+                            type="button"
+                            onClick={() => selectMentionFriend(friend)}
+                            className="w-full text-left px-3 py-1.5 hover:bg-indigo-500/10 flex items-center gap-2 transition-colors cursor-pointer"
+                          >
+                            {favatar ? (
+                              <img src={favatar} alt={fname} className="w-6 h-6 rounded-full object-cover" />
+                            ) : (
+                              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-[10px] font-bold text-white">
+                                {(fname || 'U').charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                            <span className="text-xs font-semibold text-foreground truncate">@{fname}</span>
+                          </button>
+                        );
+                      })}
+                  </div>
+                )}
               </div>
             </div>
           </form>
@@ -631,7 +751,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
                         >
                            {comment.owner?.username || `User #${comment.userId}`}
                         </Link>
-                        <span className="text-[13px] text-foreground/70 leading-snug whitespace-pre-wrap">{comment.content}</span>
+                        <span className="text-[13px] text-foreground/70 leading-snug whitespace-pre-wrap">{renderCommentContent(comment.content)}</span>
                         
                         {/* Comment like count floating bubble */}
                         {comment.likes_count > 0 && (
@@ -649,12 +769,12 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
                           Thích
                         </button>
                         <button 
-                          onClick={() => handleReplyClick(comment.id, comment.owner?.username)}
+                          onClick={() => handleReplyClick(comment.id, comment.owner?.username, comment.userId || comment.owner?.id)}
                           className="hover:underline"
                         >
                           Phản hồi
                         </button>
-                        <span className="font-normal">Vừa xong</span>
+                        <span className="font-normal">{formatCommentTime(comment.created_at)}</span>
                       </div>
                     </div>
                   </div>
@@ -683,7 +803,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
                           >
                              {reply.owner?.username || `User #${reply.userId}`}
                           </Link>
-                          <span className="text-[12px] text-foreground/70 leading-snug whitespace-pre-wrap">{reply.content}</span>
+                          <span className="text-[12px] text-foreground/70 leading-snug whitespace-pre-wrap">{renderCommentContent(reply.content)}</span>
                           
                           {reply.likes_count > 0 && (
                             <div className="absolute -bottom-2 -right-2 bg-background px-1.5 py-0.5 rounded-full border border-indigo-500/20 shadow-sm flex items-center gap-1 text-[9px] text-indigo-300/70">
@@ -700,12 +820,12 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
                             Thích
                           </button>
                           <button 
-                            onClick={() => handleReplyClick(comment.id, reply.owner?.username)}
+                            onClick={() => handleReplyClick(comment.id, reply.owner?.username, reply.userId || reply.owner?.id)}
                             className="hover:underline"
                           >
                             Phản hồi
                           </button>
-                          <span className="font-normal">Vừa xong</span>
+                          <span className="font-normal">{formatCommentTime(reply.created_at)}</span>
                         </div>
                       </div>
                     </div>

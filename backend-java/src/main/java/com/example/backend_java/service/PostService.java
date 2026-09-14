@@ -58,10 +58,16 @@ public class PostService {
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại"));
         }
 
+        String visibility = dto.getVisibility();
+        if (visibility == null || visibility.isBlank()) {
+            visibility = "public";
+        }
+
         Post post = Post.builder()
                 .title(dto.getTitle())
                 .content(dto.getContent())
                 .imageUrl(dto.getImageUrl())
+                .visibility(visibility)
                 .owner(currentUser)
                 .sharedPostId(dto.getSharedPostId())
                 .sharedPost(sharedPost)
@@ -95,28 +101,45 @@ public class PostService {
         List<Post> posts = postRepository.findAllByOrderByIdDesc();
 
         java.util.Set<Long> joinedGroupIds = new java.util.HashSet<>();
+        java.util.Set<Long> friendIds = new java.util.HashSet<>();
         if (currentUserId != null) {
             joinedGroupIds = groupMemberRepository.findByUserId(currentUserId).stream()
                     .map(com.example.backend_java.entity.GroupMember::getGroupId)
                     .collect(Collectors.toSet());
+            friendIds = friendshipRepository.findAcceptedFriendships(currentUserId).stream()
+                    .map(f -> f.getUserId().equals(currentUserId) ? f.getFriendId() : f.getUserId())
+                    .collect(Collectors.toSet());
         }
 
         final java.util.Set<Long> finalJoinedGroupIds = joinedGroupIds;
+        final java.util.Set<Long> finalFriendIds = friendIds;
         List<PostResponseDto> dtos = posts.stream()
                 .filter(post -> post.getGroupId() == null || finalJoinedGroupIds.contains(post.getGroupId()))
+                .filter(post -> {
+                    String vis = post.getVisibility();
+                    if (vis == null || "public".equalsIgnoreCase(vis)) {
+                        return true;
+                    }
+                    if (currentUserId == null) {
+                        return false;
+                    }
+                    if (currentUserId.equals(post.getOwnerId())) {
+                        return true;
+                    }
+                    if ("friends".equalsIgnoreCase(vis)) {
+                        return finalFriendIds.contains(post.getOwnerId());
+                    }
+                    return false;
+                })
                 .map(post -> toResponseDto(post, currentUserId))
                 .collect(Collectors.toList());
 
         if (currentUserId != null) {
-            // Get friend IDs
-            java.util.Set<Long> friendIds = friendshipRepository.findAcceptedFriendships(currentUserId).stream()
-                    .map(f -> f.getUserId().equals(currentUserId) ? f.getFriendId() : f.getUserId())
-                    .collect(Collectors.toSet());
 
             // Sort
             dtos.sort((a, b) -> {
-                boolean aIsFriend = friendIds.contains(a.getOwnerId()) || a.getOwnerId().equals(currentUserId);
-                boolean bIsFriend = friendIds.contains(b.getOwnerId()) || b.getOwnerId().equals(currentUserId);
+                boolean aIsFriend = finalFriendIds.contains(a.getOwnerId()) || a.getOwnerId().equals(currentUserId);
+                boolean bIsFriend = finalFriendIds.contains(b.getOwnerId()) || b.getOwnerId().equals(currentUserId);
 
                 if (aIsFriend != bIsFriend) {
                     return aIsFriend ? -1 : 1; // Friend posts first
@@ -314,6 +337,7 @@ public class PostService {
                 .groupId(post.getGroup() != null ? post.getGroup().getId() : null)
                 .groupName(post.getGroup() != null ? post.getGroup().getName() : null)
                 .mentionedUsers(mentionedUsers.isEmpty() ? null : mentionedUsers)
+                .visibility(post.getVisibility() != null ? post.getVisibility() : "public")
                 .build();
     }
 
@@ -329,6 +353,35 @@ public class PostService {
                             .reactionType(like.getReactionType())
                             .build();
                 })
+                .collect(Collectors.toList());
+    }
+
+    // Trích xuất top 10 hashtag xu hướng từ nội dung bài viết
+    public List<TrendingHashtagDto> getTrendingHashtags() {
+        List<Post> posts = postRepository.findAll();
+        Map<String, Long> tagCounts = new HashMap<>();
+        java.util.regex.Pattern hashtagPattern = java.util.regex.Pattern.compile("#([\\p{L}\\p{N}_]+)");
+
+        for (Post post : posts) {
+            String text = (post.getTitle() != null ? post.getTitle() + " " : "") + 
+                          (post.getContent() != null ? post.getContent() : "");
+            java.util.regex.Matcher matcher = hashtagPattern.matcher(text);
+            Set<String> seenInPost = new HashSet<>();
+            while (matcher.find()) {
+                String tag = matcher.group(0);
+                if (seenInPost.add(tag.toLowerCase())) {
+                    tagCounts.put(tag, tagCounts.getOrDefault(tag, 0L) + 1);
+                }
+            }
+        }
+
+        return tagCounts.entrySet().stream()
+                .sorted((e1, e2) -> Long.compare(e2.getValue(), e1.getValue()))
+                .limit(10)
+                .map(e -> TrendingHashtagDto.builder()
+                        .tag(e.getKey())
+                        .count(e.getValue())
+                        .build())
                 .collect(Collectors.toList());
     }
 }
