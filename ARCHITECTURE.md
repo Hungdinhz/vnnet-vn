@@ -183,12 +183,22 @@ backend-java/src/main/java/com/example/backend_java/
 | GET    | `/notifications`               | 🔒 Token | Lấy thông báo              |
 | PUT    | `/notifications/{id}/read`     | 🔒 Token | Đánh dấu đã đọc            |
 
-#### Messages (`/messages`)
-| Method | Path                           | Auth     | Mô tả                     |
-|--------|--------------------------------|----------|----------------------------|
-| GET    | `/messages/conversations`      | 🔒 Token | Lấy danh sách cuộc trò chuyện |
-| GET    | `/messages/{contactId}`        | 🔒 Token | Lấy lịch sử chat           |
-| POST   | `/messages`                    | 🔒 Token | Gửi tin nhắn mới            |
+#### Conversations & Real-time Messages (`/conversations`, `/ws`)
+| Method | Path | Auth | Mô tả |
+|---|---|---|---|
+| GET | `/conversations` | 🔒 Token | Danh sách cuộc trò chuyện (với tin nhắn cuối, số tin chưa đọc) |
+| GET | `/conversations/{id}` | 🔒 Token | Chi tiết cuộc trò chuyện |
+| POST | `/conversations/direct` | 🔒 Token | Tạo/mở cuộc trò chuyện 1-1 (`{ userId }`) |
+| POST | `/conversations/group` | 🔒 Token | Tạo nhóm trò chuyện (`{ name, memberIds, avatarUrl }`) |
+| PUT | `/conversations/{id}` | 🔒 Token | Đổi tên/ảnh nhóm |
+| POST | `/conversations/{id}/members` | 🔒 Token | Thêm thành viên vào nhóm (`{ memberIds }`) |
+| DELETE | `/conversations/{id}/members/{userId}` | 🔒 Token | Xóa thành viên khỏi nhóm |
+| POST | `/conversations/{id}/leave` | 🔒 Token | Rời khỏi nhóm |
+| GET | `/conversations/{id}/messages` | 🔒 Token | Lấy lịch sử tin nhắn (phân trang: `page`, `size`) |
+| POST | `/conversations/{id}/messages` | 🔒 Token | Gửi tin nhắn mới (REST fallback) |
+| PUT | `/conversations/{id}/read` | 🔒 Token | Đánh dấu đã đọc cuộc trò chuyện |
+| DELETE | `/messages/{id}` | 🔒 Token | Thu hồi tin nhắn |
+| WS | `/ws` (STOMP over SockJS) | 🔒 JWT | Real-time chat, typing indicator, read receipts, online status |
 
 #### Activity (`/users/{userId}/activity`)
 | Method | Path                           | Auth     | Mô tả                     |

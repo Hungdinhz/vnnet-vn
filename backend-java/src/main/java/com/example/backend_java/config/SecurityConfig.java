@@ -56,6 +56,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/upload").permitAll()
                 .requestMatchers(HttpMethod.GET, "/search").permitAll()
                 .requestMatchers(HttpMethod.GET, "/events/**").permitAll()
+                .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/").permitAll()
                 // --- PROTECTED endpoints (cần token) ---
                 // Stories endpoints (tất cả cần token)

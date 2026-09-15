@@ -1,0 +1,18 @@
+package com.example.backend_java.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import lombok.Data;
+
+import java.util.List;
+
+@Data
+public class CreateGroupConversationDto {
+    @NotBlank(message = "Tên nhóm không được để trống")
+    private String name;
+
+    private String avatarUrl;
+
+    @NotEmpty(message = "Danh sách thành viên không được để trống")
+    private List<Long> memberIds;
+}
