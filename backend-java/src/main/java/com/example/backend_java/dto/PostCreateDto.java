@@ -26,5 +26,8 @@ public class PostCreateDto {
 
     @JsonProperty("mentioned_user_ids")
     private List<Long> mentionedUserIds;
+
+    @JsonProperty("visibility")
+    private String visibility;
 }
 

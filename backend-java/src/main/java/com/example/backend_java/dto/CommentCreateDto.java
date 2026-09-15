@@ -2,6 +2,7 @@ package com.example.backend_java.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
+import java.util.List;
 
 @Data
 public class CommentCreateDto {
@@ -11,4 +12,7 @@ public class CommentCreateDto {
 
     @com.fasterxml.jackson.annotation.JsonProperty("parent_id")
     private Long parentId;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("mentioned_user_ids")
+    private List<Long> mentionedUserIds;
 }

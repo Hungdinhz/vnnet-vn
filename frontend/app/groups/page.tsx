@@ -188,7 +188,7 @@ export default function GroupsPage() {
                   onChange={(e) => setNewGroupName(e.target.value)}
                 />
               </div>
-              <div className="mb-6">
+              <div className="mb-4">
                 <label className="block text-xs font-semibold text-secondary mb-1.5">Mô tả (Tùy chọn)</label>
                 <textarea 
                   placeholder="Nhóm này dùng để làm gì?" 
@@ -197,6 +197,26 @@ export default function GroupsPage() {
                   value={newGroupDesc}
                   onChange={(e) => setNewGroupDesc(e.target.value)}
                 />
+              </div>
+
+              {/* Default Cover Image Preview & Note */}
+              <div className="mb-6 p-3 rounded-xl bg-black/10 dark:bg-white/[0.02] border border-indigo-500/10">
+                <div className="text-[11px] font-semibold text-accent-purple mb-1.5 flex items-center gap-1">
+                  <span>🖼️</span> Ảnh bìa mặc định
+                </div>
+                <div className="h-24 rounded-lg overflow-hidden relative border border-indigo-500/20 mb-2">
+                  <img 
+                    src="https://images.unsplash.com/photo-1518605368461-1e1e111d4187?auto=format&fit=crop&q=80&w=1200" 
+                    alt="Default Cover Preview" 
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center text-white text-[11px] font-bold">
+                    Ảnh bìa tự động gán
+                  </div>
+                </div>
+                <p className="text-[10px] text-muted leading-relaxed">
+                  Nhóm sẽ tự động dùng ảnh bìa này. Trưởng nhóm có thể thay đổi ảnh bìa bất cứ lúc nào trong phần cài đặt nhóm.
+                </p>
               </div>
               
               <div className="flex gap-2">

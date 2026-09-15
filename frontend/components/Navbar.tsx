@@ -28,6 +28,21 @@ export default function Navbar() {
   const searchRef = useRef<HTMLDivElement>(null);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Real-time clock state
+  const [currentTime, setCurrentTime] = useState<string>('');
+  const [currentDateStr, setCurrentDateStr] = useState<string>('');
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTime(now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      setCurrentDateStr(now.toLocaleDateString('vi-VN', { weekday: 'short', day: '2-digit', month: '2-digit' }));
+    };
+    updateTime();
+    const timer = setInterval(updateTime, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Fetch current user and notifications
   useEffect(() => {
     const fetchUserData = async () => {
@@ -344,6 +359,18 @@ export default function Navbar() {
         {/* Right: Actions & Profile Menu */}
         <div className="flex items-center space-x-2 md:space-x-3">
           
+          {/* Real-time Clock */}
+          {currentTime && (
+            <div className="hidden sm:flex flex-col items-end px-2.5 py-1 rounded-xl bg-black/5 dark:bg-white/[0.04] border border-indigo-500/10 font-mono select-none">
+              <span className="text-xs font-black tracking-wider text-accent-primary leading-tight">
+                {currentTime}
+              </span>
+              <span className="text-[9px] text-muted font-sans font-medium leading-none">
+                {currentDateStr}
+              </span>
+            </div>
+          )}
+
           {/* Theme Toggle */}
           <ThemeToggle />
           

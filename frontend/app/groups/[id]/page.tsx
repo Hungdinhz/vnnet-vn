@@ -100,6 +100,9 @@ export default function GroupDetailsPage() {
   const handleJoinOrLeave = async () => {
     try {
       if (group.isJoined) {
+        if (!confirm(`Bạn có chắc chắn muốn rời nhóm "${group.name}" không?`)) {
+          return;
+        }
         await api.delete(`/groups/${id}/leave`);
         toast.success('Đã rời nhóm');
       } else {
@@ -251,12 +254,12 @@ export default function GroupDetailsPage() {
                     <button 
                       onClick={handleJoinOrLeave}
                       className={`px-6 py-2 rounded-lg font-bold text-sm shadow-md transition-all ${
-                        isJoinedOrCreator 
-                          ? 'bg-black/5 dark:bg-white/5 border border-indigo-500/20 text-secondary hover:bg-black/10 dark:hover:bg-white/10' 
-                          : 'btn-anime'
+                        group.isJoined 
+                          ? 'bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 text-red-400 hover:text-red-300 cursor-pointer' 
+                          : 'btn-anime cursor-pointer'
                       }`}
                     >
-                      {isJoinedOrCreator ? '✅ Đã tham gia' : '👋 Tham gia nhóm'}
+                      {group.isJoined ? '🚪 Rời nhóm' : '👋 Tham gia nhóm'}
                     </button>
                   )}
                 </div>
