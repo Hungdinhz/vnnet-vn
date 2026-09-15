@@ -1,14 +1,14 @@
 package com.example.backend_java.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import com.example.backend_java.entity.MessageType;
 import lombok.Data;
 
 @Data
 public class ChatMessageRequestDto {
-    @NotNull(message = "Receiver ID is required")
+    private Long conversationId;
     private Long receiverId;
-
-    @NotBlank(message = "Message content is required")
     private String content;
+    private MessageType messageType = MessageType.TEXT;
+    private String imageUrl;
+    private Long replyToId;
 }

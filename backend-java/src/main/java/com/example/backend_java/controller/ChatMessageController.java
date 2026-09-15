@@ -41,4 +41,12 @@ public class ChatMessageController {
         User currentUser = (User) authentication.getPrincipal();
         return ResponseEntity.ok(messageService.sendMessage(currentUser, request));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ChatMessageResponseDto> deleteMessage(
+            @PathVariable Long id,
+            Authentication authentication) {
+        User currentUser = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(messageService.deleteMessage(id, currentUser));
+    }
 }
