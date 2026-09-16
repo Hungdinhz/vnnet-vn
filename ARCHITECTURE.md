@@ -205,6 +205,19 @@ backend-java/src/main/java/com/example/backend_java/
 |--------|--------------------------------|----------|----------------------------|
 | GET    | `/users/{userId}/activity`     | 🔒 Token | Lấy tần suất hoạt động 30 ngày |
 
+#### Games (`/games`)
+| Method | Path | Auth | Mô tả |
+|---|---|---|---|
+| GET | `/games` | Optional | Danh sách game (lọc category, search keyword, kèm high score nếu có token) |
+| GET | `/games/{id}` | Optional | Chi tiết game + high score |
+| POST | `/games/{id}/scores` | 🔒 Token | Submit điểm lượt chơi (validate maxScore, rate limit 5s, mở khóa achievements) |
+| GET | `/games/{id}/leaderboard` | Public | Bảng xếp hạng từng game (phân trang: `page`, `size`) |
+| GET | `/games/{id}/scores/me` | 🔒 Token | Lịch sử điểm của user hiện tại cho game này |
+| GET | `/games/{id}/achievements` | Optional | Danh sách thành tựu (kèm trạng thái mở khóa nếu có token) |
+| GET | `/games/leaderboard/global` | Public | Bảng xếp hạng toàn server (phân trang: `page`, `size`) |
+| GET | `/games/stats/me` | 🔒 Token | Thống kê chơi game của user hiện tại |
+| GET | `/games/stats/{userId}` | Public | Thống kê chơi game của user bất kỳ |
+
 #### Upload (`/upload`)
 | Method | Path       | Auth   | Mô tả                         |
 |--------|------------|--------|--------------------------------|

@@ -56,6 +56,16 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/upload").permitAll()
                 .requestMatchers(HttpMethod.GET, "/search").permitAll()
                 .requestMatchers(HttpMethod.GET, "/events/**").permitAll()
+                // Game endpoints
+                .requestMatchers(HttpMethod.GET, "/games/stats/me").authenticated()
+                .requestMatchers(HttpMethod.GET, "/games/*/scores/me").authenticated()
+                .requestMatchers(HttpMethod.POST, "/games/*/scores").authenticated()
+                .requestMatchers(HttpMethod.GET, "/games").permitAll()
+                .requestMatchers(HttpMethod.GET, "/games/*").permitAll()
+                .requestMatchers(HttpMethod.GET, "/games/*/leaderboard").permitAll()
+                .requestMatchers(HttpMethod.GET, "/games/*/achievements").permitAll()
+                .requestMatchers(HttpMethod.GET, "/games/leaderboard/global").permitAll()
+                .requestMatchers(HttpMethod.GET, "/games/stats/*").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/").permitAll()
                 // --- PROTECTED endpoints (cần token) ---
