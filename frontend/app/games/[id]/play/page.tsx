@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
@@ -10,6 +10,7 @@ import AnimeQuiz from '../../components/games/AnimeQuiz';
 import MemoryMatch from '../../components/games/MemoryMatch';
 import SpeedType from '../../components/games/SpeedType';
 import { GameItem, GameScoreResult } from '@/types/game';
+import { normalizeGameItem } from '@/lib/gameUtils';
 import api from '@/lib/axios';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Trophy, Award, RotateCcw, Home, Sparkles } from 'lucide-react';
@@ -27,6 +28,7 @@ function GamePlayContent() {
   const [showResultModal, setShowResultModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resultData, setResultData] = useState<GameScoreResult | null>(null);
+  const isSubmittingRef = useRef(false);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -45,7 +47,7 @@ function GamePlayContent() {
     setIsLoading(true);
     try {
       const res = await api.get(`/games/${gameId}`);
-      setGame(res.data);
+      setGame(normalizeGameItem(res.data));
     } catch (e) {
       toast.error('Không tìm thấy trò chơi');
       router.push('/games');
@@ -55,6 +57,9 @@ function GamePlayContent() {
   };
 
   const handleGameEnd = async (finalScore: number, playTimeSeconds: number) => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+
     setIsSubmitting(true);
     setShowResultModal(true);
 
@@ -81,6 +86,7 @@ function GamePlayContent() {
   };
 
   const restartGame = () => {
+    isSubmittingRef.current = false;
     setShowResultModal(false);
     setResultData(null);
     setGameSessionKey((prev) => prev + 1);

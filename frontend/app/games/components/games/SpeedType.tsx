@@ -10,12 +10,12 @@ interface SpeedTypeProps {
 }
 
 const WORDS_BANK = [
-  "Luffy", "Naruto", "Goku", "Zoro", "Sasuke", "Ichigo", "Tanjiro",
-  "Nezuko", "Gojo", "Saitama", "Eren", "Mikasa", "Levi", "Kakashi",
-  "Vegeta", "Madara", "Itachi", "Sukuna", "Killua", "Gon", "Kurapika",
-  "Sanji", "Nami", "Robin", "Chopper", "Kagebunshin", "Rasengan",
-  "Chidori", "Kamehameha", "Bankai", "Getsuga", "Domain", "Hollow",
-  "Titan", "Sharingan", "Byakugan", "Rinnegan", "Bounty", "Nakama"
+  "congnghe", "sangtao", "tuonglai", "thanhcong", "ketnoi", "tritue",
+  "khampha", "phattrien", "damme", "butpha", "hiendai", "congdong",
+  "tudo", "kientri", "doanket", "tienbo", "nangluong", "hyvong",
+  "binhminh", "banlinh", "vuonxa", "yeuthuong", "niemtin", "khatvong",
+  "danthan", "dongluc", "quyetdoan", "vungvang", "toasang", "lacquan",
+  "chiase", "trachnhiem", "hieubiet", "khoahoc", "chinhphuc", "thuthach"
 ];
 
 export default function SpeedType({ game, onGameEnd }: SpeedTypeProps) {

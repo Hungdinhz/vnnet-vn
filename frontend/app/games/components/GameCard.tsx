@@ -4,14 +4,16 @@ import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { GameItem } from '@/types/game';
+import { normalizeGameItem } from '@/lib/gameUtils';
 import { Play, Trophy, Users, Star, Flame, Sparkles } from 'lucide-react';
 
 interface GameCardProps {
   game: GameItem;
 }
 
-export default function GameCard({ game }: GameCardProps) {
+export default function GameCard({ game: rawGame }: GameCardProps) {
   const router = useRouter();
+  const game = normalizeGameItem(rawGame);
 
   const getDifficultyColor = (diff: string) => {
     switch (diff?.toUpperCase()) {

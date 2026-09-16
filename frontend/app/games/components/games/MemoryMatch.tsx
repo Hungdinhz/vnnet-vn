@@ -19,14 +19,14 @@ interface CardItem {
 }
 
 const CARDS_DATA = [
-  { pairId: 1, emoji: '⚡', name: 'Pikachu' },
-  { pairId: 2, emoji: '👒', name: 'Luffy' },
-  { pairId: 3, emoji: '🍜', name: 'Naruto' },
-  { pairId: 4, emoji: '🗡️', name: 'Tanjiro' },
-  { pairId: 5, emoji: '🥊', name: 'Saitama' },
-  { pairId: 6, emoji: '🐉', name: 'Goku' },
-  { pairId: 7, emoji: '👁️', name: 'Gojo' },
-  { pairId: 8, emoji: '🍎', name: 'Ryuk' },
+  { pairId: 1, emoji: '🚀', name: 'Tên lửa' },
+  { pairId: 2, emoji: '🍎', name: 'Quả táo' },
+  { pairId: 3, emoji: '🍕', name: 'Pizza' },
+  { pairId: 4, emoji: '🌟', name: 'Ngôi sao' },
+  { pairId: 5, emoji: '🐱', name: 'Mèo con' },
+  { pairId: 6, emoji: '🎸', name: 'Guitar' },
+  { pairId: 7, emoji: '⚽', name: 'Bóng đá' },
+  { pairId: 8, emoji: '☕', name: 'Cà phê' },
 ];
 
 export default function MemoryMatch({ game, onGameEnd }: MemoryMatchProps) {
@@ -39,6 +39,7 @@ export default function MemoryMatch({ game, onGameEnd }: MemoryMatchProps) {
   const [isGameOver, setIsGameOver] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const hasEndedRef = useRef(false);
 
   // Initialize deck
   useEffect(() => {
@@ -50,6 +51,7 @@ export default function MemoryMatch({ game, onGameEnd }: MemoryMatchProps) {
 
   const initGame = () => {
     if (timerRef.current) clearInterval(timerRef.current);
+    hasEndedRef.current = false;
 
     const deck: CardItem[] = [];
     CARDS_DATA.forEach((item, index) => {
@@ -127,7 +129,7 @@ export default function MemoryMatch({ game, onGameEnd }: MemoryMatchProps) {
           setMatchesCount((prev) => {
             const nextMatches = prev + 1;
             if (nextMatches === CARDS_DATA.length) {
-              handleWin();
+              setTimeout(() => handleWin(moves + 1), 50);
             }
             return nextMatches;
           });
@@ -156,12 +158,15 @@ export default function MemoryMatch({ game, onGameEnd }: MemoryMatchProps) {
     return Math.max(100, Math.min(game.max_score, computed));
   };
 
-  const handleWin = () => {
+  const handleWin = (finalMoves: number) => {
+    if (hasEndedRef.current) return;
+    hasEndedRef.current = true;
+
     if (timerRef.current) clearInterval(timerRef.current);
     setIsGameOver(true);
     setIsGameActive(false);
 
-    const finalScore = calculateFinalScore(elapsedSeconds, moves + 1);
+    const finalScore = calculateFinalScore(elapsedSeconds, finalMoves);
     onGameEnd(finalScore, Math.max(1, elapsedSeconds));
   };
 

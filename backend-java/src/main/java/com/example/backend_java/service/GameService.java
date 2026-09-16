@@ -182,8 +182,11 @@ public class GameService {
         if (currentUserId != null) {
             List<UserAchievement> userAchievements = userAchievementRepository.findByUserId(currentUserId);
             for (UserAchievement ua : userAchievements) {
-                unlockedIds.add(ua.getAchievementId());
-                unlockedDates.put(ua.getAchievementId(), ua.getUnlockedAt());
+                Long achId = ua.getAchievement() != null ? ua.getAchievement().getId() : ua.getAchievementId();
+                if (achId != null) {
+                    unlockedIds.add(achId);
+                    unlockedDates.put(achId, ua.getUnlockedAt());
+                }
             }
         }
 
@@ -294,10 +297,17 @@ public class GameService {
         Optional<GameScore> topScoreOpt = gameScoreRepository.findTopByGameIdAndUserIdOrderByScoreDesc(game.getId(), user.getId());
         int highScore = topScoreOpt.map(GameScore::getScore).orElse(newScore);
 
+        // Lấy danh sách ID các thành tựu user đã mở khóa trước đó
+        List<UserAchievement> existingUserAchievements = userAchievementRepository.findByUserId(user.getId());
+        Set<Long> alreadyUnlockedIds = existingUserAchievements.stream()
+                .map(ua -> ua.getAchievement() != null ? ua.getAchievement().getId() : ua.getAchievementId())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
         List<GameAchievementDto> newlyUnlocked = new ArrayList<>();
 
         for (GameAchievement a : achievements) {
-            if (userAchievementRepository.existsByAchievementIdAndUserId(a.getId(), user.getId())) {
+            if (alreadyUnlockedIds.contains(a.getId()) || userAchievementRepository.existsByAchievementIdAndUserId(a.getId(), user.getId())) {
                 continue;
             }
 
@@ -305,25 +315,31 @@ public class GameService {
             boolean playsQualified = a.getRequiredPlays() != null && a.getRequiredPlays() > 0 && totalPlays >= a.getRequiredPlays();
 
             if (scoreQualified || playsQualified) {
-                UserAchievement ua = UserAchievement.builder()
-                        .achievement(a)
-                        .achievementId(a.getId())
-                        .user(user)
-                        .userId(user.getId())
-                        .build();
-                ua = userAchievementRepository.save(ua);
+                try {
+                    UserAchievement ua = UserAchievement.builder()
+                            .achievement(a)
+                            .achievementId(a.getId())
+                            .user(user)
+                            .userId(user.getId())
+                            .build();
+                    ua = userAchievementRepository.save(ua);
+                    alreadyUnlockedIds.add(a.getId());
 
-                newlyUnlocked.add(GameAchievementDto.builder()
-                        .id(a.getId())
-                        .gameId(a.getGameId())
-                        .title(a.getTitle())
-                        .description(a.getDescription())
-                        .icon(a.getIcon())
-                        .requiredScore(a.getRequiredScore())
-                        .requiredPlays(a.getRequiredPlays())
-                        .unlockedByCurrentUser(true)
-                        .unlockedAt(ua.getUnlockedAt())
-                        .build());
+                    newlyUnlocked.add(GameAchievementDto.builder()
+                            .id(a.getId())
+                            .gameId(a.getGameId())
+                            .title(a.getTitle())
+                            .description(a.getDescription())
+                            .icon(a.getIcon())
+                            .requiredScore(a.getRequiredScore())
+                            .requiredPlays(a.getRequiredPlays())
+                            .unlockedByCurrentUser(true)
+                            .unlockedAt(ua.getUnlockedAt())
+                            .build());
+                } catch (Exception ignored) {
+                    // Nếu đã có bản ghi tồn tại do race condition thì bỏ qua an toàn
+                    alreadyUnlockedIds.add(a.getId());
+                }
             }
         }
         return newlyUnlocked;

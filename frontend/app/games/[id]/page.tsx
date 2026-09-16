@@ -10,6 +10,7 @@ import Sidebar from '@/components/Sidebar';
 import Leaderboard from '../components/Leaderboard';
 import AchievementBadge from '../components/AchievementBadge';
 import { GameItem, LeaderboardEntry, GameAchievement, GameScoreResult } from '@/types/game';
+import { normalizeGameItem } from '@/lib/gameUtils';
 import api from '@/lib/axios';
 import toast from 'react-hot-toast';
 import { ArrowLeft, Play, Trophy, Award, Clock, Users, Flame, Star } from 'lucide-react';
@@ -57,7 +58,7 @@ function GameDetailContent() {
         api.get(`/games/${gameId}/achievements`),
       ]);
 
-      setGame(gameRes.data);
+      setGame(normalizeGameItem(gameRes.data));
       setLeaderboard(lbRes.data?.content || []);
       setAchievements(achRes.data || []);
     } catch (error: any) {

@@ -113,13 +113,13 @@ function GamesContent() {
 
             <div className="relative z-10 max-w-2xl">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 text-xs font-bold mb-3">
-                <Sparkles className="w-3.5 h-3.5" /> VnNet Arcade & Games
+                <Sparkles className="w-3.5 h-3.5" /> VnNet Games
               </div>
               <h1 className="text-2xl md:text-3xl font-black text-foreground tracking-tight">
-                🎮 Đấu Trường Trò Chơi Anime
+                🎮 Trung Tâm Trò Chơi
               </h1>
               <p className="text-sm text-text-muted mt-2 leading-relaxed">
-                Khám phá các mini game phong cách Anime, tranh tài trên bảng xếp hạng toàn server và mở khóa hàng loạt danh hiệu thành tựu vinh quang!
+                Khám phá các mini game giải trí, thử thách tư duy, tranh tài trên bảng xếp hạng toàn server và mở khóa hàng loạt danh hiệu thành tựu!
               </p>
             </div>
           </div>
