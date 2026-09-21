@@ -8,7 +8,7 @@
 
 ## 1. Tổng Quan Dự Án
 
-**VnNet** là một mạng xã hội (social network) phong cách Anime, cho phép người dùng đăng bài, tương tác (like, comment), kết bạn, nhận thông báo, chơi game, xem livestream, mua bán và nhắn tin. Dự án gồm 2 phần chính:
+**VnNet** là một mạng xã hội (social network) hiện đại, cho phép người dùng đăng bài, tương tác (like, comment), kết bạn, nhận thông báo, chơi game, xem livestream, mua bán và nhắn tin. Dự án gồm 2 phần chính:
 
 | Thành phần    | Công nghệ                              | Thư mục            | Deploy          |
 |---------------|----------------------------------------|---------------------|-----------------|
@@ -205,6 +205,19 @@ backend-java/src/main/java/com/example/backend_java/
 |--------|--------------------------------|----------|----------------------------|
 | GET    | `/users/{userId}/activity`     | 🔒 Token | Lấy tần suất hoạt động 30 ngày |
 
+#### Games (`/games`)
+| Method | Path | Auth | Mô tả |
+|---|---|---|---|
+| GET | `/games` | Optional | Danh sách game (lọc category, search keyword, kèm high score nếu có token) |
+| GET | `/games/{id}` | Optional | Chi tiết game + high score |
+| POST | `/games/{id}/scores` | 🔒 Token | Submit điểm lượt chơi (validate maxScore, rate limit 5s, mở khóa achievements) |
+| GET | `/games/{id}/leaderboard` | Public | Bảng xếp hạng từng game (phân trang: `page`, `size`) |
+| GET | `/games/{id}/scores/me` | 🔒 Token | Lịch sử điểm của user hiện tại cho game này |
+| GET | `/games/{id}/achievements` | Optional | Danh sách thành tựu (kèm trạng thái mở khóa nếu có token) |
+| GET | `/games/leaderboard/global` | Public | Bảng xếp hạng toàn server (phân trang: `page`, `size`) |
+| GET | `/games/stats/me` | 🔒 Token | Thống kê chơi game của user hiện tại |
+| GET | `/games/stats/{userId}` | Public | Thống kê chơi game của user bất kỳ |
+
 #### Upload (`/upload`)
 | Method | Path       | Auth   | Mô tả                         |
 |--------|------------|--------|--------------------------------|
@@ -253,7 +266,7 @@ CLOUDINARY_API_SECRET=<secret>
 - **Axios 1.15.0** — HTTP client
 - Font: **Outfit** (Google Fonts)
 
-### 3.1.1 Design System — Anime Dark Theme
+### 3.1.1 Design System — Modern Dark Theme
 
 - **Bảng màu chủ đạo**:
   - Background: Deep Navy `#0F0B1E`
@@ -329,17 +342,19 @@ frontend/
 - Xóa bài viết (chỉ chủ sở hữu).
 - Chia sẻ bài viết (share post) — modal glassmorphism.
 
-### 3.6 Các Trang Mới (UI Placeholder — chưa có API backend)
+### 3.6 Các Trang Mới
 
-| Route          | Trang         | Mô tả                                              |
-|----------------|---------------|-----------------------------------------------------|
-| `/games`       | Trò chơi      | Grid game cards, category filter, nút "Chơi ngay"   |
-| `/livestream`  | Phát trực tiếp| Stream cards với LIVE badge, viewer count, categories|
-| `/marketplace` | Chợ           | Product cards với giá, địa điểm, categories         |
-| `/groups`      | Nhóm          | Group cards, member count, nút "Tham gia"           |
-| `/messages`    | Tin nhắn      | Split-view: contact list + chat area placeholder    |
+| Route          | Trang         | Trạng thái | Mô tả                                              |
+|----------------|---------------|------------|-----------------------------------------------------|
+| `/games`       | Trò chơi      | ✅ Hoàn thiện | Catalog mini game (Đố vui kiến thức, Lật thẻ trí nhớ, Gõ phím nhanh), lọc danh mục, BXH toàn server, thống kê cá nhân |
+| `/games/[id]`  | Chi tiết game | ✅ Hoàn thiện | Chi tiết trò chơi, BXH top người chơi, danh sách thành tựu (locked/unlocked), lịch sử điểm |
+| `/games/[id]/play` | Chơi game | ✅ Hoàn thiện | Màn chơi trực tiếp, timer, tính điểm, tự động lưu kết quả và mở khóa thành tựu |
+| `/livestream`  | Phát trực tiếp| Mock UI    | Stream cards với LIVE badge, viewer count, categories|
+| `/marketplace` | Chợ           | Mock UI    | Product cards với giá, địa điểm, categories         |
+| `/groups`      | Nhóm          | Mock UI    | Group cards, member count, nút "Tham gia"           |
+| `/messages`    | Tin nhắn      | ✅ Hoàn thiện | Split-view: danh sách hội thoại + chat WebSocket + gửi tin nhắn |
 
-> ⚠️ Các trang trên hiển thị **dữ liệu tĩnh (mock data)**. Cần thêm API backend nếu muốn dữ liệu thật.
+> ⚠️ Các trang `/livestream`, `/marketplace`, `/groups` hiển thị **dữ liệu tĩnh (mock data)**. Cần thêm API backend nếu muốn dữ liệu thật.
 
 ### 3.7 API Base URL
 
