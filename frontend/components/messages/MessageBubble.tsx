@@ -62,11 +62,11 @@ export default function MessageBubble({
     >
       {/* Avatar for other users in group or 1-1 */}
       {!isMine && (
-        <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden border border-slate-200 dark:border-indigo-500/25 mb-1 shadow-sm">
+        <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden border border-slate-200 dark:border-slate-600 mb-1 shadow-sm">
           {message.senderAvatarUrl ? (
             <img src={message.senderAvatarUrl} alt={message.senderUsername} className="w-full h-full object-cover" />
           ) : (
-            <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs font-bold flex items-center justify-center">
+            <div className="w-full h-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center">
               {getInitials(message.senderUsername)}
             </div>
           )}
@@ -78,14 +78,14 @@ export default function MessageBubble({
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity self-center text-xs">
           <button
             onClick={() => onReply(message)}
-            className="p-1.5 rounded-lg bg-slate-200 dark:bg-black/50 hover:bg-slate-300 dark:hover:bg-black/70 text-slate-700 dark:text-slate-200 transition-colors shadow-sm"
+            className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition-colors shadow-sm"
             title="Trả lời"
           >
             💬
           </button>
           <button
             onClick={() => onRecallRequest(message)}
-            className="p-1.5 rounded-lg bg-slate-200 dark:bg-black/50 hover:bg-red-500/20 text-red-600 dark:text-red-400 transition-colors shadow-sm"
+            className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-red-500/20 text-red-600 dark:text-red-400 transition-colors shadow-sm"
             title="Thu hồi tin nhắn"
           >
             🗑️
@@ -97,7 +97,7 @@ export default function MessageBubble({
       <div className="flex flex-col max-w-[75%] sm:max-w-[65%]">
         {/* Sender name in group chat for other users */}
         {!isMine && isGroup && (
-          <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 mb-1 ml-2">
+          <span className="text-[11px] font-semibold text-sky-600 dark:text-sky-400 mb-1 ml-2">
             {message.senderUsername}
           </span>
         )}
@@ -105,8 +105,8 @@ export default function MessageBubble({
         <div
           className={`rounded-2xl px-4 py-2.5 shadow-md relative text-sm ${
             isMine
-              ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-500 text-white rounded-br-xs shadow-indigo-500/15'
-              : 'bg-white dark:bg-[#1E1738] border border-slate-200 dark:border-indigo-500/25 text-slate-800 dark:text-[#EDE9FE] rounded-bl-xs shadow-sm'
+              ? 'bg-sky-500 text-white rounded-br-sm shadow-sm'
+              : 'bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 text-slate-800 dark:text-slate-100 rounded-bl-sm shadow-sm'
           }`}
         >
           {/* Quoted reply banner if this message is a reply */}
@@ -115,7 +115,7 @@ export default function MessageBubble({
               className={`mb-2 p-2 rounded-lg text-xs border-l-2 ${
                 isMine
                   ? 'bg-black/20 border-white/70 text-white/90'
-                  : 'bg-slate-100 dark:bg-black/30 border-indigo-500 text-slate-600 dark:text-slate-300'
+                  : 'bg-slate-100 dark:bg-black/30 border-sky-500 text-slate-600 dark:text-slate-300'
               }`}
             >
               <div className="font-bold text-[11px] opacity-80">
@@ -174,7 +174,7 @@ export default function MessageBubble({
                     className={`p-2 rounded-lg text-xs font-bold flex-shrink-0 transition-colors ${
                       isMine
                         ? 'bg-white/20 hover:bg-white/30 text-white'
-                        : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                        : 'bg-sky-500 hover:bg-sky-600 text-white'
                     }`}
                     title="Tải xuống tệp"
                   >
@@ -215,7 +215,7 @@ export default function MessageBubble({
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity self-center text-xs">
           <button
             onClick={() => onReply(message)}
-            className="p-1.5 rounded-lg bg-slate-200 dark:bg-black/50 hover:bg-slate-300 dark:hover:bg-black/70 text-slate-700 dark:text-slate-200 transition-colors shadow-sm"
+            className="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition-colors shadow-sm"
             title="Trả lời"
           >
             💬

@@ -48,7 +48,7 @@ export default function ConversationItem({
       onClick={onClick}
       className={`w-full flex items-center gap-3 px-4 py-3 transition-all text-left relative ${
         isSelected
-          ? 'bg-indigo-50/90 dark:bg-indigo-600/20 border-l-4 border-indigo-600'
+          ? 'bg-sky-50 dark:bg-sky-600/20 border-l-4 border-sky-500'
           : 'hover:bg-slate-50 dark:hover:bg-white/5 border-l-4 border-transparent'
       }`}
     >
@@ -61,14 +61,14 @@ export default function ConversationItem({
             className="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-indigo-500/25 shadow-sm"
           />
         ) : (
-          <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-full flex items-center justify-center font-bold border border-slate-200 dark:border-indigo-500/25 text-base shadow-sm">
+          <div className="w-12 h-12 bg-sky-500 text-white rounded-full flex items-center justify-center font-bold border border-slate-200 dark:border-slate-600 text-base shadow-sm">
             {isGroup ? '👥' : getInitials(conversation.name)}
           </div>
         )}
 
         {/* Online dot for 1-1 */}
         {!isGroup && isOnline && (
-          <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-white dark:border-[#130E26] shadow-sm" />
+          <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-white dark:border-slate-800 shadow-sm" />
         )}
       </div>
 
@@ -78,7 +78,7 @@ export default function ConversationItem({
           <span className="font-bold text-sm text-slate-900 dark:text-white truncate flex items-center gap-1.5">
             <span>{conversation.name || 'Cuộc trò chuyện'}</span>
             {isGroup && (
-              <span className="text-[10px] bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 font-semibold px-1.5 py-0.5 rounded-full border border-indigo-500/25">
+              <span className="text-[10px] bg-sky-500/15 text-sky-700 dark:text-sky-300 font-semibold px-1.5 py-0.5 rounded-full border border-sky-500/25">
                 Nhóm
               </span>
             )}
@@ -92,7 +92,7 @@ export default function ConversationItem({
           <p
             className={`text-xs truncate ${
               conversation.unreadCount > 0
-                ? 'text-indigo-600 dark:text-indigo-400 font-bold'
+                ? 'text-sky-600 dark:text-sky-400 font-bold'
                 : 'text-slate-500 dark:text-slate-400'
             }`}
           >
@@ -104,7 +104,7 @@ export default function ConversationItem({
 
           {/* Unread badge */}
           {conversation.unreadCount > 0 && (
-            <span className="flex-shrink-0 min-w-[20px] h-5 px-1.5 bg-gradient-to-r from-pink-500 to-indigo-600 text-white rounded-full text-[10px] font-extrabold flex items-center justify-center shadow-md animate-pulse">
+            <span className="flex-shrink-0 min-w-[20px] h-5 px-1.5 bg-sky-500 text-white rounded-full text-[10px] font-extrabold flex items-center justify-center shadow-md">
               {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
             </span>
           )}

@@ -15,4 +15,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     // Tìm thông báo theo id và recipient
     Optional<Notification> findByIdAndRecipientId(Long id, Long recipientId);
+
+    // Tìm thông báo chưa đọc theo recipient, type và targetId để gộp thông báo tin nhắn
+    Optional<Notification> findFirstByRecipientIdAndTypeAndTargetIdAndIsReadFalse(Long recipientId, String type, Long targetId);
 }

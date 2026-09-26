@@ -20,40 +20,9 @@ interface InAppMessageToastProps {
   previewEnabled?: boolean;
 }
 
-// Web Audio API chime sound generator
+// Notification sound removed as requested
 export function playNotificationChime() {
-  try {
-    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-    if (!AudioContext) return;
-    const ctx = new AudioContext();
-
-    const now = ctx.currentTime;
-    // Note 1: E5
-    const osc1 = ctx.createOscillator();
-    const gain1 = ctx.createGain();
-    osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(659.25, now);
-    gain1.gain.setValueAtTime(0.15, now);
-    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-    osc1.connect(gain1);
-    gain1.connect(ctx.destination);
-    osc1.start(now);
-    osc1.stop(now + 0.3);
-
-    // Note 2: B5 (higher chime)
-    const osc2 = ctx.createOscillator();
-    const gain2 = ctx.createGain();
-    osc2.type = 'sine';
-    osc2.frequency.setValueAtTime(987.77, now + 0.1);
-    gain2.gain.setValueAtTime(0.18, now + 0.1);
-    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
-    osc2.connect(gain2);
-    gain2.connect(ctx.destination);
-    osc2.start(now + 0.1);
-    osc2.stop(now + 0.5);
-  } catch (e) {
-    // Audio context not allowed or failed, silently ignore
-  }
+  // Sound disabled
 }
 
 export default function InAppMessageToast({
@@ -71,11 +40,11 @@ export default function InAppMessageToast({
           <div
             key={notif.conversationId}
             onClick={() => onOpenConversation(notif.conversationId)}
-            className="pointer-events-auto bg-white/95 dark:bg-[#150F2C]/95 border border-indigo-500/25 dark:border-indigo-500/40 rounded-2xl p-3.5 shadow-2xl backdrop-blur-md cursor-pointer hover:scale-[1.02] transition-all duration-200 animate-slide-up flex items-start gap-3 relative group"
+            className="pointer-events-auto bg-white/95 dark:bg-slate-800/95 border border-sky-500/25 dark:border-slate-600 rounded-2xl p-3.5 shadow-2xl backdrop-blur-md cursor-pointer hover:scale-[1.02] transition-all duration-200 animate-slide-up flex items-start gap-3 relative group"
           >
             {/* Avatar with unread count badge */}
             <div className="relative flex-shrink-0">
-              <div className="w-10 h-10 rounded-full overflow-hidden border border-indigo-500/30">
+              <div className="w-10 h-10 rounded-full overflow-hidden border border-sky-500/30">
                 {notif.senderAvatarUrl ? (
                   <img
                     src={notif.senderAvatarUrl}
@@ -83,14 +52,14 @@ export default function InAppMessageToast({
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold text-sm flex items-center justify-center">
+                  <div className="w-full h-full bg-sky-500 text-white font-bold text-sm flex items-center justify-center">
                     {notif.senderUsername?.charAt(0).toUpperCase()}
                   </div>
                 )}
               </div>
               {/* Badge +1, +2 etc */}
               {notif.count > 1 && (
-                <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 bg-gradient-to-r from-pink-500 to-rose-600 text-white text-[11px] font-extrabold rounded-full flex items-center justify-center shadow-md animate-bounce">
+                <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 bg-sky-500 text-white text-[11px] font-extrabold rounded-full flex items-center justify-center shadow-md animate-bounce">
                   +{notif.count}
                 </span>
               )}
@@ -103,7 +72,7 @@ export default function InAppMessageToast({
                   {notif.senderUsername}
                 </span>
                 {notif.count > 1 && (
-                  <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold">
+                  <span className="text-[10px] text-sky-600 dark:text-sky-400 font-semibold">
                     ({notif.count} tin mới)
                   </span>
                 )}

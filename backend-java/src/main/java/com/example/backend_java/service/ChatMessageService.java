@@ -35,6 +35,7 @@ public class ChatMessageService {
     private final ConversationMemberRepository memberRepository;
     private final UserRepository userRepository;
     private final ConversationService conversationService;
+    private final NotificationService notificationService;
     @Lazy
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -121,6 +122,23 @@ public class ChatMessageService {
         } catch (Exception e) {
             // Log warning but don't fail transaction
             System.err.println("Could not broadcast WebSocket message: " + e.getMessage());
+        }
+
+        // Create in-app notification for all other members so they see the bell notification on other pages
+        try {
+            List<ConversationMember> members = memberRepository.findByConversationId(conversation.getId());
+            for (ConversationMember member : members) {
+                if (!member.getUser().getId().equals(sender.getId())) {
+                    notificationService.createNotification(
+                            member.getUser().getId(),
+                            sender.getId(),
+                            "message",
+                            conversation.getId()
+                    );
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Could not create message notification: " + e.getMessage());
         }
 
         return responseDto;

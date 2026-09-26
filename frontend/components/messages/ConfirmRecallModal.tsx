@@ -20,7 +20,7 @@ export default function ConfirmRecallModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-      <div className="w-full max-w-sm bg-white dark:bg-[#150F2C] border border-slate-200 dark:border-indigo-500/25 rounded-2xl p-5 shadow-2xl animate-scale-up text-slate-800 dark:text-slate-100">
+      <div className="w-full max-w-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-2xl animate-scale-up text-slate-800 dark:text-slate-100">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 rounded-xl bg-red-500/15 text-red-500 flex items-center justify-center text-xl flex-shrink-0">
             🗑️
@@ -37,7 +37,7 @@ export default function ConfirmRecallModal({
 
         {/* Message preview snippet */}
         <div className="my-3 p-3 bg-slate-100 dark:bg-black/30 rounded-xl border border-slate-200 dark:border-white/5 text-xs">
-          <span className="font-semibold text-indigo-600 dark:text-indigo-400 block mb-0.5">
+          <span className="font-semibold text-sky-600 dark:text-sky-400 block mb-0.5">
             Tin nhắn của bạn:
           </span>
           <p className="italic text-slate-700 dark:text-slate-300 line-clamp-2">

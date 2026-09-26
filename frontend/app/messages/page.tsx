@@ -23,7 +23,8 @@ import GroupInfoModal from '@/components/messages/GroupInfoModal';
 import ImageLightbox from '@/components/messages/ImageLightbox';
 import ConfirmRecallModal from '@/components/messages/ConfirmRecallModal';
 import ChatSettingsModal, { ChatSettings, DEFAULT_CHAT_SETTINGS } from '@/components/messages/ChatSettingsModal';
-import InAppMessageToast, { InAppNotification, playNotificationChime } from '@/components/messages/InAppMessageToast';
+import InAppMessageToast, { InAppNotification } from '@/components/messages/InAppMessageToast';
+import DirectChatInfoModal from '@/components/messages/DirectChatInfoModal';
 
 function MessagesContent() {
   const router = useRouter();
@@ -40,6 +41,7 @@ function MessagesContent() {
   // Modals state
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
   const [isGroupInfoOpen, setIsGroupInfoOpen] = useState(false);
+  const [isDirectInfoOpen, setIsDirectInfoOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [recallMessageTarget, setRecallMessageTarget] = useState<ChatMessage | null>(null);
   const [isRecalling, setIsRecalling] = useState(false);
@@ -177,11 +179,6 @@ function MessagesContent() {
       messageType: 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM';
       fileName?: string | null;
     }) => {
-      // If user has sound enabled, play chime
-      if (chatSettings.soundEnabled) {
-        playNotificationChime();
-      }
-
       // If desktop notification enabled and document is hidden
       if (
         chatSettings.desktopNotificationEnabled &&
@@ -330,11 +327,44 @@ function MessagesContent() {
           updated[idx] = incoming;
           return updated;
         }
+        // Match and replace optimistic temporary message
+        const tempIdx = prev.findIndex(
+          (m) =>
+            m.id < 0 &&
+            m.senderId === incoming.senderId &&
+            m.content === incoming.content &&
+            m.messageType === incoming.messageType
+        );
+        if (tempIdx !== -1) {
+          const updated = [...prev];
+          updated[tempIdx] = incoming;
+          return updated;
+        }
         return [...prev, incoming];
       });
       scrollToBottom(true);
 
-      // If received while window is blurred or from someone else, trigger chime/notification
+      // Cập nhật ngay lập tức tin nhắn mới nhất và thời gian vào danh sách bên trái
+      setConversations((prev) => {
+        const target = prev.find((c) => c.id === convId);
+        if (!target) return prev;
+        const preview =
+          incoming.messageType === 'IMAGE'
+            ? '📷 [Hình ảnh]'
+            : incoming.messageType === 'FILE'
+            ? `📎 [Tệp] ${incoming.fileName || 'Tài liệu'}`
+            : incoming.content;
+        const updated: Conversation = {
+          ...target,
+          lastMessage: preview,
+          lastMessageTime: incoming.createdAt,
+          lastMessageSenderName: incoming.senderUsername,
+        };
+        const rest = prev.filter((c) => c.id !== convId);
+        return [updated, ...rest];
+      });
+
+      // If received while window is blurred or from someone else, trigger notification
       if (incoming.senderId !== currentUser?.id) {
         sendReadReceipt(convId);
         if (typeof document !== 'undefined' && document.hidden) {
@@ -399,6 +429,52 @@ function MessagesContent() {
   }) => {
     if (!activeConversation) return;
 
+    const tempId = -Date.now();
+    const optimisticMsg: ChatMessage = {
+      id: tempId,
+      conversationId: activeConversation.id,
+      senderId: currentUser?.id,
+      senderUsername: currentUser?.username || 'Tôi',
+      senderAvatarUrl: currentUser?.avatarUrl || null,
+      receiverId: null,
+      content: payload.content,
+      messageType: payload.messageType,
+      imageUrl: payload.imageUrl || null,
+      fileUrl: payload.fileUrl || null,
+      fileName: payload.fileName || null,
+      fileSize: payload.fileSize || null,
+      replyToId: payload.replyToId || null,
+      replyToContent: replyingTo?.content || null,
+      replyToSenderUsername: replyingTo?.senderUsername || null,
+      isDeleted: false,
+      createdAt: new Date().toISOString(),
+      isRead: false,
+    };
+
+    // Immediate optimistic UI update
+    setMessages((prev) => [...prev, optimisticMsg]);
+    setTimeout(() => scrollToBottom(true), 20);
+
+    // Cập nhật ngay tin nhắn mới nhất vào danh sách hội thoại bên trái và đưa lên đầu
+    setConversations((prev) => {
+      const target = prev.find((c) => c.id === activeConversation.id);
+      if (!target) return prev;
+      const preview =
+        payload.messageType === 'IMAGE'
+          ? '📷 [Hình ảnh]'
+          : payload.messageType === 'FILE'
+          ? `📎 [Tệp] ${payload.fileName || 'Tài liệu'}`
+          : payload.content;
+      const updated: Conversation = {
+        ...target,
+        lastMessage: preview,
+        lastMessageTime: new Date().toISOString(),
+        lastMessageSenderName: currentUser?.username || 'Bạn',
+      };
+      const rest = prev.filter((c) => c.id !== activeConversation.id);
+      return [updated, ...rest];
+    });
+
     const msgPayload = {
       conversationId: activeConversation.id,
       content: payload.content,
@@ -416,11 +492,15 @@ function MessagesContent() {
       // REST fallback
       try {
         const res = await api.post(`/conversations/${activeConversation.id}/messages`, msgPayload);
-        setMessages((prev) => [...prev, res.data]);
+        setMessages((prev) => {
+          const filtered = prev.filter((m) => m.id !== tempId);
+          return [...filtered, res.data];
+        });
         scrollToBottom(true);
         fetchConversations();
       } catch (err) {
         console.error('Lỗi gửi tin nhắn qua REST:', err);
+        setMessages((prev) => prev.filter((m) => m.id !== tempId));
       }
     }
   };
@@ -458,15 +538,15 @@ function MessagesContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F9FC] dark:bg-[#0B0819] text-slate-800 dark:text-slate-100 flex flex-col transition-colors duration-200">
+    <div className="h-screen overflow-hidden bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col transition-colors duration-200">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto w-full flex-1 flex h-[calc(100vh-4rem)] p-2 md:p-4 gap-3">
+      <div className="max-w-7xl mx-auto w-full flex-1 min-h-0 flex overflow-hidden p-2 md:p-4 gap-3">
         {/* Sidebar: Conversation List */}
         <div
           className={`${
             activeConversation ? 'hidden md:flex' : 'flex'
-          } w-full md:w-80 lg:w-96 flex-col bg-white dark:bg-[#130E26] rounded-2xl overflow-hidden shadow-xl border border-slate-200/80 dark:border-indigo-500/15`}
+          } w-full md:w-80 lg:w-96 flex-col bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-xl border border-slate-200/80 dark:border-slate-700`}
         >
           <ConversationList
             conversations={conversations}
@@ -482,7 +562,7 @@ function MessagesContent() {
         <div
           className={`${
             !activeConversation ? 'hidden md:flex' : 'flex'
-          } flex-1 flex-col bg-white/95 dark:bg-[#130E26]/90 rounded-2xl overflow-hidden shadow-xl border border-slate-200/80 dark:border-indigo-500/15 relative backdrop-blur-md`}
+          } flex-1 flex-col bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-xl border border-slate-200/80 dark:border-slate-700 relative`}
         >
           {activeConversation ? (
             <>
@@ -492,20 +572,21 @@ function MessagesContent() {
                 currentUser={currentUser}
                 onBack={() => setActiveConversation(null)}
                 onOpenGroupInfo={() => setIsGroupInfoOpen(true)}
+                onOpenChatSettings={() => setIsDirectInfoOpen(true)}
               />
 
               {/* Messages Container */}
               <div
                 ref={chatContainerRef}
-                className="flex-1 overflow-y-auto p-4 space-y-1 bg-slate-50/50 dark:bg-black/15"
+                className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-1 bg-gray-50 dark:bg-slate-900"
               >
                 {loadingMessages ? (
                   <div className="h-full flex items-center justify-center">
-                    <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-8 h-8 border-2 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
                   </div>
                 ) : messages.length === 0 ? (
                   <div className="h-full flex items-center justify-center">
-                    <div className="text-center p-6 bg-white dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-indigo-500/20 max-w-sm shadow-sm">
+                    <div className="text-center p-6 bg-white dark:bg-slate-700 rounded-2xl border border-slate-200 dark:border-slate-600 max-w-sm shadow-sm">
                       <div className="text-4xl mb-2">👋</div>
                       <h3 className="font-bold text-sm text-slate-800 dark:text-slate-100 mb-1">
                         Bắt đầu cuộc trò chuyện
@@ -546,10 +627,10 @@ function MessagesContent() {
             </>
           ) : (
             /* Empty state when no conversation is selected */
-            <div className="flex-1 flex items-center justify-center p-8 bg-slate-50/40 dark:bg-black/10">
+            <div className="flex-1 flex items-center justify-center p-8 bg-gray-50 dark:bg-slate-900">
               <div className="text-center max-w-md">
                 <div className="text-7xl mb-4 animate-bounce">💬</div>
-                <h2 className="text-2xl font-black gradient-text mb-2">
+                <h2 className="text-2xl font-black text-sky-600 dark:text-sky-400 mb-2">
                   Tin nhắn VnNet Real-time
                 </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
@@ -558,7 +639,7 @@ function MessagesContent() {
                 <div className="flex justify-center gap-3">
                   <button
                     onClick={() => setIsCreateGroupOpen(true)}
-                    className="px-4 py-2.5 btn-anime text-xs font-bold rounded-xl shadow-md flex items-center gap-2"
+                    className="px-4 py-2.5 bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold rounded-xl shadow-md flex items-center gap-2"
                   >
                     <span>👥</span>
                     <span>Tạo nhóm chat</span>
@@ -608,6 +689,14 @@ function MessagesContent() {
         }}
       />
 
+      <DirectChatInfoModal
+        conversation={activeConversation}
+        currentUser={currentUser}
+        isOpen={isDirectInfoOpen}
+        onClose={() => setIsDirectInfoOpen(false)}
+        onOpenSettings={() => setIsSettingsOpen(true)}
+      />
+
       <ChatSettingsModal
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
@@ -655,8 +744,8 @@ export default function MessagesPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#F8F9FC] dark:bg-[#0B0819] flex items-center justify-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-2 border-indigo-600 border-t-transparent"></div>
+        <div className="min-h-screen bg-white dark:bg-slate-900 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-sky-500 border-t-transparent"></div>
         </div>
       }
     >

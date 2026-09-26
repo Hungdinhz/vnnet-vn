@@ -84,16 +84,14 @@ export default function MessageInput({
     formData.append('file', file);
 
     try {
-      const res = await api.post('/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const res = await api.post('/upload', formData);
       if (res.data && res.data.url) {
         setSelectedImage(res.data.url);
         setSelectedFile(null); // image and file are separate
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Lỗi tải ảnh:', err);
-      setUploadError('Không thể tải ảnh lên. Vui lòng thử lại!');
+      setUploadError(err.response?.data?.message || 'Không thể tải ảnh lên. Vui lòng thử lại!');
     } finally {
       setIsUploading(false);
       if (imageInputRef.current) imageInputRef.current.value = '';
@@ -115,9 +113,7 @@ export default function MessageInput({
     formData.append('file', file);
 
     try {
-      const res = await api.post('/upload/file', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const res = await api.post('/upload/file', formData);
       if (res.data && res.data.url) {
         setSelectedFile({
           url: res.data.url,
@@ -126,9 +122,9 @@ export default function MessageInput({
         });
         setSelectedImage(null);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Lỗi tải file:', err);
-      setUploadError('Không thể tải file lên. Vui lòng thử lại!');
+      setUploadError(err.response?.data?.message || 'Không thể tải file lên. Vui lòng thử lại!');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -183,7 +179,7 @@ export default function MessageInput({
   };
 
   return (
-    <div className="p-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-t border-slate-200 dark:border-indigo-500/20 text-slate-800 dark:text-slate-100">
+    <div className="p-3 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 text-slate-800 dark:text-slate-100">
       {/* Upload error banner */}
       {uploadError && (
         <div className="p-2 mb-2 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-xl text-xs flex items-center justify-between">
@@ -194,9 +190,9 @@ export default function MessageInput({
 
       {/* Reply banner if actively replying */}
       {replyingTo && (
-        <div className="flex items-center justify-between bg-indigo-50 dark:bg-indigo-500/15 border-l-4 border-indigo-500 px-3 py-1.5 rounded-r-lg mb-2 text-xs">
+        <div className="flex items-center justify-between bg-sky-50 dark:bg-sky-500/15 border-l-4 border-sky-500 px-3 py-1.5 rounded-r-lg mb-2 text-xs">
           <div className="truncate">
-            <span className="font-bold text-indigo-600 dark:text-indigo-400">
+            <span className="font-bold text-sky-600 dark:text-sky-400">
               Đang trả lời {replyingTo.senderUsername}:
             </span>{' '}
             <span className="text-slate-600 dark:text-slate-300 truncate">
@@ -216,7 +212,7 @@ export default function MessageInput({
 
       {/* Uploaded image preview */}
       {selectedImage && (
-        <div className="relative inline-block mb-2 rounded-xl overflow-hidden border border-indigo-500/30">
+        <div className="relative inline-block mb-2 rounded-xl overflow-hidden border border-sky-500/30">
           <img
             src={selectedImage}
             alt="Preview"
@@ -235,7 +231,7 @@ export default function MessageInput({
 
       {/* Uploaded file preview card */}
       {selectedFile && (
-        <div className="inline-flex items-center gap-2 mb-2 p-2 bg-indigo-50 dark:bg-indigo-950/40 rounded-xl border border-indigo-200 dark:border-indigo-500/30 text-xs">
+        <div className="inline-flex items-center gap-2 mb-2 p-2 bg-sky-50 dark:bg-sky-900/40 rounded-xl border border-sky-200 dark:border-sky-500/30 text-xs">
           <span className="text-xl">📄</span>
           <div className="max-w-xs">
             <p className="font-semibold text-slate-800 dark:text-slate-100 truncate">{selectedFile.name}</p>
@@ -254,7 +250,7 @@ export default function MessageInput({
 
       {/* Emoji quick popover */}
       {showEmojiPicker && (
-        <div className="flex gap-2 p-2 bg-white dark:bg-slate-800 backdrop-blur-md rounded-xl border border-slate-200 dark:border-indigo-500/30 mb-2 shadow-lg animate-scale-up">
+        <div className="flex gap-2 p-2 bg-white dark:bg-slate-800 backdrop-blur-md rounded-xl border border-slate-200 dark:border-slate-600 mb-2 shadow-lg animate-scale-up">
           {QUICK_EMOJIS.map((emoji) => (
             <button
               key={emoji}
@@ -296,7 +292,7 @@ export default function MessageInput({
           title="Gửi hình ảnh"
         >
           {isUploading && !selectedFile ? (
-            <span className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin inline-block"></span>
+            <span className="w-5 h-5 border-2 border-sky-500 border-t-transparent rounded-full animate-spin inline-block"></span>
           ) : (
             '🖼️'
           )}
@@ -311,7 +307,7 @@ export default function MessageInput({
           title="Đính kèm tệp (PDF, Word, Zip...)"
         >
           {isUploading && selectedFile ? (
-            <span className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin inline-block"></span>
+            <span className="w-5 h-5 border-2 border-sky-500 border-t-transparent rounded-full animate-spin inline-block"></span>
           ) : (
             '📎'
           )}
@@ -336,14 +332,14 @@ export default function MessageInput({
           onKeyDown={handleKeyDown}
           placeholder="Nhập tin nhắn..."
           disabled={disabled}
-          className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-indigo-500/30 rounded-xl text-sm outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-100 placeholder-slate-400"
+          className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-600 rounded-xl text-sm outline-none focus:border-sky-500 text-slate-800 dark:text-slate-100 placeholder-slate-400"
         />
 
         {/* Send Button */}
         <button
           type="submit"
           disabled={(!text.trim() && !selectedImage && !selectedFile) || disabled || isUploading}
-          className="px-5 py-2.5 btn-anime rounded-xl text-sm font-bold disabled:opacity-40 transition-opacity flex items-center gap-1.5 shadow-md shadow-indigo-500/20"
+          className="px-5 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-bold disabled:opacity-40 transition-opacity flex items-center gap-1.5 shadow-sm"
         >
           <span>Gửi</span>
           <span>🚀</span>

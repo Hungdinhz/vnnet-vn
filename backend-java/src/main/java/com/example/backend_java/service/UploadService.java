@@ -47,25 +47,40 @@ public class UploadService {
         }
 
         try {
-            Map<String, Object> params = ObjectUtils.asMap(
-                    "resource_type", "auto",
-                    "use_filename", true,
-                    "unique_filename", true
-            );
+            String originalFilename = file.getOriginalFilename();
+            long size = file.getSize();
+            String contentType = file.getContentType();
+
+            String resourceType = "auto";
+            if (contentType != null && !contentType.startsWith("image/") && !contentType.startsWith("video/") && !contentType.startsWith("audio/")) {
+                resourceType = "raw";
+            }
+
+            java.util.Map<String, Object> params = new java.util.HashMap<>();
+            params.put("resource_type", resourceType);
+            params.put("use_filename", true);
+            params.put("unique_filename", true);
+            if (originalFilename != null) {
+                params.put("filename", originalFilename);
+                params.put("filename_override", originalFilename);
+            }
+
             Map<String, Object> result = cloudinary.uploader().upload(file.getBytes(), params);
 
             String url = (String) result.get("secure_url");
-            String originalFilename = file.getOriginalFilename();
-            long size = file.getSize();
+            if (url == null) {
+                url = (String) result.get("url");
+            }
 
             return Map.of(
                     "url", url != null ? url : "",
                     "fileName", originalFilename != null ? originalFilename : "file",
                     "fileSize", size
             );
-        } catch (IOException e) {
-            System.out.println("Lỗi Cloudinary khi upload file: " + e.getMessage());
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi upload file lên mây");
+        } catch (Exception e) {
+            System.err.println("Lỗi Cloudinary khi upload file: " + e.getMessage());
+            e.printStackTrace();
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi upload file lên mây: " + e.getMessage());
         }
     }
 }

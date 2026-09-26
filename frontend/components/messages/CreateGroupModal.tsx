@@ -103,10 +103,10 @@ export default function CreateGroupModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-      <div className="w-full max-w-md bg-white dark:bg-[#130E26] text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-indigo-500/20 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+      <div className="w-full max-w-md bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
         {/* Header */}
-        <div className="p-4 border-b border-slate-200/80 dark:border-indigo-500/15 flex items-center justify-between bg-slate-50/50 dark:bg-black/20">
-          <h2 className="text-lg font-bold gradient-text flex items-center gap-2">
+        <div className="p-4 border-b border-slate-200/80 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-black/20">
+          <h2 className="text-lg font-bold text-sky-600 dark:text-sky-400 flex items-center gap-2">
             <span>👥</span> Tạo nhóm chat mới
           </h2>
           <button
@@ -138,8 +138,8 @@ export default function CreateGroupModal({
                 setName(e.target.value);
                 setErrorMessage(null);
               }}
-              placeholder="VD: Hội Weeb VNNet..."
-              className="w-full px-3.5 py-2.5 bg-slate-100 dark:bg-black/30 border border-slate-300 dark:border-indigo-500/30 rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-100"
+              placeholder="VD: Nhóm bạn thân..."
+              className="w-full px-3.5 py-2.5 bg-slate-100 dark:bg-black/30 border border-slate-300 dark:border-slate-600 rounded-xl text-sm focus:outline-none focus:border-sky-500 text-slate-800 dark:text-slate-100"
               autoFocus
             />
           </div>
@@ -154,19 +154,19 @@ export default function CreateGroupModal({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Tìm kiếm bạn bè..."
-              className="w-full px-3.5 py-2 bg-slate-100 dark:bg-black/30 border border-slate-300 dark:border-indigo-500/30 rounded-xl text-xs mb-2.5 focus:outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-100"
+              className="w-full px-3.5 py-2 bg-slate-100 dark:bg-black/30 border border-slate-300 dark:border-slate-600 rounded-xl text-xs mb-2.5 focus:outline-none focus:border-sky-500 text-slate-800 dark:text-slate-100"
             />
 
             {/* Selected chips preview */}
             {selectedFriendIds.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 mb-2.5 p-2 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-indigo-500/15">
+              <div className="flex flex-wrap gap-1.5 mb-2.5 p-2 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-slate-600">
                 {selectedFriendIds.map((id) => {
                   const friend = friends.find((f) => f.id === id);
                   if (!friend) return null;
                   return (
                     <span
                       key={id}
-                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 rounded-lg text-xs font-medium border border-indigo-500/20"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 bg-sky-500/15 text-sky-700 dark:text-sky-300 rounded-lg text-xs font-medium border border-sky-500/20"
                     >
                       <span>{friend.username}</span>
                       <button
@@ -204,12 +204,12 @@ export default function CreateGroupModal({
                       onClick={() => toggleSelectFriend(friend.id)}
                       className={`flex items-center justify-between p-2 rounded-xl cursor-pointer transition-colors ${
                         isSelected
-                          ? 'bg-indigo-50 dark:bg-indigo-500/20 border border-indigo-300 dark:border-indigo-500/30'
+                          ? 'bg-sky-50 dark:bg-sky-500/20 border border-sky-300 dark:border-sky-500/30'
                           : 'hover:bg-slate-100 dark:hover:bg-white/5 border border-transparent'
                       }`}
                     >
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-indigo-500/20 flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-slate-600 flex-shrink-0">
                           {friend.avatarUrl ? (
                             <img
                               src={friend.avatarUrl}
@@ -217,7 +217,7 @@ export default function CreateGroupModal({
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs font-bold flex items-center justify-center">
+                            <div className="w-full h-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center">
                               {friend.username?.charAt(0).toUpperCase()}
                             </div>
                           )}
@@ -231,7 +231,7 @@ export default function CreateGroupModal({
                         type="checkbox"
                         checked={isSelected}
                         onChange={() => {}}
-                        className="rounded border-slate-300 dark:border-indigo-500/40 text-indigo-600 focus:ring-indigo-500 w-4 h-4 cursor-pointer"
+                        className="rounded border-slate-300 dark:border-slate-600 text-sky-600 focus:ring-sky-500 w-4 h-4 cursor-pointer"
                       />
                     </div>
                   );
@@ -241,7 +241,7 @@ export default function CreateGroupModal({
           </div>
 
           {/* Footer buttons */}
-          <div className="flex justify-end gap-2 pt-3 border-t border-slate-200/80 dark:border-indigo-500/10">
+          <div className="flex justify-end gap-2 pt-3 border-t border-slate-200/80 dark:border-slate-700">
             <button
               type="button"
               onClick={onClose}
@@ -252,7 +252,7 @@ export default function CreateGroupModal({
             <button
               type="submit"
               disabled={submitting || !name.trim() || selectedFriendIds.length === 0}
-              className="px-5 py-2 btn-anime text-sm font-bold rounded-xl disabled:opacity-50 shadow-md shadow-indigo-500/20"
+              className="px-5 py-2 bg-sky-500 hover:bg-sky-600 text-white text-sm font-bold rounded-xl disabled:opacity-50 shadow-md"
             >
               {submitting ? 'Đang tạo...' : 'Tạo nhóm 🎉'}
             </button>

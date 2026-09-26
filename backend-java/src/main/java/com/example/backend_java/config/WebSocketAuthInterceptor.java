@@ -42,8 +42,14 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
                 String email = jwtTokenProvider.getEmailFromToken(authHeader);
                 User user = userRepository.findByEmail(email).orElse(null);
                 if (user != null) {
+                    // Use email as the principal name so that convertAndSendToUser matches correctly
                     UsernamePasswordAuthenticationToken auth =
-                            new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
+                            new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList()) {
+                                @Override
+                                public String getName() {
+                                    return user.getEmail();
+                                }
+                            };
                     accessor.setUser(auth);
                     onlineStatusService.userConnected(user.getId());
                 }
