@@ -22,6 +22,9 @@ public class ChatMessageResponseDto {
     private String content;
     private MessageType messageType;
     private String imageUrl;
+    private String fileUrl;
+    private String fileName;
+    private Long fileSize;
     private Long replyToId;
     private String replyToContent;
     private String replyToSenderUsername;

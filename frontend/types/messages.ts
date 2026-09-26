@@ -1,5 +1,5 @@
 export type ConversationType = 'DIRECT' | 'GROUP';
-export type MessageType = 'TEXT' | 'IMAGE' | 'SYSTEM';
+export type MessageType = 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM';
 
 export interface ConversationMember {
   userId: number;
@@ -36,6 +36,9 @@ export interface ChatMessage {
   content: string;
   messageType: MessageType;
   imageUrl: string | null;
+  fileUrl?: string | null;
+  fileName?: string | null;
+  fileSize?: number | null;
   replyToId: number | null;
   replyToContent: string | null;
   replyToSenderUsername: string | null;

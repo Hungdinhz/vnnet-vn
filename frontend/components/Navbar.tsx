@@ -31,6 +31,7 @@ export default function Navbar() {
   // Real-time clock state
   const [currentTime, setCurrentTime] = useState<string>('');
   const [currentDateStr, setCurrentDateStr] = useState<string>('');
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
 
   useEffect(() => {
     const updateTime = () => {
@@ -68,6 +69,14 @@ export default function Navbar() {
       setNotifications(notifs);
       const unread = notifs.filter((n: any) => !n.is_read).length;
       setUnreadCount(unread);
+
+      // Đồng thời cập nhật số tin nhắn chưa đọc cho icon tin nhắn
+      try {
+        const convRes = await api.get('/conversations');
+        const convs = convRes.data || [];
+        const totalUnreadMsg = convs.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0);
+        setUnreadMessagesCount(totalUnreadMsg);
+      } catch {}
 
       const senderIds = [...new Set(notifs.map((n: any) => n.sender_id).filter(Boolean))] as number[];
       const newNames: Record<number, string> = {};
@@ -153,6 +162,7 @@ export default function Navbar() {
       case 'friend_request': return { icon: '👋', text: `${senderName} đã gửi lời mời kết bạn` };
       case 'friend_accept': return { icon: '🤝', text: `${senderName} đã chấp nhận lời mời kết bạn` };
       case 'comment_like': return { icon: '👍', text: `${senderName} đã thích bình luận của bạn` };
+      case 'message': return { icon: '💬', text: `${senderName} đã gửi cho bạn một tin nhắn mới` };
       default: return { icon: '🔔', text: `${senderName} đã tương tác với bạn` };
     }
   };
@@ -167,6 +177,8 @@ export default function Navbar() {
         return '/friends?tab=requests';
       case 'friend_accept':
         return `/profile/${notif.sender_id}`;
+      case 'message':
+        return '/messages';
       default:
         return '/';
     }
@@ -375,8 +387,13 @@ export default function Navbar() {
           <ThemeToggle />
           
           {/* Messages Icon */}
-          <Link href="/messages" className="relative cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 transition-all duration-200 border border-indigo-500/10">
+          <Link href="/messages" className="relative cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 transition-all duration-200 border border-slate-200 dark:border-slate-700" title="Tin nhắn">
             <span className="text-lg">💬</span>
+            {unreadMessagesCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-sky-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-background">
+                {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
+              </span>
+            )}
           </Link>
 
           {/* Notifications Icon + Dropdown */}

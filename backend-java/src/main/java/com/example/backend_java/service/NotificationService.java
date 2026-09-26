@@ -26,6 +26,19 @@ public class NotificationService {
             return;
         }
 
+        // Với thông báo tin nhắn: nếu đã có thông báo chưa đọc từ cùng hội thoại, chỉ cập nhật thời gian
+        if ("message".equals(type) && targetId != null) {
+            java.util.Optional<Notification> existingOpt = notificationRepository
+                    .findFirstByRecipientIdAndTypeAndTargetIdAndIsReadFalse(recipientId, "message", targetId);
+            if (existingOpt.isPresent()) {
+                Notification existing = existingOpt.get();
+                existing.setCreatedAt(java.time.LocalDateTime.now());
+                existing.setSenderId(senderId);
+                notificationRepository.save(existing);
+                return;
+            }
+        }
+
         Notification notification = Notification.builder()
                 .recipientId(recipientId)
                 .senderId(senderId)

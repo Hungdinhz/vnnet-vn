@@ -38,4 +38,49 @@ public class UploadService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi upload ảnh lên mây");
         }
     }
+
+    // Upload bất kỳ loại file nào (tài liệu, pdf, zip, audio, v.v.)
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> uploadAnyFile(MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File không được để trống");
+        }
+
+        try {
+            String originalFilename = file.getOriginalFilename();
+            long size = file.getSize();
+            String contentType = file.getContentType();
+
+            String resourceType = "auto";
+            if (contentType != null && !contentType.startsWith("image/") && !contentType.startsWith("video/") && !contentType.startsWith("audio/")) {
+                resourceType = "raw";
+            }
+
+            java.util.Map<String, Object> params = new java.util.HashMap<>();
+            params.put("resource_type", resourceType);
+            params.put("use_filename", true);
+            params.put("unique_filename", true);
+            if (originalFilename != null) {
+                params.put("filename", originalFilename);
+                params.put("filename_override", originalFilename);
+            }
+
+            Map<String, Object> result = cloudinary.uploader().upload(file.getBytes(), params);
+
+            String url = (String) result.get("secure_url");
+            if (url == null) {
+                url = (String) result.get("url");
+            }
+
+            return Map.of(
+                    "url", url != null ? url : "",
+                    "fileName", originalFilename != null ? originalFilename : "file",
+                    "fileSize", size
+            );
+        } catch (Exception e) {
+            System.err.println("Lỗi Cloudinary khi upload file: " + e.getMessage());
+            e.printStackTrace();
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi upload file lên mây: " + e.getMessage());
+        }
+    }
 }

@@ -23,10 +23,51 @@ public class ConversationService {
     private final UserRepository userRepository;
     private final OnlineStatusService onlineStatusService;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ConversationResponseDto> getConversations(User currentUser) {
         List<Conversation> conversations = conversationRepository.findConversationsByUserId(currentUser.getId());
-        return conversations.stream()
+        
+        // Deduplicate DIRECT conversations with the same partner
+        Map<Long, Conversation> uniqueDirectByPartner = new LinkedHashMap<>();
+        List<Conversation> finalConversations = new ArrayList<>();
+
+        for (Conversation conv : conversations) {
+            if (conv.getType() == ConversationType.DIRECT) {
+                List<ConversationMember> members = memberRepository.findByConversationId(conv.getId());
+                Optional<ConversationMember> partnerOpt = members.stream()
+                        .filter(m -> !m.getUser().getId().equals(currentUser.getId()))
+                        .findFirst();
+
+                if (partnerOpt.isPresent()) {
+                    Long partnerId = partnerOpt.get().getUser().getId();
+                    if (uniqueDirectByPartner.containsKey(partnerId)) {
+                        // Merge duplicate: reassign any messages to the kept conversation
+                        Conversation kept = uniqueDirectByPartner.get(partnerId);
+                        List<ChatMessage> orphanMessages = messageRepository.findByConversationIdOrderByCreatedAtAsc(conv.getId());
+                        for (ChatMessage m : orphanMessages) {
+                            m.setConversation(kept);
+                            messageRepository.save(m);
+                        }
+                        // Delete duplicate conversation members & conversation
+                        try {
+                            memberRepository.findByConversationId(conv.getId()).forEach(memberRepository::delete);
+                            conversationRepository.delete(conv);
+                        } catch (Exception e) {
+                            System.err.println("Could not delete duplicate conversation: " + e.getMessage());
+                        }
+                    } else {
+                        uniqueDirectByPartner.put(partnerId, conv);
+                        finalConversations.add(conv);
+                    }
+                } else {
+                    finalConversations.add(conv);
+                }
+            } else {
+                finalConversations.add(conv);
+            }
+        }
+
+        return finalConversations.stream()
                 .map(conv -> mapToResponseDto(conv, currentUser))
                 .collect(Collectors.toList());
     }

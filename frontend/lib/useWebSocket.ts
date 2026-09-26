@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Client, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import api from '@/lib/axios';
-import { ChatMessage, TypingEvent, ReadReceiptDto, OnlineStatusEvent, Conversation } from '@/types/messages';
+import { ChatMessage, TypingEvent, ReadReceiptDto, OnlineStatusEvent, Conversation, MessageType } from '@/types/messages';
 
 export function useWebSocket(currentUser: any) {
   const [isConnected, setIsConnected] = useState(false);
@@ -78,8 +78,11 @@ export function useWebSocket(currentUser: any) {
     (payload: {
       conversationId: number;
       content: string;
-      messageType?: 'TEXT' | 'IMAGE' | 'SYSTEM';
+      messageType?: MessageType;
       imageUrl?: string | null;
+      fileUrl?: string | null;
+      fileName?: string | null;
+      fileSize?: number | null;
       replyToId?: number | null;
     }) => {
       if (clientRef.current && clientRef.current.connected) {

@@ -23,10 +23,14 @@ CREATE TABLE IF NOT EXISTS conversation_members (
     CONSTRAINT uk_conversation_member UNIQUE (conversation_id, user_id)
 );
 
--- 3. Add columns to messages table if not exists
+-- 3. Add columns to messages table if not exists and allow nullable receiver_id for group chats
+ALTER TABLE messages ALTER COLUMN receiver_id DROP NOT NULL;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS conversation_id BIGINT REFERENCES conversations(id) ON DELETE CASCADE;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS message_type VARCHAR(20) DEFAULT 'TEXT';
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS image_url VARCHAR(255);
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_url VARCHAR(255);
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_name VARCHAR(255);
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_size BIGINT;
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_id BIGINT REFERENCES messages(id);
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE;
 
