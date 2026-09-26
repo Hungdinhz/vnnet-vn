@@ -10,5 +10,8 @@ public class ChatMessageRequestDto {
     private String content;
     private MessageType messageType = MessageType.TEXT;
     private String imageUrl;
+    private String fileUrl;
+    private String fileName;
+    private Long fileSize;
     private Long replyToId;
 }

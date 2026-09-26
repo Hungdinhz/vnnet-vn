@@ -39,6 +39,15 @@ public class ChatMessage {
     @Column(name = "image_url")
     private String imageUrl;
 
+    @Column(name = "file_url")
+    private String fileUrl;
+
+    @Column(name = "file_name")
+    private String fileName;
+
+    @Column(name = "file_size")
+    private Long fileSize;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reply_to_id")
     private ChatMessage replyTo;

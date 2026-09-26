@@ -157,7 +157,7 @@ public class FriendService {
         return FriendshipResponseDto.builder()
                 .id(friendship.getId())
                 .userId(friendship.getUserId())
-                .friendId(friendship.getFriendId())
+                .friendId(friendUserId)
                 .status(friendship.getStatus())
                 .friendUsername(friendUser != null ? friendUser.getUsername() : "Unknown")
                 .friendAvatarUrl(friendUser != null ? friendUser.getAvatarUrl() : null)

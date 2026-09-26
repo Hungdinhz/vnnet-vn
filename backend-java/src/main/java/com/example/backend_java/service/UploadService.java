@@ -38,4 +38,34 @@ public class UploadService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi upload ảnh lên mây");
         }
     }
+
+    // Upload bất kỳ loại file nào (tài liệu, pdf, zip, audio, v.v.)
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> uploadAnyFile(MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "File không được để trống");
+        }
+
+        try {
+            Map<String, Object> params = ObjectUtils.asMap(
+                    "resource_type", "auto",
+                    "use_filename", true,
+                    "unique_filename", true
+            );
+            Map<String, Object> result = cloudinary.uploader().upload(file.getBytes(), params);
+
+            String url = (String) result.get("secure_url");
+            String originalFilename = file.getOriginalFilename();
+            long size = file.getSize();
+
+            return Map.of(
+                    "url", url != null ? url : "",
+                    "fileName", originalFilename != null ? originalFilename : "file",
+                    "fileSize", size
+            );
+        } catch (IOException e) {
+            System.out.println("Lỗi Cloudinary khi upload file: " + e.getMessage());
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Lỗi khi upload file lên mây");
+        }
+    }
 }

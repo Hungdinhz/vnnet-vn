@@ -23,4 +23,10 @@ public class UploadController {
         String url = uploadService.uploadImage(file);
         return ResponseEntity.ok(Map.of("url", url));
     }
+
+    // POST /upload/file - Upload file bất kỳ (tài liệu, pdf, zip, v.v.)
+    @PostMapping("/file")
+    public ResponseEntity<Map<String, Object>> uploadFile(@RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(uploadService.uploadAnyFile(file));
+    }
 }
