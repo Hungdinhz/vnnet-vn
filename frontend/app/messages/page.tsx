@@ -33,6 +33,11 @@ function MessagesContent() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
+  const activeConversationRef = useRef<Conversation | null>(null);
+  useEffect(() => {
+    activeConversationRef.current = activeConversation;
+  }, [activeConversation]);
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
@@ -159,14 +164,14 @@ function MessagesContent() {
   }, []);
 
   useEffect(() => {
-    if (activeConversation) {
+    if (activeConversation?.id) {
       fetchMessages(activeConversation.id);
       setTypingUsers([]);
       setReplyingTo(null);
     } else {
       setMessages([]);
     }
-  }, [activeConversation, fetchMessages]);
+  }, [activeConversation?.id, fetchMessages]);
 
   // Push or update In-App notification with deduplication per user/conversation
   const triggerInAppNotification = useCallback(
@@ -262,7 +267,7 @@ function MessagesContent() {
       });
 
       // If this conversation is currently open, keep activeConversation synced
-      if (activeConversation?.id === updatedConv.id) {
+      if (activeConversationRef.current?.id === updatedConv.id) {
         setActiveConversation((prev) => (prev ? { ...prev, ...updatedConv } : updatedConv));
       } else {
         // New message in a conversation that is NOT currently open: trigger notification!
@@ -291,7 +296,7 @@ function MessagesContent() {
           ),
         }))
       );
-      if (activeConversation) {
+      if (activeConversationRef.current) {
         setActiveConversation((prev) => {
           if (!prev) return null;
           return {
@@ -310,13 +315,12 @@ function MessagesContent() {
       convSub?.unsubscribe();
       onlineSub?.unsubscribe();
     };
-  }, [isConnected, currentUser, activeConversation, subscribe, triggerInAppNotification]);
+  }, [isConnected, currentUser?.id, subscribe, triggerInAppNotification]);
 
   // C. Subscribe to Active Conversation Topics
   useEffect(() => {
-    if (!isConnected || !activeConversation) return;
-
-    const convId = activeConversation.id;
+    const convId = activeConversation?.id;
+    if (!isConnected || !convId) return;
 
     // Real-time messages topic
     const msgSub = subscribe(`/topic/conversation.${convId}`, (incoming: ChatMessage) => {
@@ -332,8 +336,9 @@ function MessagesContent() {
           (m) =>
             m.id < 0 &&
             m.senderId === incoming.senderId &&
-            m.content === incoming.content &&
-            m.messageType === incoming.messageType
+            ((incoming.fileUrl && m.fileUrl === incoming.fileUrl) ||
+             (incoming.imageUrl && m.imageUrl === incoming.imageUrl) ||
+             (m.content === incoming.content && m.messageType === incoming.messageType))
         );
         if (tempIdx !== -1) {
           const updated = [...prev];
@@ -415,7 +420,7 @@ function MessagesContent() {
       typingSub?.unsubscribe();
       readSub?.unsubscribe();
     };
-  }, [isConnected, activeConversation, currentUser, subscribe, sendReadReceipt, triggerInAppNotification]);
+  }, [isConnected, activeConversation?.id, currentUser?.id, subscribe, sendReadReceipt, triggerInAppNotification]);
 
   // 6. Action Handlers
   const handleSendMessage = async (payload: {

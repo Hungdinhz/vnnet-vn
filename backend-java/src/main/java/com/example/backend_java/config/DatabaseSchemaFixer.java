@@ -31,13 +31,23 @@ public class DatabaseSchemaFixer implements CommandLineRunner {
             // 2. Ensure all columns for file attachments, replies, and conversations exist
             jdbcTemplate.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS conversation_id BIGINT REFERENCES conversations(id) ON DELETE CASCADE;");
             jdbcTemplate.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS message_type VARCHAR(20) DEFAULT 'TEXT';");
-            jdbcTemplate.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS image_url VARCHAR(255);");
-            jdbcTemplate.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_url VARCHAR(255);");
-            jdbcTemplate.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_name VARCHAR(255);");
+            jdbcTemplate.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS image_url TEXT;");
+            jdbcTemplate.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_url TEXT;");
+            jdbcTemplate.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_name TEXT;");
             jdbcTemplate.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS file_size BIGINT;");
             jdbcTemplate.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to_id BIGINT REFERENCES messages(id);");
             jdbcTemplate.execute("ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE;");
-            log.info("Successfully verified message table schema columns");
+
+            // Update column types to TEXT in case they were previously VARCHAR(255)
+            jdbcTemplate.execute("ALTER TABLE messages ALTER COLUMN image_url TYPE TEXT;");
+            jdbcTemplate.execute("ALTER TABLE messages ALTER COLUMN file_url TYPE TEXT;");
+            jdbcTemplate.execute("ALTER TABLE messages ALTER COLUMN file_name TYPE TEXT;");
+
+            // Fix message_type check constraint to include FILE
+            jdbcTemplate.execute("ALTER TABLE messages DROP CONSTRAINT IF EXISTS messages_message_type_check;");
+            jdbcTemplate.execute("ALTER TABLE messages ADD CONSTRAINT messages_message_type_check CHECK (message_type IN ('TEXT', 'IMAGE', 'FILE', 'SYSTEM'));");
+
+            log.info("Successfully verified and updated message table schema columns and constraints");
         } catch (Exception e) {
             log.warn("Error checking message table schema columns: {}", e.getMessage());
         }

@@ -170,7 +170,7 @@ export default function MessageBubble({
                   className={`flex items-center gap-3 p-2.5 rounded-xl mb-2 transition-all ${
                     isMine
                       ? 'bg-black/20 hover:bg-black/30 border border-white/20'
-                      : 'bg-slate-50 dark:bg-black/20 hover:bg-slate-100 dark:hover:bg-black/40 border border-slate-200 dark:border-indigo-500/20'
+                      : 'bg-slate-50 dark:bg-black/20 hover:bg-slate-100 dark:hover:bg-black/40 border border-slate-200 dark:border-slate-600'
                   }`}
                 >
                   <span className="text-2xl flex-shrink-0">
