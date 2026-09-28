@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Conversation } from '@/types/messages';
 
 interface ConversationItemProps {
@@ -14,6 +14,7 @@ export default function ConversationItem({
   onClick,
   currentUser,
 }: ConversationItemProps) {
+  const [imgError, setImgError] = useState(false);
   const isGroup = conversation.type === 'GROUP';
 
   // Partner for 1-1
@@ -54,11 +55,13 @@ export default function ConversationItem({
     >
       {/* Avatar */}
       <div className="relative flex-shrink-0">
-        {conversation.avatarUrl ? (
+        {conversation.avatarUrl && !imgError ? (
           <img
             src={conversation.avatarUrl}
             alt={conversation.name || 'Chat'}
-            className="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-indigo-500/25 shadow-sm"
+            referrerPolicy="no-referrer"
+            onError={() => setImgError(true)}
+            className="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600 shadow-sm"
           />
         ) : (
           <div className="w-12 h-12 bg-sky-500 text-white rounded-full flex items-center justify-center font-bold border border-slate-200 dark:border-slate-600 text-base shadow-sm">

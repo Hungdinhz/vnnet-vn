@@ -200,7 +200,7 @@ export default function GroupInfoModal({
           <div className="flex flex-col items-center text-center pb-3 border-b border-slate-200/80 dark:border-slate-600">
             <div className="w-16 h-16 rounded-full bg-sky-500 flex items-center justify-center text-2xl font-bold text-white shadow-lg border border-slate-200 dark:border-slate-600 mb-2">
               {conversation.avatarUrl ? (
-                <img src={conversation.avatarUrl} alt={conversation.name || ''} className="w-full h-full rounded-full object-cover" />
+                <img src={conversation.avatarUrl} alt={conversation.name || ''} referrerPolicy="no-referrer" className="w-full h-full rounded-full object-cover" />
               ) : (
                 '👥'
               )}
@@ -317,7 +317,7 @@ export default function GroupInfoModal({
                     <div className="flex items-center gap-2.5">
                       <div className="relative w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-sky-500/20">
                         {member.avatarUrl ? (
-                          <img src={member.avatarUrl} alt={member.username} className="w-full h-full object-cover" />
+                          <img src={member.avatarUrl} alt={member.username} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full bg-sky-600/30 text-sky-500 dark:text-secondary text-xs font-bold flex items-center justify-center">
                             {member.username.charAt(0).toUpperCase()}

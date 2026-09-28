@@ -49,6 +49,7 @@ export default function InAppMessageToast({
                   <img
                     src={notif.senderAvatarUrl}
                     alt={notif.senderUsername}
+                    referrerPolicy="no-referrer"
                     className="w-full h-full object-cover"
                   />
                 ) : (

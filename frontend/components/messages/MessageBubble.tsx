@@ -50,9 +50,23 @@ export default function MessageBubble({
     return '📄';
   };
 
+  const [avatarError, setAvatarError] = useState(false);
+
   const getInitials = (name: string) => {
     return name ? name.charAt(0).toUpperCase() : '?';
   };
+
+  // Render SYSTEM message (e.g. group rename notification)
+  if (message.messageType === 'SYSTEM') {
+    return (
+      <div className="flex justify-center my-3">
+        <div className="px-4 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 font-medium shadow-xs select-none flex items-center gap-1.5">
+          <span>ℹ️</span>
+          <span>{message.content}</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -63,8 +77,14 @@ export default function MessageBubble({
       {/* Avatar for other users in group or 1-1 */}
       {!isMine && (
         <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden border border-slate-200 dark:border-slate-600 mb-1 shadow-sm">
-          {message.senderAvatarUrl ? (
-            <img src={message.senderAvatarUrl} alt={message.senderUsername} className="w-full h-full object-cover" />
+          {message.senderAvatarUrl && !avatarError ? (
+            <img
+              src={message.senderAvatarUrl}
+              alt={message.senderUsername}
+              referrerPolicy="no-referrer"
+              onError={() => setAvatarError(true)}
+              className="w-full h-full object-cover"
+            />
           ) : (
             <div className="w-full h-full bg-sky-500 text-white text-xs font-bold flex items-center justify-center">
               {getInitials(message.senderUsername)}

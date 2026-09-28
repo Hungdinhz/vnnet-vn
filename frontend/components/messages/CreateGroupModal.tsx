@@ -214,6 +214,7 @@ export default function CreateGroupModal({
                             <img
                               src={friend.avatarUrl}
                               alt={friend.username}
+                              referrerPolicy="no-referrer"
                               className="w-full h-full object-cover"
                             />
                           ) : (

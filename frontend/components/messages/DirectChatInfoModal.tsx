@@ -58,6 +58,7 @@ export default function DirectChatInfoModal({
                 <img
                   src={partnerAvatar}
                   alt={partnerName}
+                  referrerPolicy="no-referrer"
                   className="w-full h-full object-cover"
                 />
               ) : (

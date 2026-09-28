@@ -5,6 +5,8 @@ import com.example.backend_java.entity.*;
 import com.example.backend_java.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -22,6 +24,8 @@ public class ConversationService {
     private final ChatMessageRepository messageRepository;
     private final UserRepository userRepository;
     private final OnlineStatusService onlineStatusService;
+    @Lazy
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
     public List<ConversationResponseDto> getConversations(User currentUser) {
@@ -259,8 +263,16 @@ public class ConversationService {
         ConversationMember actor = memberRepository.findByConversationIdAndUserId(conversationId, currentUser.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không thuộc nhóm này."));
 
+        String oldName = conv.getName();
+        boolean nameChanged = false;
+        String newName = null;
+
         if (request.getName() != null && !request.getName().trim().isEmpty()) {
-            conv.setName(request.getName().trim());
+            newName = request.getName().trim();
+            if (!newName.equals(oldName)) {
+                conv.setName(newName);
+                nameChanged = true;
+            }
         }
         if (request.getAvatarUrl() != null) {
             conv.setAvatarUrl(request.getAvatarUrl());
@@ -268,6 +280,53 @@ public class ConversationService {
 
         conv.setUpdatedAt(LocalDateTime.now());
         conv = conversationRepository.save(conv);
+
+        // Khi đổi tên nhóm, tạo và phát tin nhắn SYSTEM thông báo tới đoạn chat
+        if (nameChanged) {
+            String systemText = currentUser.getUsername() + " đã đổi tên nhóm thành \"" + newName + "\"";
+            ChatMessage systemMessage = ChatMessage.builder()
+                    .conversation(conv)
+                    .sender(currentUser)
+                    .content(systemText)
+                    .messageType(MessageType.SYSTEM)
+                    .isDeleted(false)
+                    .isRead(true)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            ChatMessage savedMsg = messageRepository.save(systemMessage);
+
+            ChatMessageResponseDto msgDto = ChatMessageResponseDto.builder()
+                    .id(savedMsg.getId())
+                    .conversationId(conv.getId())
+                    .senderId(currentUser.getId())
+                    .senderUsername(currentUser.getUsername())
+                    .senderAvatarUrl(currentUser.getAvatarUrl())
+                    .content(systemText)
+                    .messageType(MessageType.SYSTEM)
+                    .isDeleted(false)
+                    .createdAt(savedMsg.getCreatedAt())
+                    .isRead(true)
+                    .build();
+
+            try {
+                if (messagingTemplate != null) {
+                    // Phát tin nhắn thông báo vào đoạn chat nhóm
+                    messagingTemplate.convertAndSend("/topic/conversation." + conv.getId(), msgDto);
+
+                    // Cập nhật thông tin hội thoại cho tất cả các thành viên trong danh sách bên trái
+                    List<ConversationMember> members = memberRepository.findByConversationId(conv.getId());
+                    for (ConversationMember m : members) {
+                        messagingTemplate.convertAndSendToUser(
+                                m.getUser().getEmail(),
+                                "/queue/conversations",
+                                mapToResponseDto(conv, m.getUser())
+                        );
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Error broadcasting group rename system message: " + e.getMessage());
+            }
+        }
 
         return mapToResponseDto(conv, currentUser);
     }

@@ -84,14 +84,16 @@ export default function MessageInput({
     formData.append('file', file);
 
     try {
-      const res = await api.post('/upload', formData);
+      const res = await api.post('/upload', formData, {
+        headers: { 'Content-Type': undefined },
+      });
       if (res.data && res.data.url) {
         setSelectedImage(res.data.url);
         setSelectedFile(null); // image and file are separate
       }
     } catch (err: any) {
       console.error('Lỗi tải ảnh:', err);
-      setUploadError(err.response?.data?.message || 'Không thể tải ảnh lên. Vui lòng thử lại!');
+      setUploadError(err.response?.data?.message || err.message || 'Không thể tải ảnh lên. Vui lòng thử lại!');
     } finally {
       setIsUploading(false);
       if (imageInputRef.current) imageInputRef.current.value = '';
@@ -113,7 +115,9 @@ export default function MessageInput({
     formData.append('file', file);
 
     try {
-      const res = await api.post('/upload/file', formData);
+      const res = await api.post('/upload/file', formData, {
+        headers: { 'Content-Type': undefined },
+      });
       if (res.data && res.data.url) {
         setSelectedFile({
           url: res.data.url,
@@ -124,7 +128,7 @@ export default function MessageInput({
       }
     } catch (err: any) {
       console.error('Lỗi tải file:', err);
-      setUploadError(err.response?.data?.message || 'Không thể tải file lên. Vui lòng thử lại!');
+      setUploadError(err.response?.data?.message || err.message || 'Không thể tải file lên. Vui lòng thử lại!');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';

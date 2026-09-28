@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Conversation } from '@/types/messages';
 
 interface ChatHeaderProps {
@@ -16,7 +16,12 @@ export default function ChatHeader({
   onOpenGroupInfo,
   onOpenChatSettings,
 }: ChatHeaderProps) {
+  const [imgError, setImgError] = useState(false);
   const isGroup = conversation.type === 'GROUP';
+
+  useEffect(() => {
+    setImgError(false);
+  }, [conversation.avatarUrl]);
 
   // For 1-1 chat, check if partner is online
   const partner = !isGroup
@@ -58,10 +63,12 @@ export default function ChatHeader({
 
         {/* Avatar */}
         <div className="relative flex-shrink-0">
-          {conversation.avatarUrl ? (
+          {conversation.avatarUrl && !imgError ? (
             <img
               src={conversation.avatarUrl}
               alt={conversation.name || 'Chat'}
+              referrerPolicy="no-referrer"
+              onError={() => setImgError(true)}
               className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-600 shadow-sm"
             />
           ) : (
