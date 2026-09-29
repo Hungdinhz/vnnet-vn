@@ -2,7 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import api from '@/lib/axios';
 import { ChatMessage } from '@/types/messages';
 
-interface SelectedFile {
+export interface AttachmentItem {
+  id: string;
+  type: 'IMAGE' | 'FILE';
   url: string;
   name: string;
   size: number;
@@ -23,6 +25,8 @@ interface MessageInputProps {
   onCancelReply: () => void;
   disabled?: boolean;
   sendOnEnter?: boolean;
+  droppedFiles?: FileList | File[] | null;
+  onClearDroppedFiles?: () => void;
 }
 
 const QUICK_EMOJIS = ['❤️', '😂', '👍', '🔥', '🎉', '✨', '🥺', '🌸'];
@@ -34,11 +38,12 @@ export default function MessageInput({
   onCancelReply,
   disabled = false,
   sendOnEnter = true,
+  droppedFiles,
+  onClearDroppedFiles,
 }: MessageInputProps) {
   const [text, setText] = useState('');
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  const [attachments, setAttachments] = useState<AttachmentItem[]>([]);
+  const [uploadingCount, setUploadingCount] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
@@ -51,6 +56,16 @@ export default function MessageInput({
   useEffect(() => {
     inputRef.current?.focus();
   }, [replyingTo]);
+
+  // Handle dropped files from drag-and-drop
+  useEffect(() => {
+    if (droppedFiles && droppedFiles.length > 0) {
+      uploadFiles(droppedFiles);
+      if (onClearDroppedFiles) {
+        onClearDroppedFiles();
+      }
+    }
+  }, [droppedFiles]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -74,102 +89,117 @@ export default function MessageInput({
     }
   };
 
-  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const uploadFiles = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    if (fileArray.length === 0) return;
 
-    setIsUploading(true);
     setUploadError(null);
-    const formData = new FormData();
-    formData.append('file', file);
+    setUploadingCount((prev) => prev + fileArray.length);
 
-    try {
-      const res = await api.post('/upload', formData, {
-        headers: { 'Content-Type': undefined },
-      });
-      if (res.data && res.data.url) {
-        setSelectedImage(res.data.url);
-        setSelectedFile(null); // image and file are separate
+    for (const file of fileArray) {
+      if (file.size > 20 * 1024 * 1024) {
+        setUploadError(`Tệp "${file.name}" vượt quá giới hạn 20MB.`);
+        setUploadingCount((prev) => Math.max(0, prev - 1));
+        continue;
       }
-    } catch (err: any) {
-      console.error('Lỗi tải ảnh:', err);
-      setUploadError(err.response?.data?.message || err.message || 'Không thể tải ảnh lên. Vui lòng thử lại!');
-    } finally {
-      setIsUploading(false);
-      if (imageInputRef.current) imageInputRef.current.value = '';
+
+      const isImg = file.type.startsWith('image/');
+      const endpoint = isImg ? '/upload' : '/upload/file';
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const res = await api.post(endpoint, formData, {
+          headers: { 'Content-Type': undefined },
+        });
+        if (res.data && res.data.url) {
+          const item: AttachmentItem = {
+            id: `${Date.now()}-${Math.random()}`,
+            type: isImg ? 'IMAGE' : 'FILE',
+            url: res.data.url,
+            name: res.data.fileName || file.name,
+            size: res.data.fileSize || file.size,
+          };
+          setAttachments((prev) => [...prev, item]);
+        }
+      } catch (err: any) {
+        console.error('Lỗi tải file:', err);
+        setUploadError(`Không thể tải "${file.name}". Vui lòng thử lại!`);
+      } finally {
+        setUploadingCount((prev) => Math.max(0, prev - 1));
+      }
     }
   };
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError('Kích thước file vượt quá giới hạn 10MB.');
-      return;
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      uploadFiles(e.target.files);
     }
+    if (imageInputRef.current) imageInputRef.current.value = '';
+  };
 
-    setIsUploading(true);
-    setUploadError(null);
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const res = await api.post('/upload/file', formData, {
-        headers: { 'Content-Type': undefined },
-      });
-      if (res.data && res.data.url) {
-        setSelectedFile({
-          url: res.data.url,
-          name: res.data.fileName || file.name,
-          size: res.data.fileSize || file.size,
-        });
-        setSelectedImage(null);
-      }
-    } catch (err: any) {
-      console.error('Lỗi tải file:', err);
-      setUploadError(err.response?.data?.message || err.message || 'Không thể tải file lên. Vui lòng thử lại!');
-    } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      uploadFiles(e.target.files);
     }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removeAttachment = (id: string) => {
+    setAttachments((prev) => prev.filter((a) => a.id !== id));
   };
 
   const formatFileSize = (bytes: number) => {
+    if (!bytes) return '';
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
   };
 
+  const getFileIcon = (filename: string) => {
+    const ext = filename.split('.').pop()?.toLowerCase();
+    if (['doc', 'docx'].includes(ext || '')) return '📝';
+    if (['xls', 'xlsx'].includes(ext || '')) return '📊';
+    if (['pdf'].includes(ext || '')) return '📕';
+    if (['zip', 'rar', '7z'].includes(ext || '')) return '🗜️';
+    if (['mp3', 'wav', 'ogg'].includes(ext || '')) return '🎵';
+    if (['mp4', 'mov', 'avi'].includes(ext || '')) return '🎬';
+    return '📄';
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if ((!text.trim() && !selectedImage && !selectedFile) || disabled || isUploading) return;
+    if ((!text.trim() && attachments.length === 0) || disabled || uploadingCount > 0) return;
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
       onTyping(false);
     }
 
-    let messageType: 'TEXT' | 'IMAGE' | 'FILE' = 'TEXT';
-    if (selectedFile) {
-      messageType = 'FILE';
-    } else if (selectedImage) {
-      messageType = 'IMAGE';
+    if (attachments.length === 0) {
+      onSendMessage({
+        content: text.trim(),
+        messageType: 'TEXT',
+        replyToId: replyingTo ? replyingTo.id : null,
+      });
+    } else {
+      // Gửi từng tệp/ảnh: tệp đầu tiên đi kèm text nội dung (nếu có) và replyToId
+      attachments.forEach((att, index) => {
+        onSendMessage({
+          content: index === 0 ? text.trim() : '',
+          messageType: att.type,
+          imageUrl: att.type === 'IMAGE' ? att.url : null,
+          fileUrl: att.type === 'FILE' ? att.url : null,
+          fileName: att.type === 'FILE' ? att.name : null,
+          fileSize: att.type === 'FILE' ? att.size : null,
+          replyToId: index === 0 && replyingTo ? replyingTo.id : null,
+        });
+      });
     }
 
-    onSendMessage({
-      content: text.trim(),
-      messageType,
-      imageUrl: selectedImage,
-      fileUrl: selectedFile?.url,
-      fileName: selectedFile?.name,
-      fileSize: selectedFile?.size,
-      replyToId: replyingTo ? replyingTo.id : null,
-    });
-
     setText('');
-    setSelectedImage(null);
-    setSelectedFile(null);
+    setAttachments([]);
     setUploadError(null);
     if (replyingTo) {
       onCancelReply();
@@ -182,25 +212,33 @@ export default function MessageInput({
     inputRef.current?.focus();
   };
 
+  const isUploadingActive = uploadingCount > 0;
+
   return (
-    <div className="p-3 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 text-slate-800 dark:text-slate-100">
+    <div className="p-3 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 relative">
       {/* Upload error banner */}
       {uploadError && (
-        <div className="p-2 mb-2 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-xl text-xs flex items-center justify-between">
-          <span>⚠️ {uploadError}</span>
-          <button onClick={() => setUploadError(null)} className="text-red-400 font-bold px-1">✕</button>
+        <div className="mb-2 p-2 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-500/30 rounded-xl text-xs text-red-600 dark:text-red-400 flex items-center justify-between animate-fade-in">
+          <span>{uploadError}</span>
+          <button
+            type="button"
+            onClick={() => setUploadError(null)}
+            className="text-red-400 hover:text-red-600 font-bold ml-2"
+          >
+            ✕
+          </button>
         </div>
       )}
 
-      {/* Reply banner if actively replying */}
+      {/* Replying banner */}
       {replyingTo && (
-        <div className="flex items-center justify-between bg-sky-50 dark:bg-sky-500/15 border-l-4 border-sky-500 px-3 py-1.5 rounded-r-lg mb-2 text-xs">
-          <div className="truncate">
-            <span className="font-bold text-sky-600 dark:text-sky-400">
-              Đang trả lời {replyingTo.senderUsername}:
+        <div className="flex items-center justify-between mb-2 p-2 bg-sky-50 dark:bg-sky-500/15 rounded-xl border-l-4 border-sky-500 text-xs">
+          <div className="flex-1 truncate">
+            <span className="font-semibold text-sky-600 dark:text-sky-400">
+              Đang trả lời {replyingTo.senderNickname || replyingTo.senderUsername}:
             </span>{' '}
             <span className="text-slate-600 dark:text-slate-300 truncate">
-              {replyingTo.content || (replyingTo.fileName ? `📎 [File] ${replyingTo.fileName}` : '[Hình ảnh]')}
+              {replyingTo.content || (replyingTo.fileName ? `📎 [Tệp] ${replyingTo.fileName}` : '[Hình ảnh]')}
             </span>
           </div>
           <button
@@ -214,41 +252,59 @@ export default function MessageInput({
         </div>
       )}
 
-      {/* Uploaded image preview */}
-      {selectedImage && (
-        <div className="relative inline-block mb-2 rounded-xl overflow-hidden border border-sky-500/30">
-          <img
-            src={selectedImage}
-            alt="Preview"
-            className="w-24 h-24 object-cover rounded-xl"
-          />
-          <button
-            type="button"
-            onClick={() => setSelectedImage(null)}
-            className="absolute top-1 right-1 bg-black/70 hover:bg-black text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-            title="Xóa ảnh"
-          >
-            ✕
-          </button>
-        </div>
-      )}
+      {/* Multi-attachment preview strip */}
+      {(attachments.length > 0 || isUploadingActive) && (
+        <div className="flex flex-wrap items-center gap-2 mb-2.5 p-2.5 bg-slate-50 dark:bg-slate-700/40 rounded-xl border border-slate-200 dark:border-slate-700 max-h-40 overflow-y-auto">
+          {attachments.map((att) => (
+            <div key={att.id} className="relative group/att">
+              {att.type === 'IMAGE' ? (
+                <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-sky-400/40 shadow-xs">
+                  <img src={att.url} alt={att.name} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeAttachment(att.id)}
+                    className="absolute top-1 right-1 bg-black/70 hover:bg-black text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px]"
+                    title="Xóa ảnh"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 px-2.5 py-1.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-600 text-xs shadow-xs">
+                  <span className="text-lg">{getFileIcon(att.name)}</span>
+                  <div className="max-w-[130px]">
+                    <p className="font-semibold text-slate-800 dark:text-slate-100 truncate text-[11px]">{att.name}</p>
+                    <p className="text-[9px] text-slate-500 dark:text-slate-400">{formatFileSize(att.size)}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeAttachment(att.id)}
+                    className="text-slate-400 hover:text-red-500 ml-1 font-bold"
+                    title="Xóa tệp"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
 
-      {/* Uploaded file preview card */}
-      {selectedFile && (
-        <div className="inline-flex items-center gap-2 mb-2 p-2 bg-sky-50 dark:bg-sky-900/40 rounded-xl border border-sky-200 dark:border-sky-500/30 text-xs">
-          <span className="text-xl">📄</span>
-          <div className="max-w-xs">
-            <p className="font-semibold text-slate-800 dark:text-slate-100 truncate">{selectedFile.name}</p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400">{formatFileSize(selectedFile.size)}</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setSelectedFile(null)}
-            className="p-1 text-slate-400 hover:text-red-500 font-bold ml-1"
-            title="Xóa tệp đính kèm"
-          >
-            ✕
-          </button>
+          {isUploadingActive && (
+            <div className="flex items-center gap-2 px-3 py-2 bg-white/80 dark:bg-slate-800/80 rounded-xl border border-sky-300 dark:border-sky-500/30 text-xs text-sky-600 dark:text-sky-400 font-medium">
+              <div className="animate-spin rounded-full h-3.5 w-3.5 border-2 border-sky-500 border-t-transparent" />
+              <span>Đang tải {uploadingCount} tệp...</span>
+            </div>
+          )}
+
+          {attachments.length > 1 && (
+            <button
+              type="button"
+              onClick={() => setAttachments([])}
+              className="text-[11px] text-slate-400 hover:text-red-500 font-medium px-2 py-1 transition-colors"
+            >
+              Xóa tất cả
+            </button>
+          )}
         </div>
       )}
 
@@ -269,19 +325,21 @@ export default function MessageInput({
       )}
 
       <form onSubmit={handleSubmit} className="flex items-center gap-2">
-        {/* Hidden image input */}
+        {/* Hidden multiple image input */}
         <input
           type="file"
           ref={imageInputRef}
           accept="image/*"
+          multiple
           className="hidden"
           onChange={handleImageSelect}
         />
 
-        {/* Hidden file input (PDF, DOCX, ZIP, etc.) */}
+        {/* Hidden multiple file input (PDF, DOCX, ZIP, TXT, etc.) */}
         <input
           type="file"
           ref={fileInputRef}
+          multiple
           accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar,.7z,.txt,.csv,.mp3,.mp4,audio/*,video/*"
           className="hidden"
           onChange={handleFileSelect}
@@ -291,30 +349,22 @@ export default function MessageInput({
         <button
           type="button"
           onClick={() => imageInputRef.current?.click()}
-          disabled={isUploading || disabled}
+          disabled={isUploadingActive || disabled}
           className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors disabled:opacity-50"
-          title="Gửi hình ảnh"
+          title="Chọn hình ảnh (có thể chọn nhiều ảnh cùng lúc)"
         >
-          {isUploading && !selectedFile ? (
-            <span className="w-5 h-5 border-2 border-sky-500 border-t-transparent rounded-full animate-spin inline-block"></span>
-          ) : (
-            '🖼️'
-          )}
+          🖼️
         </button>
 
         {/* File Attachment button */}
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading || disabled}
+          disabled={isUploadingActive || disabled}
           className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors disabled:opacity-50"
-          title="Đính kèm tệp (PDF, Word, Zip...)"
+          title="Đính kèm tệp (Word, PDF, Zip... có thể chọn nhiều tệp)"
         >
-          {isUploading && selectedFile ? (
-            <span className="w-5 h-5 border-2 border-sky-500 border-t-transparent rounded-full animate-spin inline-block"></span>
-          ) : (
-            '📎'
-          )}
+          📎
         </button>
 
         {/* Emoji trigger button */}
@@ -334,7 +384,11 @@ export default function MessageInput({
           value={text}
           onChange={handleTextChange}
           onKeyDown={handleKeyDown}
-          placeholder="Nhập tin nhắn..."
+          placeholder={
+            attachments.length > 0
+              ? 'Thêm chú thích hoặc nhấn Gửi...'
+              : 'Nhập tin nhắn (hoặc kéo thả file vào đây)...'
+          }
           disabled={disabled}
           className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-600 rounded-xl text-sm outline-none focus:border-sky-500 text-slate-800 dark:text-slate-100 placeholder-slate-400"
         />
@@ -342,11 +396,11 @@ export default function MessageInput({
         {/* Send Button */}
         <button
           type="submit"
-          disabled={(!text.trim() && !selectedImage && !selectedFile) || disabled || isUploading}
+          disabled={(!text.trim() && attachments.length === 0) || disabled || isUploadingActive}
           className="px-5 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-bold disabled:opacity-40 transition-opacity flex items-center gap-1.5 shadow-sm"
         >
-          <span>Gửi</span>
-          <span>🚀</span>
+          <span>{isUploadingActive ? 'Đang tải...' : 'Gửi'}</span>
+          <span>{isUploadingActive ? '⏳' : '🚀'}</span>
         </button>
       </form>
     </div>

@@ -99,10 +99,44 @@ export default function ConversationItem({
                 : 'text-slate-500 dark:text-slate-400'
             }`}
           >
-            {conversation.lastMessageSenderName && isGroup
-              ? `${conversation.lastMessageSenderName}: `
-              : ''}
-            {conversation.lastMessage || 'Bắt đầu cuộc trò chuyện...'}
+            {(() => {
+              if (!conversation.lastMessage) return 'Bắt đầu cuộc trò chuyện...';
+              let msg = conversation.lastMessage;
+
+              // Thay thế username thành biệt danh nếu thành viên đã có biệt danh
+              if (conversation.members && conversation.members.length > 0) {
+                conversation.members.forEach((m) => {
+                  if (m.nickname && m.nickname.trim() && m.username) {
+                    msg = msg.split(m.username).join(m.nickname.trim());
+                  }
+                });
+              }
+
+              // Tin nhắn hệ thống (đổi tên, đặt biệt danh, v.v.): hiển thị trực tiếp, không prepend tên người gửi
+              const isSystem =
+                msg.includes('đã đổi tên') ||
+                msg.includes('đã đặt biệt danh') ||
+                msg.includes('đã gỡ biệt danh') ||
+                msg.includes('đã rời nhóm') ||
+                msg.includes('đã thêm');
+
+              if (isSystem) {
+                return msg;
+              }
+
+              if (
+                msg.includes('đã gửi') ||
+                msg.startsWith('Bạn:') ||
+                (conversation.lastMessageSenderName &&
+                  msg.startsWith(`${conversation.lastMessageSenderName}:`))
+              ) {
+                return msg;
+              }
+              if (isGroup && conversation.lastMessageSenderName) {
+                return `${conversation.lastMessageSenderName}: ${msg}`;
+              }
+              return msg;
+            })()}
           </p>
 
           {/* Unread badge */}

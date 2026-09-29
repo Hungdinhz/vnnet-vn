@@ -47,6 +47,9 @@ public class DatabaseSchemaFixer implements CommandLineRunner {
             jdbcTemplate.execute("ALTER TABLE messages DROP CONSTRAINT IF EXISTS messages_message_type_check;");
             jdbcTemplate.execute("ALTER TABLE messages ADD CONSTRAINT messages_message_type_check CHECK (message_type IN ('TEXT', 'IMAGE', 'FILE', 'SYSTEM'));");
 
+            // Ensure nickname column in conversation_members
+            jdbcTemplate.execute("ALTER TABLE conversation_members ADD COLUMN IF NOT EXISTS nickname VARCHAR(100);");
+
             log.info("Successfully verified and updated message table schema columns and constraints");
         } catch (Exception e) {
             log.warn("Error checking message table schema columns: {}", e.getMessage());

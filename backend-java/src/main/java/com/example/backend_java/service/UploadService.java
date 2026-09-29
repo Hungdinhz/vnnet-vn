@@ -58,11 +58,22 @@ public class UploadService {
 
             java.util.Map<String, Object> params = new java.util.HashMap<>();
             params.put("resource_type", resourceType);
-            params.put("use_filename", true);
-            params.put("unique_filename", true);
-            if (originalFilename != null) {
-                params.put("filename", originalFilename);
-                params.put("filename_override", originalFilename);
+
+            // Cloudinary Free accounts block delivery of files with .pdf/.zip extension (401 ACL deny).
+            // To guarantee 100% reliable download of PDF and all documents:
+            // Store raw files with safe identifier (.cld) on Cloudinary CDN while preserving originalFilename for user downloads.
+            if ("raw".equals(resourceType)) {
+                String safeId = "doc_" + java.util.UUID.randomUUID().toString().replace("-", "") + ".cld";
+                params.put("public_id", safeId);
+                params.put("use_filename", false);
+                params.put("unique_filename", false);
+            } else {
+                params.put("use_filename", true);
+                params.put("unique_filename", true);
+                if (originalFilename != null) {
+                    params.put("filename", originalFilename);
+                    params.put("filename_override", originalFilename);
+                }
             }
 
             Map<String, Object> result = cloudinary.uploader().upload(file.getBytes(), params);

@@ -42,4 +42,7 @@ public class ConversationMember {
     @Column(name = "is_muted")
     @Builder.Default
     private Boolean isMuted = false;
+
+    @Column(name = "nickname", length = 100)
+    private String nickname;
 }

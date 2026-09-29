@@ -90,7 +90,16 @@ export default function ChatHeader({
         {/* Title & Status */}
         <div>
           <div className="font-bold text-slate-900 dark:text-white text-[15px] flex items-center gap-1.5">
-            <span>{conversation.name || 'Cuộc trò chuyện'}</span>
+            <span>
+              {isGroup
+                ? (conversation.name || 'Nhóm chat')
+                : (partner?.nickname || conversation.name || partner?.username || 'Cuộc trò chuyện')}
+            </span>
+            {!isGroup && partner?.nickname && (
+              <span className="text-xs font-normal text-slate-400 dark:text-slate-400">
+                (@{partner.username})
+              </span>
+            )}
             {isGroup && (
               <span className="text-[10px] bg-sky-500/15 text-sky-700 dark:text-sky-300 font-bold px-2 py-0.5 rounded-full border border-sky-500/25">
                 Nhóm

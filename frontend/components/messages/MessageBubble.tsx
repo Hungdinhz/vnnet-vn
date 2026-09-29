@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { ChatMessage } from '@/types/messages';
+import { downloadMediaOrFile } from '@/lib/downloadHelper';
 
 interface MessageBubbleProps {
   message: ChatMessage;
   isMine: boolean;
   isGroup: boolean;
+  members?: Array<{ userId: number; username: string; nickname?: string | null }>;
   onReply: (message: ChatMessage) => void;
   onRecallRequest: (message: ChatMessage) => void;
   onImageClick: (url: string) => void;
@@ -14,6 +16,7 @@ export default function MessageBubble({
   message,
   isMine,
   isGroup,
+  members,
   onReply,
   onRecallRequest,
   onImageClick,
@@ -58,11 +61,19 @@ export default function MessageBubble({
 
   // Render SYSTEM message (e.g. group rename notification)
   if (message.messageType === 'SYSTEM') {
+    let content = message.content;
+    if (members && members.length > 0) {
+      members.forEach((m) => {
+        if (m.nickname && m.nickname.trim() && m.username) {
+          content = content.split(m.username).join(m.nickname.trim());
+        }
+      });
+    }
     return (
       <div className="flex justify-center my-3">
         <div className="px-4 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 font-medium shadow-xs select-none flex items-center gap-1.5">
           <span>ℹ️</span>
-          <span>{message.content}</span>
+          <span>{content}</span>
         </div>
       </div>
     );
@@ -118,7 +129,7 @@ export default function MessageBubble({
         {/* Sender name in group chat for other users */}
         {!isMine && isGroup && (
           <span className="text-[11px] font-semibold text-sky-600 dark:text-sky-400 mb-1 ml-2">
-            {message.senderUsername}
+            {message.senderNickname || message.senderUsername}
           </span>
         )}
 
@@ -154,13 +165,23 @@ export default function MessageBubble({
             <>
               {/* Image attachment if any */}
               {message.imageUrl && (
-                <div className="mb-2 overflow-hidden rounded-xl cursor-pointer">
+                <div className="mb-2 overflow-hidden rounded-xl relative group/img cursor-pointer">
                   <img
                     src={message.imageUrl}
                     alt="Ảnh gửi kèm"
                     className="max-h-64 w-auto rounded-xl object-cover hover:scale-105 transition-transform duration-300"
                     onClick={() => onImageClick(message.imageUrl!)}
                   />
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      downloadMediaOrFile(message.imageUrl!, 'image.png');
+                    }}
+                    className="absolute top-2 right-2 p-1.5 bg-black/60 hover:bg-black/80 text-white rounded-lg opacity-0 group-hover/img:opacity-100 transition-opacity text-xs shadow-md"
+                    title="Tải ảnh về máy"
+                  >
+                    ⬇️
+                  </button>
                 </div>
               )}
 
@@ -186,11 +207,9 @@ export default function MessageBubble({
                       </p>
                     )}
                   </div>
-                  <a
-                    href={message.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    download={message.fileName || 'file'}
+                  <button
+                    type="button"
+                    onClick={() => downloadMediaOrFile(message.fileUrl!, message.fileName || 'file')}
                     className={`p-2 rounded-lg text-xs font-bold flex-shrink-0 transition-colors ${
                       isMine
                         ? 'bg-white/20 hover:bg-white/30 text-white'
@@ -199,7 +218,7 @@ export default function MessageBubble({
                     title="Tải xuống tệp"
                   >
                     ⬇️
-                  </a>
+                  </button>
                 </div>
               )}
 

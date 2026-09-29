@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 public class ConversationMemberDto {
     private Long userId;
     private String username;
+    private String nickname;
     private String avatarUrl;
     private String role;
     private LocalDateTime joinedAt;

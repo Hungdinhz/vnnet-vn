@@ -32,6 +32,9 @@ public class CorsConfig {
         // Cho phép gửi credentials (cookies, authorization headers)
         configuration.setAllowCredentials(true);
 
+        // Cho phép trình duyệt đọc header Content-Disposition khi tải file
+        configuration.setExposedHeaders(Arrays.asList("Content-Disposition", "Content-Type", "Content-Length"));
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
 
