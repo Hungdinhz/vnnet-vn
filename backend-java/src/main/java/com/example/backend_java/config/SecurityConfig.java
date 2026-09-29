@@ -1,6 +1,7 @@
 package com.example.backend_java.config;
 
 import com.example.backend_java.security.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -28,6 +29,14 @@ public class SecurityConfig {
             .cors(cors -> {}) // Dùng CorsConfig bean riêng
             .csrf(csrf -> csrf.disable()) // Tắt CSRF cho REST API
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json");
+                    response.setCharacterEncoding("UTF-8");
+                    response.getWriter().write("{\"detail\":\"Unauthorized: Vui lòng đăng nhập để tiếp tục\"}");
+                })
+            )
             .authorizeHttpRequests(auth -> auth
                 // --- PROTECTED endpoints (cần token) ---
                 .requestMatchers(HttpMethod.GET, "/users/me").authenticated()

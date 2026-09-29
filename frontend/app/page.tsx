@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import api from '@/lib/axios';
+import { getAuthToken, removeAuthToken } from '@/lib/auth';
 import PostCard from '@/components/PostCard';
 import StoryBar from '@/components/StoryBar';
 import toast from 'react-hot-toast';
@@ -14,6 +15,7 @@ import toast from 'react-hot-toast';
 export default function Home() {
   const router = useRouter();
   
+  const [isAuthChecking, setIsAuthChecking] = useState(true);
   const [posts, setPosts] = useState<any[]>([]); 
   const [isLoading, setIsLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -94,7 +96,7 @@ export default function Home() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = getAuthToken();
     if (!token) {
       router.push('/login');
       return;
@@ -104,8 +106,15 @@ export default function Home() {
       try {
         const res = await api.get('/users/me');
         setCurrentUser(res.data);
-      } catch (err) {
+        setIsAuthChecking(false);
+      } catch (err: any) {
         console.error("Lỗi tải self user:", err);
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          removeAuthToken();
+          router.push('/login');
+          return;
+        }
+        setIsAuthChecking(false);
       }
     };
 
@@ -244,6 +253,15 @@ export default function Home() {
     if (hour < 18) return 'Chào buổi chiều';
     return 'Chào buổi tối';
   };
+
+  if (isAuthChecking) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
+        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
+        <p className="text-secondary text-sm">Đang kiểm tra đăng nhập...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">

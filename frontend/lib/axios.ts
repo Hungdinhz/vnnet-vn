@@ -1,5 +1,6 @@
 // lib/axios.ts
 import axios from 'axios';
+import { getAuthToken, removeAuthToken } from './auth';
 
 // Tạo một instance với cấu hình mặc định
 const api = axios.create({
@@ -20,11 +21,8 @@ api.interceptors.request.use(
       delete config.headers['Content-Type'];
     }
 
-    // KHI NÀO DÙNG: Đoạn này lấy token từ localStorage để gắn vào Header
-    // LƯU Ý QUAN TRỌNG: localStorage chỉ tồn tại trên trình duyệt (Client). 
-    // Do Next.js có render trên Server, ta phải kiểm tra window để tránh lỗi crash server.
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -36,17 +34,30 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor cho response: Xử lý lỗi 401 (Token hết hạn/Không hợp lệ)
+// Interceptor cho response: Xử lý lỗi 401 / 403 (Token hết hạn/Không hợp lệ/Chưa xác thực)
 api.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
-    if (error.response && error.response.status === 401) {
-      if (typeof window !== 'undefined') {
-        // Chỉ logout nếu đang ở trang không phải trang login/register
-        if (!window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {
-          localStorage.removeItem('token');
+    if (error.response) {
+      const status = error.response.status;
+      const url = error.config?.url || '';
+
+      // 401 luôn là lỗi chưa đăng nhập/token sai
+      // 403 trên các endpoint người dùng/thông báo cũng là lỗi xác thực từ Spring Security
+      const isAuthFailure = status === 401 || (status === 403 && (url.includes('/users/me') || url.includes('/notifications')));
+
+      if (isAuthFailure && typeof window !== 'undefined') {
+        const path = window.location.pathname;
+        const isAuthPage =
+          path.startsWith('/login') ||
+          path.startsWith('/register') ||
+          path.startsWith('/verify-email') ||
+          path.startsWith('/forgot-password');
+
+        if (!isAuthPage) {
+          removeAuthToken();
           window.location.href = '/login';
         }
       }

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import api from '@/lib/axios';
+import { getAuthToken, removeAuthToken } from '@/lib/auth';
 import { ThemeToggle } from './ThemeToggle';
 
 export default function Navbar() {
@@ -46,23 +47,33 @@ export default function Navbar() {
 
   // Fetch current user and notifications
   useEffect(() => {
+    const token = getAuthToken();
+    if (!token) return;
+
     const fetchUserData = async () => {
       try {
         const res = await api.get('/users/me');
         setCurrentUser(res.data);
-      } catch (err) {
-        console.error("Lỗi lấy thông tin user:", err);
+      } catch (err: any) {
+        if (err.response?.status !== 401 && err.response?.status !== 403) {
+          console.error("Lỗi lấy thông tin user:", err);
+        }
       }
     };
 
     fetchUserData();
     fetchNotifications();
 
-    const interval = setInterval(fetchNotifications, 20000);
+    const interval = setInterval(() => {
+      if (getAuthToken()) {
+        fetchNotifications();
+      }
+    }, 20000);
     return () => clearInterval(interval);
   }, []);
 
   const fetchNotifications = async () => {
+    if (!getAuthToken()) return;
     try {
       const res = await api.get('/notifications');
       const notifs = res.data || [];
@@ -218,7 +229,7 @@ export default function Navbar() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    removeAuthToken();
     router.push('/login');
   };
 

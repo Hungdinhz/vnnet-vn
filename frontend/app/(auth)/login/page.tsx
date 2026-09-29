@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/axios'; 
+import { setAuthToken } from '@/lib/auth';
 import GoogleLoginButton from '@/components/GoogleLoginButton';
 
 export default function LoginPage() {
@@ -34,7 +35,7 @@ export default function LoginPage() {
       const token = response.data.access_token;
       
       if (token) {
-        localStorage.setItem('token', token);
+        setAuthToken(token);
         router.push('/');
       } else {
         setError('Không nhận được token từ server.');
