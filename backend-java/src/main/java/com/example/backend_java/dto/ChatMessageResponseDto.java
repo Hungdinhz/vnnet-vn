@@ -17,6 +17,7 @@ public class ChatMessageResponseDto {
     private Long conversationId;
     private Long senderId;
     private String senderUsername;
+    private String senderNickname;
     private String senderAvatarUrl;
     private Long receiverId;
     private String content;

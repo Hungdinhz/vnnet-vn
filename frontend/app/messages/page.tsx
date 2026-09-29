@@ -33,6 +33,11 @@ function MessagesContent() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
+  const activeConversationRef = useRef<Conversation | null>(null);
+  useEffect(() => {
+    activeConversationRef.current = activeConversation;
+  }, [activeConversation]);
+
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [typingUsers, setTypingUsers] = useState<string[]>([]);
   const [replyingTo, setReplyingTo] = useState<ChatMessage | null>(null);
@@ -54,6 +59,11 @@ function MessagesContent() {
 
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [hasInitQuery, setHasInitQuery] = useState(false);
+
+  // Drag and drop state
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [droppedFiles, setDroppedFiles] = useState<File[] | null>(null);
+  const dragCounterRef = useRef(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
@@ -159,14 +169,14 @@ function MessagesContent() {
   }, []);
 
   useEffect(() => {
-    if (activeConversation) {
+    if (activeConversation?.id) {
       fetchMessages(activeConversation.id);
       setTypingUsers([]);
       setReplyingTo(null);
     } else {
       setMessages([]);
     }
-  }, [activeConversation, fetchMessages]);
+  }, [activeConversation?.id, fetchMessages]);
 
   // Push or update In-App notification with deduplication per user/conversation
   const triggerInAppNotification = useCallback(
@@ -262,7 +272,7 @@ function MessagesContent() {
       });
 
       // If this conversation is currently open, keep activeConversation synced
-      if (activeConversation?.id === updatedConv.id) {
+      if (activeConversationRef.current?.id === updatedConv.id) {
         setActiveConversation((prev) => (prev ? { ...prev, ...updatedConv } : updatedConv));
       } else {
         // New message in a conversation that is NOT currently open: trigger notification!
@@ -291,7 +301,7 @@ function MessagesContent() {
           ),
         }))
       );
-      if (activeConversation) {
+      if (activeConversationRef.current) {
         setActiveConversation((prev) => {
           if (!prev) return null;
           return {
@@ -310,13 +320,12 @@ function MessagesContent() {
       convSub?.unsubscribe();
       onlineSub?.unsubscribe();
     };
-  }, [isConnected, currentUser, activeConversation, subscribe, triggerInAppNotification]);
+  }, [isConnected, currentUser?.id, subscribe, triggerInAppNotification]);
 
   // C. Subscribe to Active Conversation Topics
   useEffect(() => {
-    if (!isConnected || !activeConversation) return;
-
-    const convId = activeConversation.id;
+    const convId = activeConversation?.id;
+    if (!isConnected || !convId) return;
 
     // Real-time messages topic
     const msgSub = subscribe(`/topic/conversation.${convId}`, (incoming: ChatMessage) => {
@@ -332,8 +341,9 @@ function MessagesContent() {
           (m) =>
             m.id < 0 &&
             m.senderId === incoming.senderId &&
-            m.content === incoming.content &&
-            m.messageType === incoming.messageType
+            ((incoming.fileUrl && m.fileUrl === incoming.fileUrl) ||
+             (incoming.imageUrl && m.imageUrl === incoming.imageUrl) ||
+             (m.content === incoming.content && m.messageType === incoming.messageType))
         );
         if (tempIdx !== -1) {
           const updated = [...prev];
@@ -348,17 +358,33 @@ function MessagesContent() {
       setConversations((prev) => {
         const target = prev.find((c) => c.id === convId);
         if (!target) return prev;
-        const preview =
-          incoming.messageType === 'IMAGE'
-            ? '📷 [Hình ảnh]'
-            : incoming.messageType === 'FILE'
-            ? `📎 [Tệp] ${incoming.fileName || 'Tài liệu'}`
-            : incoming.content;
+        const isMe = incoming.senderId === currentUser?.id;
+        const senderName = isMe
+          ? 'Bạn'
+          : incoming.senderNickname || incoming.senderUsername || 'Người dùng';
+        let preview = '';
+        if (incoming.messageType === 'SYSTEM') {
+          preview = incoming.content || '';
+        } else if (incoming.messageType === 'IMAGE') {
+          preview = incoming.content?.trim()
+            ? `${senderName} đã gửi một hình ảnh: ${incoming.content.trim()}`
+            : `${senderName} đã gửi một hình ảnh`;
+        } else if (incoming.messageType === 'FILE') {
+          const fName = incoming.fileName || 'tài liệu';
+          preview = incoming.content?.trim()
+            ? `${senderName} đã gửi một tệp (${fName}): ${incoming.content.trim()}`
+            : `${senderName} đã gửi một tệp: ${fName}`;
+        } else {
+          preview =
+            target.type === 'GROUP' || isMe
+              ? `${senderName}: ${incoming.content}`
+              : incoming.content;
+        }
         const updated: Conversation = {
           ...target,
           lastMessage: preview,
           lastMessageTime: incoming.createdAt,
-          lastMessageSenderName: incoming.senderUsername,
+          lastMessageSenderName: senderName,
         };
         const rest = prev.filter((c) => c.id !== convId);
         return [updated, ...rest];
@@ -410,12 +436,24 @@ function MessagesContent() {
       }
     );
 
+    // Real-time conversation info topic (group rename, nicknames, member updates)
+    const infoSub = subscribe(
+      `/topic/conversation.${convId}.info`,
+      (updatedConv: Conversation) => {
+        setActiveConversation((prev) => (prev ? { ...prev, ...updatedConv } : updatedConv));
+        setConversations((prev) =>
+          prev.map((c) => (c.id === convId ? { ...c, ...updatedConv } : c))
+        );
+      }
+    );
+
     return () => {
       msgSub?.unsubscribe();
       typingSub?.unsubscribe();
       readSub?.unsubscribe();
+      infoSub?.unsubscribe();
     };
-  }, [isConnected, activeConversation, currentUser, subscribe, sendReadReceipt, triggerInAppNotification]);
+  }, [isConnected, activeConversation?.id, currentUser?.id, subscribe, sendReadReceipt, triggerInAppNotification]);
 
   // 6. Action Handlers
   const handleSendMessage = async (payload: {
@@ -429,7 +467,7 @@ function MessagesContent() {
   }) => {
     if (!activeConversation) return;
 
-    const tempId = -Date.now();
+    const tempId = -(Date.now() + Math.floor(Math.random() * 100000));
     const optimisticMsg: ChatMessage = {
       id: tempId,
       conversationId: activeConversation.id,
@@ -459,17 +497,24 @@ function MessagesContent() {
     setConversations((prev) => {
       const target = prev.find((c) => c.id === activeConversation.id);
       if (!target) return prev;
-      const preview =
-        payload.messageType === 'IMAGE'
-          ? '📷 [Hình ảnh]'
-          : payload.messageType === 'FILE'
-          ? `📎 [Tệp] ${payload.fileName || 'Tài liệu'}`
-          : payload.content;
+      let preview = '';
+      if (payload.messageType === 'IMAGE') {
+        preview = payload.content?.trim()
+          ? `Bạn đã gửi một hình ảnh: ${payload.content.trim()}`
+          : 'Bạn đã gửi một hình ảnh';
+      } else if (payload.messageType === 'FILE') {
+        const fName = payload.fileName || 'tài liệu';
+        preview = payload.content?.trim()
+          ? `Bạn đã gửi một tệp (${fName}): ${payload.content.trim()}`
+          : `Bạn đã gửi một tệp: ${fName}`;
+      } else {
+        preview = target.type === 'GROUP' ? `Bạn: ${payload.content}` : `Bạn: ${payload.content}`;
+      }
       const updated: Conversation = {
         ...target,
         lastMessage: preview,
         lastMessageTime: new Date().toISOString(),
-        lastMessageSenderName: currentUser?.username || 'Bạn',
+        lastMessageSenderName: 'Bạn',
       };
       const rest = prev.filter((c) => c.id !== activeConversation.id);
       return [updated, ...rest];
@@ -537,6 +582,42 @@ function MessagesContent() {
     }
   };
 
+  // Drag and drop event handlers
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current += 1;
+    if (e.dataTransfer?.items && e.dataTransfer.items.length > 0) {
+      setIsDraggingOver(true);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current -= 1;
+    if (dragCounterRef.current <= 0) {
+      dragCounterRef.current = 0;
+      setIsDraggingOver(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current = 0;
+    setIsDraggingOver(false);
+    if (e.dataTransfer?.files && e.dataTransfer.files.length > 0) {
+      const filesArray = Array.from(e.dataTransfer.files);
+      setDroppedFiles(filesArray);
+    }
+  };
+
   return (
     <div className="h-screen overflow-hidden bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col transition-colors duration-200">
       <Navbar />
@@ -560,12 +641,35 @@ function MessagesContent() {
 
         {/* Main Area: Chat Window */}
         <div
+          onDragEnter={activeConversation ? handleDragEnter : undefined}
+          onDragOver={activeConversation ? handleDragOver : undefined}
+          onDragLeave={activeConversation ? handleDragLeave : undefined}
+          onDrop={activeConversation ? handleDrop : undefined}
           className={`${
             !activeConversation ? 'hidden md:flex' : 'flex'
           } flex-1 flex-col bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-xl border border-slate-200/80 dark:border-slate-700 relative`}
         >
           {activeConversation ? (
             <>
+              {/* Drag and drop overlay */}
+              {isDraggingOver && (
+                <div className="absolute inset-0 z-50 bg-sky-500/10 dark:bg-sky-500/20 backdrop-blur-xs border-2 border-dashed border-sky-500 rounded-2xl flex flex-col items-center justify-center pointer-events-none transition-all">
+                  <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-xl flex flex-col items-center gap-3 border border-sky-200 dark:border-sky-500/30">
+                    <div className="w-16 h-16 rounded-full bg-sky-100 dark:bg-sky-500/20 flex items-center justify-center text-3xl text-sky-600 dark:text-sky-400 animate-bounce">
+                      📂
+                    </div>
+                    <div className="text-center">
+                      <p className="font-bold text-base text-slate-800 dark:text-slate-100">
+                        Thả file hoặc ảnh vào đây để gửi
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Hỗ trợ gửi nhiều ảnh & tệp tin cùng một lúc (tối đa 20MB / tệp)
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Header */}
               <ChatHeader
                 conversation={activeConversation}
@@ -604,6 +708,7 @@ function MessagesContent() {
                       message={msg}
                       isMine={msg.senderId === currentUser?.id}
                       isGroup={activeConversation.type === 'GROUP'}
+                      members={activeConversation.members}
                       onReply={(target) => setReplyingTo(target)}
                       onRecallRequest={(target) => setRecallMessageTarget(target)}
                       onImageClick={(url) => setLightboxImage(url)}
@@ -623,6 +728,8 @@ function MessagesContent() {
                 replyingTo={replyingTo}
                 onCancelReply={() => setReplyingTo(null)}
                 sendOnEnter={chatSettings.sendOnEnter}
+                droppedFiles={droppedFiles}
+                onClearDroppedFiles={() => setDroppedFiles(null)}
               />
             </>
           ) : (
@@ -695,6 +802,12 @@ function MessagesContent() {
         isOpen={isDirectInfoOpen}
         onClose={() => setIsDirectInfoOpen(false)}
         onOpenSettings={() => setIsSettingsOpen(true)}
+        onUpdateConversation={(updated) => {
+          setActiveConversation(updated);
+          setConversations((prev) =>
+            prev.map((c) => (c.id === updated.id ? updated : c))
+          );
+        }}
       />
 
       <ChatSettingsModal

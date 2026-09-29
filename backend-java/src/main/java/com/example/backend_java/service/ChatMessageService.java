@@ -245,11 +245,21 @@ public class ChatMessageService {
             replySender = message.getReplyTo().getSender().getUsername();
         }
 
+        String senderNickname = null;
+        if (message.getConversation() != null && message.getSender() != null) {
+            Optional<ConversationMember> memOpt = memberRepository.findByConversationIdAndUserId(
+                    message.getConversation().getId(), message.getSender().getId());
+            if (memOpt.isPresent() && memOpt.get().getNickname() != null && !memOpt.get().getNickname().trim().isEmpty()) {
+                senderNickname = memOpt.get().getNickname();
+            }
+        }
+
         return ChatMessageResponseDto.builder()
                 .id(message.getId())
                 .conversationId(message.getConversation() != null ? message.getConversation().getId() : null)
                 .senderId(message.getSender().getId())
                 .senderUsername(message.getSender().getUsername())
+                .senderNickname(senderNickname)
                 .senderAvatarUrl(message.getSender().getAvatarUrl())
                 .receiverId(message.getReceiver() != null ? message.getReceiver().getId() : null)
                 .content(message.getContent())

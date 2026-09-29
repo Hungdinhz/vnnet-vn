@@ -15,6 +15,11 @@ const api = axios.create({
 // Interceptor: Đánh chặn trước khi request được gửi đi
 api.interceptors.request.use(
   (config) => {
+    // Nếu request gửi FormData, xóa Content-Type để trình duyệt tự động sinh multipart boundary
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+
     // KHI NÀO DÙNG: Đoạn này lấy token từ localStorage để gắn vào Header
     // LƯU Ý QUAN TRỌNG: localStorage chỉ tồn tại trên trình duyệt (Client). 
     // Do Next.js có render trên Server, ta phải kiểm tra window để tránh lỗi crash server.
@@ -31,13 +36,13 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor cho response: Xử lý lỗi 401/403 (Token hết hạn/Không hợp lệ)
+// Interceptor cho response: Xử lý lỗi 401 (Token hết hạn/Không hợp lệ)
 api.interceptors.response.use(
   (response) => {
     return response;
   },
   (error) => {
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+    if (error.response && error.response.status === 401) {
       if (typeof window !== 'undefined') {
         // Chỉ logout nếu đang ở trang không phải trang login/register
         if (!window.location.pathname.startsWith('/login') && !window.location.pathname.startsWith('/register')) {

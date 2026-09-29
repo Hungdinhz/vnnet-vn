@@ -35,6 +35,10 @@ export default function GroupInfoModal({
   const [editName, setEditName] = useState(conversation?.name || '');
   const [savingName, setSavingName] = useState(false);
 
+  const [editingNicknameUserId, setEditingNicknameUserId] = useState<number | null>(null);
+  const [nicknameInput, setNicknameInput] = useState<string>('');
+  const [savingNickname, setSavingNickname] = useState(false);
+
   // In-modal confirmation state (NO window.confirm!)
   const [confirmAction, setConfirmAction] = useState<{
     type: 'REMOVE' | 'LEAVE';
@@ -89,6 +93,23 @@ export default function GroupInfoModal({
       setErrorMessage('Không thể đổi tên nhóm!');
     } finally {
       setSavingName(false);
+    }
+  };
+
+  const handleSaveNickname = async (userId: number) => {
+    setSavingNickname(true);
+    setErrorMessage(null);
+    try {
+      const res = await api.put(`/conversations/${conversation.id}/members/${userId}/nickname`, {
+        nickname: nicknameInput.trim(),
+      });
+      onUpdateConversation(res.data);
+      setEditingNicknameUserId(null);
+    } catch (err: any) {
+      console.error('Lỗi đặt biệt danh:', err);
+      setErrorMessage(err.response?.data?.message || 'Không thể đặt biệt danh!');
+    } finally {
+      setSavingNickname(false);
     }
   };
 
@@ -200,7 +221,7 @@ export default function GroupInfoModal({
           <div className="flex flex-col items-center text-center pb-3 border-b border-slate-200/80 dark:border-slate-600">
             <div className="w-16 h-16 rounded-full bg-sky-500 flex items-center justify-center text-2xl font-bold text-white shadow-lg border border-slate-200 dark:border-slate-600 mb-2">
               {conversation.avatarUrl ? (
-                <img src={conversation.avatarUrl} alt={conversation.name || ''} className="w-full h-full rounded-full object-cover" />
+                <img src={conversation.avatarUrl} alt={conversation.name || ''} referrerPolicy="no-referrer" className="w-full h-full rounded-full object-cover" />
               ) : (
                 '👥'
               )}
@@ -317,7 +338,7 @@ export default function GroupInfoModal({
                     <div className="flex items-center gap-2.5">
                       <div className="relative w-8 h-8 rounded-full overflow-hidden border border-slate-200 dark:border-sky-500/20">
                         {member.avatarUrl ? (
-                          <img src={member.avatarUrl} alt={member.username} className="w-full h-full object-cover" />
+                          <img src={member.avatarUrl} alt={member.username} referrerPolicy="no-referrer" className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full bg-sky-600/30 text-sky-500 dark:text-secondary text-xs font-bold flex items-center justify-center">
                             {member.username.charAt(0).toUpperCase()}
@@ -328,10 +349,60 @@ export default function GroupInfoModal({
                         )}
                       </div>
                       <div>
-                        <div className="text-xs font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                          <span>{member.username}</span>
-                          {isUser && <span className="text-[10px] text-slate-400">(Bạn)</span>}
-                        </div>
+                        {editingNicknameUserId === member.userId ? (
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <input
+                              type="text"
+                              value={nicknameInput}
+                              placeholder="Nhập biệt danh..."
+                              onChange={(e) => setNicknameInput(e.target.value)}
+                              className="px-2 py-0.5 border border-sky-300 dark:border-slate-600 rounded text-xs bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-sky-500 w-28"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveNickname(member.userId);
+                                if (e.key === 'Escape') setEditingNicknameUserId(null);
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleSaveNickname(member.userId)}
+                              disabled={savingNickname}
+                              className="text-xs text-sky-600 hover:text-sky-700 font-bold"
+                              title="Lưu biệt danh"
+                            >
+                              ✓
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingNicknameUserId(null)}
+                              className="text-xs text-slate-400 hover:text-slate-600"
+                              title="Hủy"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="text-xs font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-1.5 flex-wrap">
+                            <span>{member.nickname || member.username}</span>
+                            {member.nickname && (
+                              <span className="text-[10px] text-slate-400 font-normal">
+                                (@{member.username})
+                              </span>
+                            )}
+                            {isUser && <span className="text-[10px] text-slate-400 font-normal">(Bạn)</span>}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingNicknameUserId(member.userId);
+                                setNicknameInput(member.nickname || '');
+                              }}
+                              className="text-[11px] text-slate-400 hover:text-sky-500 transition-colors ml-0.5"
+                              title="Đặt hoặc sửa biệt danh"
+                            >
+                              ✏️
+                            </button>
+                          </div>
+                        )}
                         <span className="text-[10px] text-slate-500 dark:text-slate-400">
                           {member.role === 'ADMIN' ? '👑 Trưởng nhóm' : 'Thành viên'}
                         </span>

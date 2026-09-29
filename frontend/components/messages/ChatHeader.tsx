@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Conversation } from '@/types/messages';
 
 interface ChatHeaderProps {
@@ -16,7 +16,12 @@ export default function ChatHeader({
   onOpenGroupInfo,
   onOpenChatSettings,
 }: ChatHeaderProps) {
+  const [imgError, setImgError] = useState(false);
   const isGroup = conversation.type === 'GROUP';
+
+  useEffect(() => {
+    setImgError(false);
+  }, [conversation.avatarUrl]);
 
   // For 1-1 chat, check if partner is online
   const partner = !isGroup
@@ -58,10 +63,12 @@ export default function ChatHeader({
 
         {/* Avatar */}
         <div className="relative flex-shrink-0">
-          {conversation.avatarUrl ? (
+          {conversation.avatarUrl && !imgError ? (
             <img
               src={conversation.avatarUrl}
               alt={conversation.name || 'Chat'}
+              referrerPolicy="no-referrer"
+              onError={() => setImgError(true)}
               className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-600 shadow-sm"
             />
           ) : (
@@ -83,7 +90,16 @@ export default function ChatHeader({
         {/* Title & Status */}
         <div>
           <div className="font-bold text-slate-900 dark:text-white text-[15px] flex items-center gap-1.5">
-            <span>{conversation.name || 'Cuộc trò chuyện'}</span>
+            <span>
+              {isGroup
+                ? (conversation.name || 'Nhóm chat')
+                : (partner?.nickname || conversation.name || partner?.username || 'Cuộc trò chuyện')}
+            </span>
+            {!isGroup && partner?.nickname && (
+              <span className="text-xs font-normal text-slate-400 dark:text-slate-400">
+                (@{partner.username})
+              </span>
+            )}
             {isGroup && (
               <span className="text-[10px] bg-sky-500/15 text-sky-700 dark:text-sky-300 font-bold px-2 py-0.5 rounded-full border border-sky-500/25">
                 Nhóm

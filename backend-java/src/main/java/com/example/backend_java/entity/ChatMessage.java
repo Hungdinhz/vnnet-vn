@@ -36,13 +36,13 @@ public class ChatMessage {
     @Builder.Default
     private MessageType messageType = MessageType.TEXT;
 
-    @Column(name = "image_url")
+    @Column(name = "image_url", columnDefinition = "TEXT")
     private String imageUrl;
 
-    @Column(name = "file_url")
+    @Column(name = "file_url", columnDefinition = "TEXT")
     private String fileUrl;
 
-    @Column(name = "file_name")
+    @Column(name = "file_name", columnDefinition = "TEXT")
     private String fileName;
 
     @Column(name = "file_size")

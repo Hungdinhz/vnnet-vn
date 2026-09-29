@@ -4,6 +4,7 @@ export type MessageType = 'TEXT' | 'IMAGE' | 'FILE' | 'SYSTEM';
 export interface ConversationMember {
   userId: number;
   username: string;
+  nickname?: string | null;
   avatarUrl: string | null;
   role: 'ADMIN' | 'MEMBER';
   joinedAt: string;
@@ -31,6 +32,7 @@ export interface ChatMessage {
   conversationId: number;
   senderId: number;
   senderUsername: string;
+  senderNickname?: string | null;
   senderAvatarUrl: string | null;
   receiverId: number | null;
   content: string;

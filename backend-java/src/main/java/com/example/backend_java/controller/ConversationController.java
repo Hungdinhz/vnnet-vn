@@ -118,4 +118,14 @@ public class ConversationController {
         chatMessageService.markAsRead(id, currentUser);
         return ResponseEntity.ok().build();
     }
+
+    @PutMapping("/{id}/members/{targetUserId}/nickname")
+    public ResponseEntity<ConversationResponseDto> setMemberNickname(
+            @PathVariable Long id,
+            @PathVariable Long targetUserId,
+            @RequestBody com.example.backend_java.dto.SetNicknameDto request,
+            Authentication authentication) {
+        User currentUser = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(conversationService.setMemberNickname(id, targetUserId, request.getNickname(), currentUser));
+    }
 }

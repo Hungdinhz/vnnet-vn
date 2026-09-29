@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Conversation } from '@/types/messages';
 
 interface ConversationItemProps {
@@ -14,6 +14,7 @@ export default function ConversationItem({
   onClick,
   currentUser,
 }: ConversationItemProps) {
+  const [imgError, setImgError] = useState(false);
   const isGroup = conversation.type === 'GROUP';
 
   // Partner for 1-1
@@ -54,11 +55,13 @@ export default function ConversationItem({
     >
       {/* Avatar */}
       <div className="relative flex-shrink-0">
-        {conversation.avatarUrl ? (
+        {conversation.avatarUrl && !imgError ? (
           <img
             src={conversation.avatarUrl}
             alt={conversation.name || 'Chat'}
-            className="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-indigo-500/25 shadow-sm"
+            referrerPolicy="no-referrer"
+            onError={() => setImgError(true)}
+            className="w-12 h-12 rounded-full object-cover border border-slate-200 dark:border-slate-600 shadow-sm"
           />
         ) : (
           <div className="w-12 h-12 bg-sky-500 text-white rounded-full flex items-center justify-center font-bold border border-slate-200 dark:border-slate-600 text-base shadow-sm">
@@ -96,10 +99,44 @@ export default function ConversationItem({
                 : 'text-slate-500 dark:text-slate-400'
             }`}
           >
-            {conversation.lastMessageSenderName && isGroup
-              ? `${conversation.lastMessageSenderName}: `
-              : ''}
-            {conversation.lastMessage || 'Bắt đầu cuộc trò chuyện...'}
+            {(() => {
+              if (!conversation.lastMessage) return 'Bắt đầu cuộc trò chuyện...';
+              let msg = conversation.lastMessage;
+
+              // Thay thế username thành biệt danh nếu thành viên đã có biệt danh
+              if (conversation.members && conversation.members.length > 0) {
+                conversation.members.forEach((m) => {
+                  if (m.nickname && m.nickname.trim() && m.username) {
+                    msg = msg.split(m.username).join(m.nickname.trim());
+                  }
+                });
+              }
+
+              // Tin nhắn hệ thống (đổi tên, đặt biệt danh, v.v.): hiển thị trực tiếp, không prepend tên người gửi
+              const isSystem =
+                msg.includes('đã đổi tên') ||
+                msg.includes('đã đặt biệt danh') ||
+                msg.includes('đã gỡ biệt danh') ||
+                msg.includes('đã rời nhóm') ||
+                msg.includes('đã thêm');
+
+              if (isSystem) {
+                return msg;
+              }
+
+              if (
+                msg.includes('đã gửi') ||
+                msg.startsWith('Bạn:') ||
+                (conversation.lastMessageSenderName &&
+                  msg.startsWith(`${conversation.lastMessageSenderName}:`))
+              ) {
+                return msg;
+              }
+              if (isGroup && conversation.lastMessageSenderName) {
+                return `${conversation.lastMessageSenderName}: ${msg}`;
+              }
+              return msg;
+            })()}
           </p>
 
           {/* Unread badge */}
