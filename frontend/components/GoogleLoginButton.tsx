@@ -4,6 +4,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/axios';
+import { setAuthToken } from '@/lib/auth';
 
 declare global {
   interface Window {
@@ -121,7 +122,7 @@ export default function GoogleLoginButton({ mode = 'login', onError, onRegistrat
         }
       } else if (token) {
         // User đã có TK → đăng nhập luôn
-        localStorage.setItem('token', token);
+        setAuthToken(token);
         router.push('/');
       } else {
         if (onError) onError('Không nhận được token từ server.');

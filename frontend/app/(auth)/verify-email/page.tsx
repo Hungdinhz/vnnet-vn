@@ -5,6 +5,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/axios';
+import { setAuthToken } from '@/lib/auth';
 import OtpInput from '@/components/OtpInput';
 
 function VerifyEmailContent() {
@@ -64,7 +65,7 @@ function VerifyEmailContent() {
       setSuccess('Xác thực thành công! Đang chuyển hướng...');
       
       if (token) {
-        localStorage.setItem('token', token);
+        setAuthToken(token);
       }
       
       setTimeout(() => {

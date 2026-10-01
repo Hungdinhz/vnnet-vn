@@ -5,18 +5,24 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import api from '@/lib/axios';
+import { getAuthToken } from '@/lib/auth';
 
 export default function Sidebar() {
   const pathname = usePathname();
   const [currentUser, setCurrentUser] = useState<any>(null);
 
   useEffect(() => {
+    const token = getAuthToken();
+    if (!token) return;
+
     const fetchUser = async () => {
       try {
         const res = await api.get('/users/me');
         setCurrentUser(res.data);
-      } catch (err) {
-        console.error("Lỗi lấy user trong Sidebar:", err);
+      } catch (err: any) {
+        if (err.response?.status !== 401 && err.response?.status !== 403) {
+          console.error("Lỗi lấy user trong Sidebar:", err);
+        }
       }
     };
     fetchUser();
