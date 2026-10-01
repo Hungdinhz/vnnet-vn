@@ -166,25 +166,25 @@ export default function ProfilePage() {
                     </div>
                     <div className="md:mb-4">
                       {isOwnProfile ? (
-                        <button onClick={() => setIsEditingBio(!isEditingBio)} className="px-6 py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-secondary font-bold rounded-lg transition-colors text-sm flex items-center gap-1.5 border border-indigo-500/20">
+                        <button onClick={() => setIsEditingBio(!isEditingBio)} className="w-full md:w-auto px-6 py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-secondary font-bold rounded-lg transition-colors text-sm flex items-center justify-center gap-1.5 border border-indigo-500/20">
                           ✏️ {isEditingBio ? "Đóng" : "Chỉnh sửa tiểu sử"}
                         </button>
                       ) : isFriend ? (
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col md:flex-row items-center gap-2">
                           {showUnfriendConfirm ? (
                             <>
-                              <button onClick={handleUnfriend} className="flex items-center gap-2 px-5 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-bold rounded-lg text-sm border border-red-500/30 transition-colors">✓ Xác nhận hủy kết bạn</button>
-                              <button onClick={() => setShowUnfriendConfirm(false)} className="flex items-center gap-2 px-5 py-2.5 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-sm border border-indigo-500/10 transition-colors">Không</button>
+                              <button onClick={handleUnfriend} className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-bold rounded-lg text-sm border border-red-500/30 transition-colors">✓ Xác nhận hủy kết bạn</button>
+                              <button onClick={() => setShowUnfriendConfirm(false)} className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-sm border border-indigo-500/10 transition-colors">Không</button>
                             </>
                           ) : (
                             <>
-                              <button onClick={() => setShowUnfriendConfirm(true)} className="flex items-center gap-2 px-6 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-lg text-sm border border-red-500/20 shadow-sm transition-colors cursor-pointer">❌ Hủy kết bạn</button>
-                              <button onClick={() => router.push(`/messages?userId=${id}`)} className="flex items-center gap-2 px-6 py-2.5 btn-anime rounded-lg text-sm shadow-md">💬 Nhắn tin</button>
+                              <button onClick={() => setShowUnfriendConfirm(true)} className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-lg text-sm border border-red-500/20 shadow-sm transition-colors cursor-pointer">❌ Hủy kết bạn</button>
+                              <button onClick={() => router.push(`/messages?userId=${id}`)} className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-2.5 btn-anime rounded-lg text-sm shadow-md">💬 Nhắn tin</button>
                             </>
                           )}
                         </div>
                       ) : (
-                        <button onClick={handleAddFriend} className="flex items-center gap-2 px-6 py-2.5 btn-anime rounded-lg text-sm shadow-md">👋 Thêm bạn bè</button>
+                        <button onClick={handleAddFriend} className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-2.5 btn-anime rounded-lg text-sm shadow-md">👋 Thêm bạn bè</button>
                       )}
                     </div>
                   </div>

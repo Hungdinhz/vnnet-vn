@@ -192,10 +192,10 @@ function FriendsContent() {
             <h1 className="text-2xl font-extrabold gradient-text mb-4 tracking-tight">Bạn bè</h1>
 
             {/* Navigation Tabs */}
-            <div className="flex items-center gap-2 border-b border-indigo-500/10 pb-2">
+            <div className="flex items-center gap-2 border-b border-indigo-500/10 pb-2 overflow-x-auto scrollbar-hide">
               <button
                 onClick={() => setActiveTab('suggestions')}
-                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
+                className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
                   activeTab === 'suggestions' 
                     ? 'bg-indigo-500/15 text-accent-purple shadow-sm' 
                     : 'text-muted/50 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-accent-purple'
@@ -205,7 +205,7 @@ function FriendsContent() {
               </button>
               <button
                 onClick={() => setActiveTab('requests')}
-                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none relative ${
+                className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none relative ${
                   activeTab === 'requests' 
                     ? 'bg-indigo-500/15 text-accent-purple shadow-sm' 
                     : 'text-muted/50 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-accent-purple'
@@ -220,7 +220,7 @@ function FriendsContent() {
               </button>
               <button
                 onClick={() => setActiveTab('list')}
-                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
+                className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
                   activeTab === 'list' 
                     ? 'bg-indigo-500/15 text-accent-purple shadow-sm' 
                     : 'text-muted/50 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-accent-purple'

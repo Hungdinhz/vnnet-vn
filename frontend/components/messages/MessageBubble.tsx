@@ -125,7 +125,7 @@ export default function MessageBubble({
       )}
 
       {/* Bubble container */}
-      <div className="flex flex-col max-w-[75%] sm:max-w-[65%]">
+      <div className="flex flex-col max-w-[85%] sm:max-w-[70%]">
         {/* Sender name in group chat for other users */}
         {!isMine && isGroup && (
           <span className="text-[11px] font-semibold text-sky-600 dark:text-sky-400 mb-1 ml-2">

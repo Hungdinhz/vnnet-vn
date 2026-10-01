@@ -63,7 +63,7 @@ export default function StoryBar() {
         <div className="flex items-center gap-3 overflow-hidden">
           {[...Array(6)].map((_, i) => (
             <div key={i} className="flex flex-col items-center gap-1.5 flex-shrink-0 animate-pulse">
-              <div className="w-16 h-16 rounded-full bg-indigo-500/10"></div>
+              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-indigo-500/10"></div>
               <div className="w-12 h-2 rounded bg-indigo-500/10"></div>
             </div>
           ))}
@@ -77,15 +77,15 @@ export default function StoryBar() {
       <div className="glass-card rounded-xl p-4 mb-4">
         <div 
           ref={scrollRef}
-          className="flex items-start gap-3 overflow-x-auto scrollbar-hide pb-1"
+          className="flex items-start gap-3 overflow-x-auto scrollbar-hide pb-1 snap-x snap-mandatory"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {/* Create Story button */}
           <button 
             onClick={() => setCreatorOpen(true)}
-            className="flex flex-col items-center gap-1.5 flex-shrink-0 group cursor-pointer"
+            className="flex flex-col items-center gap-1.5 flex-shrink-0 group cursor-pointer snap-center"
           >
-            <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500/15 to-indigo-600/15 border-2 border-dashed border-indigo-500/40 flex items-center justify-center group-hover:border-indigo-400 group-hover:from-indigo-500/30 group-hover:to-indigo-600/30 transition-all duration-300">
+            <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-indigo-500/15 to-indigo-600/15 border-2 border-dashed border-indigo-500/40 flex items-center justify-center group-hover:border-indigo-400 group-hover:from-indigo-500/30 group-hover:to-indigo-600/30 transition-all duration-300">
               <span className="text-2xl group-hover:scale-110 transition-transform">➕</span>
             </div>
             <span className="text-[10px] font-semibold text-muted/60 max-w-[64px] truncate">Tạo story</span>
@@ -96,9 +96,9 @@ export default function StoryBar() {
             <button 
               key={group.user_id} 
               onClick={() => openViewer(idx)}
-              className="flex flex-col items-center gap-1.5 flex-shrink-0 group cursor-pointer"
+              className="flex flex-col items-center gap-1.5 flex-shrink-0 group cursor-pointer snap-center"
             >
-              <div className={`relative w-16 h-16 rounded-full p-[3px] transition-all duration-300 group-hover:scale-105 ${
+              <div className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full p-[3px] transition-all duration-300 group-hover:scale-105 ${
                 group.has_unviewed
                   ? 'bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-lg shadow-indigo-500/20'
                   : 'bg-gradient-to-br from-slate-400/30 to-slate-500/30'

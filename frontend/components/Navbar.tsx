@@ -25,6 +25,7 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any>(null);
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -256,24 +257,33 @@ export default function Navbar() {
             <span className="text-white text-lg font-black tracking-tighter">VN</span>
           </Link>
           
+          <button 
+            className="sm:hidden w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+            onClick={() => setShowMobileSearch(!showMobileSearch)}
+          >
+            🔍
+          </button>
+
           {/* Search with Dropdown */}
-          <div className="relative max-w-xs w-full hidden sm:block" ref={searchRef}>
-            <span className="absolute inset-y-0 left-3 flex items-center text-muted/60 z-10">
-              🔍
-            </span>
-            <input 
-              type="text" 
-              placeholder="Tìm kiếm trên VnNet..." 
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              onKeyDown={handleSearchSubmit}
-              onFocus={() => { if (searchResults && searchQuery.trim().length >= 2) setShowSearchDropdown(true); }}
-              className="input-anime rounded-full pl-9 pr-4 py-2 text-sm w-60 transition-all focus:w-64"
-            />
+          <div className={`absolute top-full left-0 w-full p-2 bg-background/95 backdrop-blur-md border-b border-indigo-500/10 sm:border-none sm:static sm:p-0 sm:bg-transparent sm:backdrop-blur-none sm:max-w-xs sm:w-full ${showMobileSearch ? 'block' : 'hidden sm:block'}`} ref={searchRef}>
+            <div className="relative w-full">
+              <span className="absolute inset-y-0 left-3 flex items-center text-muted/60 z-10">
+                🔍
+              </span>
+              <input 
+                type="text" 
+                placeholder="Tìm kiếm trên VnNet..." 
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                onKeyDown={handleSearchSubmit}
+                onFocus={() => { if (searchResults && searchQuery.trim().length >= 2) setShowSearchDropdown(true); }}
+                className="input-anime rounded-full pl-9 pr-4 py-2 text-sm w-full sm:w-60 transition-all sm:focus:w-64"
+              />
+            </div>
 
             {/* Search Dropdown */}
             {showSearchDropdown && searchResults && (
-              <div className="absolute left-0 top-full mt-2 w-96 bg-background border border-indigo-500/15 shadow-2xl rounded-xl py-2 z-50 animate-slide-up max-h-[480px] overflow-hidden flex flex-col">
+              <div className="absolute left-2 sm:left-0 top-full mt-2 w-[calc(100vw-1rem)] sm:w-96 bg-background border border-indigo-500/15 shadow-2xl rounded-xl py-2 z-50 animate-slide-up max-h-[480px] overflow-hidden flex flex-col">
                 
                 {/* Users section */}
                 {searchResults.users && searchResults.users.length > 0 && (
@@ -359,7 +369,7 @@ export default function Navbar() {
         </div>
 
         {/* Center: Navigation Icons */}
-        <div className="flex items-center justify-center gap-1 md:gap-2 flex-1 max-w-lg h-full">
+        <div className="hidden md:flex items-center justify-center gap-1 md:gap-2 flex-1 max-w-lg h-full">
           {navItems.map((item) => {
             const isActive = item.match(pathname);
             return (
@@ -384,7 +394,7 @@ export default function Navbar() {
           
           {/* Real-time Clock */}
           {currentTime && (
-            <div className="hidden sm:flex flex-col items-end px-2.5 py-1 rounded-xl bg-black/5 dark:bg-white/[0.04] border border-indigo-500/10 font-mono select-none">
+            <div className="hidden lg:flex flex-col items-end px-2.5 py-1 rounded-xl bg-black/5 dark:bg-white/[0.04] border border-indigo-500/10 font-mono select-none">
               <span className="text-xs font-black tracking-wider text-accent-primary leading-tight">
                 {currentTime}
               </span>
@@ -395,10 +405,12 @@ export default function Navbar() {
           )}
 
           {/* Theme Toggle */}
-          <ThemeToggle />
+          <div className="hidden sm:block">
+            <ThemeToggle />
+          </div>
           
           {/* Messages Icon */}
-          <Link href="/messages" className="relative cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 transition-all duration-200 border border-slate-200 dark:border-slate-700" title="Tin nhắn">
+          <Link href="/messages" className="hidden md:flex relative cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 w-10 h-10 items-center justify-center rounded-full bg-black/5 dark:bg-white/5 transition-all duration-200 border border-slate-200 dark:border-slate-700" title="Tin nhắn">
             <span className="text-lg">💬</span>
             {unreadMessagesCount > 0 && (
               <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-sky-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-background">
@@ -423,7 +435,7 @@ export default function Navbar() {
 
             {/* Notifications Dropdown */}
             {showNotifDropdown && (
-              <div className="absolute right-0 mt-2 w-96 bg-background border border-indigo-500/15 shadow-2xl rounded-xl py-2 z-50 animate-slide-up max-h-[480px] overflow-hidden flex flex-col">
+              <div className="dropdown-mobile-full sm:w-96 sm:absolute sm:right-0 mt-2 bg-background border border-indigo-500/15 shadow-2xl rounded-xl py-2 z-50 animate-slide-up max-h-[480px] overflow-hidden flex flex-col">
                 <div className="flex items-center justify-between px-4 py-2 border-b border-indigo-500/10">
                   <h3 className="font-bold text-foreground text-[15px]">🔔 Thông báo</h3>
                   {unreadCount > 0 && (
@@ -500,7 +512,7 @@ export default function Navbar() {
 
             {/* User Dropdown Menu */}
             {showDropdown && (
-              <div className="absolute right-0 mt-2 w-72 bg-background border border-indigo-500/15 shadow-2xl rounded-xl py-3 z-50 animate-slide-up">
+              <div className="dropdown-mobile-full sm:w-72 sm:absolute sm:right-0 mt-2 bg-background border border-indigo-500/15 shadow-2xl rounded-xl py-3 z-50 animate-slide-up">
                 <Link 
                   href="/profile" 
                   onClick={() => setShowDropdown(false)}

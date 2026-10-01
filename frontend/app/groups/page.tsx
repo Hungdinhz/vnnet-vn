@@ -165,7 +165,7 @@ export default function GroupsPage() {
       {/* Modal Tạo nhóm */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="glass-card rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-slide-up">
+          <div className="glass-card rounded-xl shadow-xl w-full sm:max-w-md overflow-hidden animate-slide-up">
             <div className="border-b border-indigo-500/10 px-4 py-3 flex items-center justify-between bg-black/5 dark:bg-white/[0.02]">
               <h3 className="font-bold text-foreground">Tạo nhóm mới</h3>
               <button 
@@ -219,18 +219,18 @@ export default function GroupsPage() {
                 </p>
               </div>
               
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <button 
                   type="button" 
                   onClick={() => setShowCreateModal(false)}
-                  className="flex-1 py-2.5 rounded-lg text-sm font-semibold text-muted bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
+                  className="w-full sm:flex-1 py-2.5 rounded-lg text-sm font-semibold text-muted bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
                 >
                   Hủy
                 </button>
                 <button 
                   type="submit" 
                   disabled={isCreating}
-                  className="flex-1 py-2.5 btn-anime rounded-lg text-sm font-semibold disabled:opacity-50"
+                  className="w-full sm:flex-1 py-2.5 btn-anime rounded-lg text-sm font-semibold disabled:opacity-50"
                 >
                   {isCreating ? "Đang tạo..." : "Tạo nhóm"}
                 </button>

@@ -276,11 +276,11 @@ export default function Home() {
         <main className="flex-1 max-w-2xl py-4 md:py-6 mx-auto w-full">
           
           {/* Welcome Dashboard Card */}
-          <div className="glass-card rounded-2xl p-5 mb-5 relative overflow-hidden border border-indigo-500/10 shadow-lg animate-slide-up">
+          <div className="glass-card rounded-2xl p-3.5 sm:p-5 mb-5 relative overflow-hidden border border-indigo-500/10 shadow-lg animate-slide-up">
             <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-gradient-to-br from-accent-primary/15 to-accent-secondary/10 rounded-full blur-3xl pointer-events-none" />
             <div className="flex justify-between items-center relative z-10">
               <div>
-                <h2 className="text-xl md:text-2xl font-extrabold tracking-tight">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold tracking-tight">
                   {getGreeting()},{' '}
                   <span className="gradient-text">{currentUser?.username || 'Bạn'}</span>! ✨
                 </h2>
@@ -290,7 +290,7 @@ export default function Home() {
             </div>
 
             {/* Quick stats mini row */}
-            <div className="grid grid-cols-3 gap-2.5 mt-4 pt-4 border-t border-indigo-500/10 text-center">
+            <div className="grid grid-cols-2 xs:grid-cols-3 gap-2.5 mt-4 pt-4 border-t border-indigo-500/10 text-center">
               <div className="bg-black/10 dark:bg-white/[0.02] p-2 rounded-xl border border-indigo-500/5">
                 <span className="block text-xs font-bold text-accent-purple">👥 Bạn bè</span>
                 <span className="text-sm font-extrabold font-mono mt-0.5 block">Đang kết nối</span>
@@ -527,10 +527,11 @@ export default function Home() {
                   
                   <hr className="border-indigo-500/10" />
                   
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center gap-2 sm:justify-between">
                     <label className="flex items-center gap-2 cursor-pointer hover:bg-indigo-500/10 dark:bg-white/[0.02] border border-indigo-500/15 px-4 py-2.5 rounded-xl transition-all text-accent-purple/90 text-xs font-bold">
                       <span className="text-base">🖼️</span>
-                      <span>Thêm ảnh bài viết</span>
+                      <span className="hidden sm:inline">Thêm ảnh bài viết</span>
+                      <span className="sm:hidden">Thêm ảnh</span>
                       <input 
                         id="file-upload"
                         type="file" 
@@ -550,7 +551,8 @@ export default function Home() {
                         }`}
                       >
                         <span className="text-base">🏷️</span>
-                        <span>Tag bạn bè {taggedFriends.length > 0 ? `(${taggedFriends.length})` : ''}</span>
+                        <span className="hidden sm:inline">Tag bạn bè {taggedFriends.length > 0 ? `(${taggedFriends.length})` : ''}</span>
+                        <span className="sm:hidden">Tag {taggedFriends.length > 0 ? `(${taggedFriends.length})` : ''}</span>
                       </button>
 
                       {showTagDropdown && (
@@ -609,9 +611,9 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={isPosting || !newContent.trim()}
-                      className="px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all btn-anime"
+                      className="w-full sm:w-auto mt-2 sm:mt-0 order-last sm:order-none px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all btn-anime"
                     >
-                      {isPosting ? 'Đang gửi...' : '✨ Đăng lên'}
+                      {isPosting ? 'Đang gửi...' : '✨ Đăng'}
                     </button>
                   </div>
 
@@ -699,7 +701,7 @@ export default function Home() {
         </main>
 
         {/* Right Sidebar: Friends & Trending */}
-        <aside className="w-80 hidden lg:block py-6 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto space-y-5">
+        <aside className="lg:w-72 xl:w-80 hidden lg:block py-6 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto space-y-5">
           
           {/* Friends list widget */}
           <div className="glass-card rounded-2xl p-4.5 border border-indigo-500/10">

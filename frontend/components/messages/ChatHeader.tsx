@@ -54,10 +54,11 @@ export default function ChatHeader({
               e.stopPropagation();
               onBack();
             }}
-            className="md:hidden p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mr-1 transition-colors"
+            className="md:hidden p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white mr-1 transition-colors flex items-center gap-1"
             title="Quay lại"
           >
-            ←
+            <span>←</span>
+            <span className="text-[13px] font-medium">Quay lại</span>
           </button>
         )}
 

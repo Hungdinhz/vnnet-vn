@@ -235,7 +235,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Profile Card Mini Preview Side Widget */}
-                <div className="glass-card rounded-2xl p-4 border border-indigo-500/10 space-y-3">
+                <div className="glass-card rounded-2xl p-4 border border-indigo-500/10 space-y-3 hidden lg:block sticky top-20">
                   <span className="text-xs font-bold text-accent-purple/80 uppercase tracking-wider block">👁️ Xem trước thẻ hồ sơ</span>
                   <div className="rounded-xl overflow-hidden bg-black/20 border border-white/5 relative">
                     <div className="h-20 w-full bg-gradient-to-r from-indigo-600/30 via-indigo-500/25 to-slate-500/20 relative">
@@ -364,18 +364,18 @@ export default function SettingsPage() {
                         </div>
                       </div>
 
-                      <div className="pt-4 border-t border-indigo-500/10 flex justify-end gap-3">
+                      <div className="pt-4 border-t border-indigo-500/10 flex flex-col sm:flex-row justify-end gap-3">
                         <button
                           type="button"
                           onClick={() => router.push('/')}
-                          className="px-5 py-2.5 text-xs font-bold text-muted/60 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors border border-indigo-500/10"
+                          className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-muted/60 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-colors border border-indigo-500/10 order-2 sm:order-1"
                         >
                           Hủy
                         </button>
                         <button
                           type="submit"
                           disabled={isSaving}
-                          className="px-6 py-2.5 btn-anime rounded-xl text-xs font-bold shadow-lg"
+                          className="w-full sm:w-auto px-6 py-2.5 btn-anime rounded-xl text-xs font-bold shadow-lg order-1 sm:order-2"
                         >
                           {isSaving ? "Đang lưu..." : "✨ Lưu tất cả thay đổi"}
                         </button>

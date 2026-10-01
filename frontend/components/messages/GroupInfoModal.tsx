@@ -162,8 +162,8 @@ export default function GroupInfoModal({
   const candidateFriends = friends.filter((f) => !existingMemberIds.has(f.id));
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-      <div className="w-full max-w-md bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+    <div className="fixed inset-0 z-50 bg-black/60 dark:bg-black/80 backdrop-blur-sm flex items-center justify-center sm:p-4 animate-fade-in">
+      <div className="w-full h-full sm:h-auto sm:max-w-md bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border-0 sm:border border-slate-200 dark:border-slate-700 rounded-none sm:rounded-2xl overflow-hidden shadow-2xl flex flex-col sm:max-h-[85vh]">
         {/* Header */}
         <div className="p-4 border-b border-slate-200/80 dark:border-slate-700 flex items-center justify-between bg-slate-50/50 dark:bg-black/20">
           <h2 className="text-base font-bold text-sky-600 dark:text-sky-400 flex items-center gap-2">

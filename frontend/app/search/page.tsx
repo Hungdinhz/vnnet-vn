@@ -106,7 +106,7 @@ function SearchContent() {
         <main className="flex-1 py-4 md:py-6 max-w-3xl mx-auto">
           
           {/* Search Header */}
-          <div className="glass-card rounded-xl p-4 mb-4">
+          <div className="glass-card rounded-xl p-4 mb-4 sticky top-[3.5rem] md:static z-20">
             <h1 className="text-xl font-extrabold gradient-text mb-1">
               🔍 Kết quả tìm kiếm
             </h1>
@@ -115,10 +115,10 @@ function SearchContent() {
             </p>
 
             {/* Tabs */}
-            <div className="flex items-center gap-2 border-b border-indigo-500/10 pb-2">
+            <div className="flex items-center gap-2 border-b border-indigo-500/10 pb-2 overflow-x-auto scrollbar-hide">
               <button
                 onClick={() => setActiveTab('all')}
-                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
+                className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
                   activeTab === 'all'
                     ? 'bg-indigo-500/15 text-accent-purple shadow-sm'
                     : 'text-muted/50 hover:bg-black/5 dark:hover:bg-white/5 hover:text-accent-purple'
@@ -128,7 +128,7 @@ function SearchContent() {
               </button>
               <button
                 onClick={() => setActiveTab('users')}
-                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
+                className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
                   activeTab === 'users'
                     ? 'bg-indigo-500/15 text-accent-purple shadow-sm'
                     : 'text-muted/50 hover:bg-black/5 dark:hover:bg-white/5 hover:text-accent-purple'
@@ -138,7 +138,7 @@ function SearchContent() {
               </button>
               <button
                 onClick={() => setActiveTab('posts')}
-                className={`px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
+                className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
                   activeTab === 'posts'
                     ? 'bg-indigo-500/15 text-accent-purple shadow-sm'
                     : 'text-muted/50 hover:bg-black/5 dark:hover:bg-white/5 hover:text-accent-purple'

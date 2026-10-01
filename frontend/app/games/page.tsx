@@ -127,12 +127,12 @@ function GamesContent() {
           {/* Search & Category Filter */}
           <div className="flex flex-col md:flex-row items-center justify-between gap-3">
             {/* Category tabs */}
-            <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
+            <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-hide">
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat.key}
                   onClick={() => setSelectedCategory(cat.key)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                     selectedCategory === cat.key
                       ? 'btn-anime text-white shadow-md shadow-indigo-500/20'
                       : 'bg-surface-hover/60 hover:bg-surface-hover text-text-muted hover:text-foreground border border-indigo-500/10'

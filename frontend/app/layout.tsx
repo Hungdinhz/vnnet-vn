@@ -3,6 +3,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider } from "@/components/ThemeProvider";
+import MobileBottomNav from '@/components/MobileBottomNav';
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -26,9 +27,10 @@ export default function RootLayout({
       className={`${outfit.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-300">
+      <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-300 has-bottom-nav">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           {children}
+          <MobileBottomNav />
           <Toaster 
           position="bottom-center"
           toastOptions={{
