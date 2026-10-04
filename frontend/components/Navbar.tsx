@@ -34,6 +34,22 @@ export default function Navbar() {
   const [currentTime, setCurrentTime] = useState<string>('');
   const [currentDateStr, setCurrentDateStr] = useState<string>('');
   const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  useEffect(() => {
+    setIsDrawerOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (isDrawerOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isDrawerOpen]);
 
   useEffect(() => {
     const updateTime = () => {
@@ -247,25 +263,54 @@ export default function Navbar() {
     { href: '/marketplace', icon: '🛒', label: 'Chợ', match: (p: string) => p === '/marketplace' },
   ];
 
+  const drawerMenuItems = [
+    { name: 'Bảng tin', icon: '🏠', path: '/' },
+    { name: 'Bạn bè', icon: '👥', path: '/friends' },
+    { name: 'Tin nhắn', icon: '💬', path: '/messages', badge: unreadMessagesCount },
+    { name: 'Trò chơi', icon: '🎮', path: '/games' },
+    { name: 'Livestream', icon: '📺', path: '/livestream' },
+    { name: 'Chợ', icon: '🛒', path: '/marketplace' },
+    { name: 'Nhóm', icon: '🏘️', path: '/groups' },
+    { name: 'Bản đồ', icon: '🗺️', path: '/map' },
+    { name: 'Cài đặt', icon: '⚙️', path: '/settings' },
+  ];
+
   return (
-    <nav className="glass-nav sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
+    <nav className="glass-nav sticky top-0 z-50 w-full">
+      {/* Row 1: Top Navigation Bar */}
+      <div className="w-full max-w-7xl mx-auto px-1.5 xs:px-2.5 sm:px-4 h-11 sm:h-14 flex items-center justify-between gap-1 sm:gap-3">
         
-        {/* Left: Logo & Search */}
-        <div className="flex items-center gap-3 flex-1 md:flex-initial">
-          <Link href="/" className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 hover:shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all duration-300 shadow-lg">
-            <span className="text-white text-lg font-black tracking-tighter">VN</span>
-          </Link>
-          
+        {/* Left: Hamburger (Mobile), Logo, Clock & Desktop Search */}
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+          {/* Hamburger 3 gạch for Mobile */}
           <button 
-            className="sm:hidden w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors"
-            onClick={() => setShowMobileSearch(!showMobileSearch)}
+            onClick={() => setIsDrawerOpen(true)}
+            className="md:hidden w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-foreground transition-colors text-xs sm:text-base flex items-center justify-center focus:outline-none flex-shrink-0"
+            aria-label="Mở menu"
+            title="Menu"
           >
-            🔍
+            ☰
           </button>
 
-          {/* Search with Dropdown */}
-          <div className={`absolute top-full left-0 w-full p-2 bg-background/95 backdrop-blur-md border-b border-indigo-500/10 sm:border-none sm:static sm:p-0 sm:bg-transparent sm:backdrop-blur-none sm:max-w-xs sm:w-full ${showMobileSearch ? 'block' : 'hidden sm:block'}`} ref={searchRef}>
+          <Link href="/" className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 hover:shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all duration-300 shadow-sm flex-shrink-0">
+            <span className="text-white text-[10px] sm:text-xs font-black tracking-tighter">VN</span>
+          </Link>
+
+          {/* Real-time Clock - Compact on mobile */}
+          {currentTime && (
+            <div className="h-6 sm:h-8 flex items-center px-1.5 xs:px-2 rounded-lg bg-indigo-500/10 dark:bg-white/[0.04] border border-indigo-500/15 font-mono select-none flex-shrink-0">
+              <span className="text-[9px] xs:text-[10px] sm:text-xs font-black tracking-tight text-accent-primary leading-tight whitespace-nowrap">
+                {currentTime.slice(0, 5)}
+                <span className="hidden xs:inline">{currentTime.slice(5)}</span>
+              </span>
+              <span className="hidden sm:inline-block ml-1 text-[9px] text-muted font-sans font-medium leading-none whitespace-nowrap">
+                {currentDateStr}
+              </span>
+            </div>
+          )}
+
+          {/* Search with Dropdown for Desktop */}
+          <div className="relative max-w-xs w-full hidden sm:block ml-1" ref={searchRef}>
             <div className="relative w-full">
               <span className="absolute inset-y-0 left-3 flex items-center text-muted/60 z-10">
                 🔍
@@ -390,28 +435,23 @@ export default function Navbar() {
         </div>
 
         {/* Right: Actions & Profile Menu */}
-        <div className="flex items-center space-x-2 md:space-x-3">
+        <div className="flex items-center gap-0.5 xs:gap-1 sm:gap-2 flex-shrink-0">
           
-          {/* Real-time Clock */}
-          {currentTime && (
-            <div className="hidden lg:flex flex-col items-end px-2.5 py-1 rounded-xl bg-black/5 dark:bg-white/[0.04] border border-indigo-500/10 font-mono select-none">
-              <span className="text-xs font-black tracking-wider text-accent-primary leading-tight">
-                {currentTime}
-              </span>
-              <span className="text-[9px] text-muted font-sans font-medium leading-none">
-                {currentDateStr}
-              </span>
-            </div>
-          )}
+          {/* Mobile Search Toggle Button */}
+          <button 
+            className="sm:hidden w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-xs flex-shrink-0"
+            onClick={() => setShowMobileSearch(!showMobileSearch)}
+            aria-label="Tìm kiếm"
+          >
+            🔍
+          </button>
 
-          {/* Theme Toggle */}
-          <div className="hidden sm:block">
-            <ThemeToggle />
-          </div>
+          {/* Theme Toggle - Always visible on top */}
+          <ThemeToggle className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-foreground transition-all focus:outline-none flex-shrink-0" />
           
-          {/* Messages Icon */}
-          <Link href="/messages" className="hidden md:flex relative cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 w-10 h-10 items-center justify-center rounded-full bg-black/5 dark:bg-white/5 transition-all duration-200 border border-slate-200 dark:border-slate-700" title="Tin nhắn">
-            <span className="text-lg">💬</span>
+          {/* Messages Icon (Desktop only - mobile has top nav tabs & drawer) */}
+          <Link href="/messages" className="hidden md:flex relative cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 w-9 h-9 sm:w-10 sm:h-10 items-center justify-center rounded-xl bg-black/5 dark:bg-white/5 transition-all duration-200 border border-slate-200 dark:border-slate-700 flex-shrink-0" title="Tin nhắn">
+            <span className="text-base sm:text-lg">💬</span>
             {unreadMessagesCount > 0 && (
               <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 bg-sky-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-background">
                 {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
@@ -420,15 +460,15 @@ export default function Navbar() {
           </Link>
 
           {/* Notifications Icon + Dropdown */}
-          <div className="relative" ref={notifRef}>
+          <div className="relative flex-shrink-0" ref={notifRef}>
             <button 
               onClick={() => { setShowNotifDropdown(!showNotifDropdown); setShowDropdown(false); }}
-              className="relative cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 transition-all duration-200 border border-indigo-500/10 focus:outline-none"
+              className="relative cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-black/5 dark:bg-white/5 transition-all duration-200 border border-indigo-500/10 focus:outline-none flex-shrink-0"
             >
-              <span className="text-lg">🔔</span>
+              <span className="text-xs sm:text-sm">🔔</span>
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 badge-anime animate-pulse border-2 border-background">
-                  {unreadCount}
+                <span className="absolute -top-1 -right-1 min-w-[12px] h-[12px] px-0.5 bg-red-500 text-white text-[7px] font-bold rounded-full flex items-center justify-center border border-background">
+                  {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
             </button>
@@ -491,20 +531,20 @@ export default function Navbar() {
           </div>
 
           {/* User Profile Menu */}
-          <div className="relative" ref={dropdownRef}>
+          <div className="relative flex-shrink-0" ref={dropdownRef}>
             <button 
               onClick={() => { setShowDropdown(!showDropdown); setShowNotifDropdown(false); }}
-              className="flex items-center space-x-1 hover:brightness-110 transition-all focus:outline-none"
+              className="flex items-center hover:brightness-110 transition-all focus:outline-none flex-shrink-0"
             >
               {currentUser?.avatar_url ? (
                 <img 
                   src={currentUser.avatar_url} 
                   alt={currentUser.username} 
                   referrerPolicy="no-referrer"
-                  className="w-10 h-10 rounded-full object-cover avatar-glow"
+                  className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg object-cover avatar-glow"
                 />
               ) : (
-                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full text-white flex items-center justify-center font-bold shadow-lg avatar-glow">
+                <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg text-white flex items-center justify-center font-bold text-[9px] sm:text-xs shadow-sm avatar-glow">
                   {getInitials(currentUser?.username)}
                 </div>
               )}
@@ -564,6 +604,305 @@ export default function Navbar() {
           </div>
         </div>
 
+      </div>
+
+      {/* Row 2: Top Mobile Navigation Tabs (Nằm ngay dưới thanh header đầu tiên) */}
+      <div className="md:hidden border-t border-indigo-500/10 bg-background/95 backdrop-blur-md w-full">
+        <div className="w-full max-w-7xl mx-auto grid grid-cols-5 h-9 xs:h-10 sm:h-11 px-0.5">
+          {/* 1. Trang chủ */}
+          <Link
+            href="/"
+            className={`flex flex-col items-center justify-center relative transition-all ${
+              pathname === '/' 
+                ? 'text-accent-primary font-bold' 
+                : 'text-muted hover:text-foreground'
+            }`}
+          >
+            <span className="text-sm xs:text-base leading-none">🏠</span>
+            <span className="hidden xs:block text-[9px] sm:text-[10px] mt-0.5 tracking-tight font-medium">Trang chủ</span>
+            {pathname === '/' && (
+              <span className="absolute bottom-0 inset-x-2 h-0.5 bg-accent-primary rounded-full" />
+            )}
+          </Link>
+
+          {/* 2. Bạn bè */}
+          <Link
+            href="/friends"
+            className={`flex flex-col items-center justify-center relative transition-all ${
+              pathname === '/friends' 
+                ? 'text-accent-primary font-bold' 
+                : 'text-muted hover:text-foreground'
+            }`}
+          >
+            <span className="text-sm xs:text-base leading-none">👥</span>
+            <span className="hidden xs:block text-[9px] sm:text-[10px] mt-0.5 tracking-tight font-medium">Bạn bè</span>
+            {pathname === '/friends' && (
+              <span className="absolute bottom-0 inset-x-2 h-0.5 bg-accent-primary rounded-full" />
+            )}
+          </Link>
+
+          {/* 3. Tạo bài (Center Action Button) */}
+          <div className="flex items-center justify-center">
+            <button
+              onClick={() => {
+                if (pathname === '/') {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                  const textarea = document.querySelector('textarea') as HTMLTextAreaElement | null;
+                  if (textarea) textarea.focus();
+                } else {
+                  router.push('/');
+                }
+              }}
+              className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 text-white flex items-center justify-center text-xs sm:text-sm shadow-[0_0_10px_rgba(99,102,241,0.4)] active:scale-90 transition-all font-bold"
+              title="Tạo bài viết"
+              aria-label="Tạo bài viết"
+            >
+              ➕
+            </button>
+          </div>
+
+          {/* 4. Tin nhắn */}
+          <Link
+            href="/messages"
+            className={`flex flex-col items-center justify-center relative transition-all ${
+              pathname === '/messages' 
+                ? 'text-accent-primary font-bold' 
+                : 'text-muted hover:text-foreground'
+            }`}
+          >
+            <div className="relative leading-none">
+              <span className="text-sm xs:text-base leading-none">💬</span>
+              {unreadMessagesCount > 0 && (
+                <span className="absolute -top-1 -right-2 min-w-[13px] h-[13px] px-0.5 bg-red-500 text-white text-[7px] font-bold rounded-full flex items-center justify-center border border-background">
+                  {unreadMessagesCount > 99 ? '99+' : unreadMessagesCount}
+                </span>
+              )}
+            </div>
+            <span className="hidden xs:block text-[9px] sm:text-[10px] mt-0.5 tracking-tight font-medium">Tin nhắn</span>
+            {pathname === '/messages' && (
+              <span className="absolute bottom-0 inset-x-2 h-0.5 bg-accent-primary rounded-full" />
+            )}
+          </Link>
+
+          {/* 5. Hồ sơ */}
+          <Link
+            href="/profile"
+            className={`flex flex-col items-center justify-center relative transition-all ${
+              pathname.startsWith('/profile') 
+                ? 'text-accent-primary font-bold' 
+                : 'text-muted hover:text-foreground'
+            }`}
+          >
+            <span className="text-sm xs:text-base leading-none">👤</span>
+            <span className="hidden xs:block text-[9px] sm:text-[10px] mt-0.5 tracking-tight font-medium">Hồ sơ</span>
+            {pathname.startsWith('/profile') && (
+              <span className="absolute bottom-0 inset-x-2 h-0.5 bg-accent-primary rounded-full" />
+            )}
+          </Link>
+        </div>
+      </div>
+
+      {/* Mobile Search Input Drawer (Dropdown below navbar) */}
+      {showMobileSearch && (
+        <div className="sm:hidden px-3 py-2.5 bg-background/95 backdrop-blur-md border-b border-indigo-500/15 animate-slide-up">
+          <div className="relative w-full">
+            <span className="absolute inset-y-0 left-3 flex items-center text-muted/60 z-10">
+              🔍
+            </span>
+            <input 
+              type="text" 
+              placeholder="Tìm kiếm người dùng, bài viết..." 
+              value={searchQuery}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              onKeyDown={handleSearchSubmit}
+              autoFocus
+              className="input-anime rounded-full pl-9 pr-8 py-2 text-sm w-full"
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="absolute inset-y-0 right-3 flex items-center text-muted hover:text-foreground text-xs"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          {/* Mobile search results preview */}
+          {showSearchDropdown && searchResults && (
+            <div className="mt-2 w-full bg-background border border-indigo-500/15 shadow-2xl rounded-xl py-2 max-h-[350px] overflow-y-auto">
+              {/* Users */}
+              {searchResults.users && searchResults.users.length > 0 && (
+                <>
+                  <div className="px-3 py-1 text-[10px] font-bold text-muted uppercase">👤 Người dùng ({searchResults.total_users})</div>
+                  {searchResults.users.map((user: any) => (
+                    <Link
+                      key={`m-user-${user.id}`}
+                      href={`/profile/${user.id}`}
+                      onClick={() => { setShowSearchDropdown(false); setShowMobileSearch(false); }}
+                      className="flex items-center gap-2.5 px-3 py-2 hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+                    >
+                      {user.avatar_url ? (
+                        <img src={user.avatar_url} alt={user.username} className="w-8 h-8 rounded-full object-cover" />
+                      ) : (
+                        <div className="w-8 h-8 bg-gradient-to-br from-indigo-500/50 to-indigo-600/50 rounded-full flex items-center justify-center text-xs font-bold text-secondary">
+                          {getInitials(user.username)}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-xs text-foreground truncate">{user.username}</div>
+                        <div className="text-[10px] text-muted truncate">{user.email}</div>
+                      </div>
+                    </Link>
+                  ))}
+                </>
+              )}
+              {/* Posts */}
+              {searchResults.posts && searchResults.posts.length > 0 && (
+                <>
+                  <div className="px-3 py-1 text-[10px] font-bold text-muted uppercase border-t border-indigo-500/10 mt-1">📝 Bài viết ({searchResults.total_posts})</div>
+                  {searchResults.posts.map((post: any) => (
+                    <div
+                      key={`m-post-${post.id}`}
+                      onClick={() => { 
+                        setShowSearchDropdown(false); 
+                        setShowMobileSearch(false);
+                        router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`); 
+                      }}
+                      className="flex items-center gap-2.5 px-3 py-2 hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer"
+                    >
+                      <span className="text-base">📄</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-semibold text-xs text-foreground truncate">{post.title || 'Bài viết'}</div>
+                        <div className="text-[10px] text-muted truncate">{post.content?.substring(0, 50)}...</div>
+                      </div>
+                    </div>
+                  ))}
+                </>
+              )}
+              {((searchResults.total_users || 0) > 0 || (searchResults.total_posts || 0) > 0) && (
+                <Link
+                  href={`/search?q=${encodeURIComponent(searchQuery.trim())}`}
+                  onClick={() => { setShowSearchDropdown(false); setShowMobileSearch(false); }}
+                  className="block text-center py-2 text-xs font-bold text-accent-primary hover:bg-black/5 dark:hover:bg-white/5 border-t border-indigo-500/10 mt-1"
+                >
+                  Xem tất cả kết quả →
+                </Link>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Mobile Drawer (3-gạch menu) - Slide-in from Left */}
+      {/* Backdrop */}
+      <div 
+        className={`fixed inset-0 bg-black/60 backdrop-blur-xs z-[60] transition-opacity duration-300 md:hidden ${
+          isDrawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setIsDrawerOpen(false)}
+      />
+
+      {/* Drawer Container */}
+      <div 
+        className={`fixed top-0 left-0 bottom-0 w-[280px] xs:w-[320px] bg-background/98 backdrop-blur-2xl border-r border-indigo-500/20 z-[70] shadow-2xl flex flex-col transition-transform duration-300 ease-in-out md:hidden ${
+          isDrawerOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {/* Drawer Header */}
+        <div className="flex items-center justify-between p-4 border-b border-indigo-500/10">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 flex items-center justify-center text-white font-black text-base shadow-md">
+              VN
+            </div>
+            <div>
+              <span className="font-extrabold text-base gradient-text">VnNet</span>
+              <span className="block text-[10px] text-muted font-medium">Mạng xã hội thế hệ mới</span>
+            </div>
+          </div>
+          <button 
+            onClick={() => setIsDrawerOpen(false)}
+            className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 flex items-center justify-center text-muted hover:text-foreground transition-colors"
+            aria-label="Đóng menu"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* User Profile Card in Drawer */}
+        {currentUser && (
+          <Link 
+            href={`/profile/${currentUser.id}`}
+            onClick={() => setIsDrawerOpen(false)}
+            className="flex items-center gap-3 p-3 mx-3 mt-3 bg-indigo-500/5 hover:bg-indigo-500/10 rounded-2xl border border-indigo-500/10 transition-all group"
+          >
+            {currentUser.avatar_url ? (
+              <img 
+                src={currentUser.avatar_url} 
+                alt={currentUser.username} 
+                className="w-10 h-10 rounded-full object-cover avatar-glow flex-shrink-0"
+              />
+            ) : (
+              <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full text-white flex items-center justify-center font-bold text-sm shadow-lg flex-shrink-0">
+                {getInitials(currentUser.username)}
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="font-bold text-sm text-foreground group-hover:text-accent-primary transition-colors truncate">
+                {currentUser.username}
+              </div>
+              <div className="text-[11px] text-muted truncate">
+                {currentUser.email || 'Xem trang cá nhân'}
+              </div>
+            </div>
+            <span className="text-xs text-accent-primary">➔</span>
+          </Link>
+        )}
+
+        {/* Drawer Menu Navigation */}
+        <div className="flex-1 overflow-y-auto p-3 space-y-1">
+          {drawerMenuItems.map((item, index) => {
+            const isActive = pathname === item.path;
+            return (
+              <Link
+                key={index}
+                href={item.path}
+                onClick={() => setIsDrawerOpen(false)}
+                className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl transition-all ${
+                  isActive
+                    ? 'sidebar-active text-foreground font-semibold bg-indigo-500/10'
+                    : 'text-secondary font-medium hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">{item.icon}</span>
+                  <span className="text-[14px]">{item.name}</span>
+                </div>
+                {item.badge && item.badge > 0 ? (
+                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-sky-500 text-white">
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </span>
+                ) : null}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* Drawer Footer with Logout */}
+        <div className="p-3 border-t border-indigo-500/10 space-y-2">
+          <button 
+            onClick={() => {
+              setIsDrawerOpen(false);
+              handleLogout();
+            }}
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 hover:bg-red-500/10 text-red-400 rounded-xl transition-colors text-sm font-semibold text-left"
+          >
+            <span className="text-lg">🚪</span>
+            <span>Đăng xuất</span>
+          </button>
+          <div className="px-3 py-1 text-[11px] text-muted text-center">
+            <span className="gradient-text font-bold">VnNet</span> © 2026 ✨
+          </div>
+        </div>
       </div>
     </nav>
   );

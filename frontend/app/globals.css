@@ -339,14 +339,16 @@ html {
   }
 }
 
-/* Mobile bottom nav spacing */
-.has-bottom-nav {
-  padding-bottom: 4.5rem;
+/* Prevent unwanted horizontal overflow on narrow screens */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100%;
 }
-@media (min-width: 768px) {
-  .has-bottom-nav {
-    padding-bottom: 0;
-  }
+
+/* Mobile bottom nav spacing - removed as nav is now at top */
+.has-bottom-nav {
+  padding-bottom: 0;
 }
 
 /* Full-screen overlay */
@@ -357,13 +359,18 @@ html {
   background: var(--background);
 }
 
-/* Mobile-friendly dropdown */
 @media (max-width: 639px) {
   .dropdown-mobile-full {
     position: fixed !important;
     left: 1rem !important;
     right: 1rem !important;
     width: auto !important;
+  }
+
+  /* Offset Mapbox zoom controls so they don't collide with top header / search bar on mobile */
+  .mapboxgl-ctrl-top-right {
+    top: 54px !important;
+    right: 10px !important;
   }
 }
 

@@ -188,30 +188,30 @@ function FriendsContent() {
 
         <main className="flex-1 py-4 md:py-6 max-w-4xl mx-auto">
           
-          <div className="glass-card rounded-xl p-4 mb-4">
-            <h1 className="text-2xl font-extrabold gradient-text mb-4 tracking-tight">Bạn bè</h1>
+          <div className="glass-card rounded-xl p-3 sm:p-4 mb-4">
+            <h1 className="text-xl sm:text-2xl font-extrabold gradient-text mb-3 sm:mb-4 tracking-tight">Bạn bè</h1>
 
             {/* Navigation Tabs */}
-            <div className="flex items-center gap-2 border-b border-indigo-500/10 pb-2 overflow-x-auto scrollbar-hide">
+            <div className="flex items-center gap-1.5 xs:gap-2 border-b border-indigo-500/10 pb-2 overflow-x-auto scrollbar-hide">
               <button
                 onClick={() => setActiveTab('suggestions')}
-                className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
+                className={`flex-shrink-0 whitespace-nowrap px-3 py-1.5 xs:px-4 xs:py-2 rounded-xl font-bold text-xs xs:text-sm transition-all focus:outline-none cursor-pointer ${
                   activeTab === 'suggestions' 
-                    ? 'bg-indigo-500/15 text-accent-purple shadow-sm' 
-                    : 'text-muted/50 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-accent-purple'
+                    ? 'bg-indigo-500/15 text-accent-primary shadow-sm' 
+                    : 'text-muted/60 hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground'
                 }`}
               >
-                ✨ Gợi ý kết bạn
+                ✨ Gợi ý <span className="hidden xs:inline">kết bạn</span>
               </button>
               <button
                 onClick={() => setActiveTab('requests')}
-                className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none relative ${
+                className={`flex-shrink-0 whitespace-nowrap px-3 py-1.5 xs:px-4 xs:py-2 rounded-xl font-bold text-xs xs:text-sm transition-all focus:outline-none cursor-pointer relative ${
                   activeTab === 'requests' 
-                    ? 'bg-indigo-500/15 text-accent-purple shadow-sm' 
-                    : 'text-muted/50 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-accent-purple'
+                    ? 'bg-indigo-500/15 text-accent-primary shadow-sm' 
+                    : 'text-muted/60 hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground'
                 }`}
               >
-                📩 Lời mời kết bạn
+                📩 Lời mời <span className="hidden xs:inline">kết bạn</span>
                 {pendingRequests.length > 0 && (
                   <span className="ml-1.5 badge-anime">
                     {pendingRequests.length}
@@ -220,13 +220,18 @@ function FriendsContent() {
               </button>
               <button
                 onClick={() => setActiveTab('list')}
-                className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg font-bold text-sm transition-all focus:outline-none ${
+                className={`flex-shrink-0 whitespace-nowrap px-3 py-1.5 xs:px-4 xs:py-2 rounded-xl font-bold text-xs xs:text-sm transition-all focus:outline-none cursor-pointer ${
                   activeTab === 'list' 
-                    ? 'bg-indigo-500/15 text-accent-purple shadow-sm' 
-                    : 'text-muted/50 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-accent-purple'
+                    ? 'bg-indigo-500/15 text-accent-primary shadow-sm' 
+                    : 'text-muted/60 hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground'
                 }`}
               >
-                💫 Tất cả bạn bè
+                💫 Tất cả <span className="hidden xs:inline">bạn bè</span>
+                {friends.length > 0 && (
+                  <span className="ml-1 text-[11px] opacity-75">
+                    ({friends.length})
+                  </span>
+                )}
               </button>
             </div>
           </div>
@@ -239,7 +244,7 @@ function FriendsContent() {
           ) : activeTab === 'suggestions' ? (
             
             /* Suggestions Grid */
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2.5 xs:gap-3 sm:gap-4">
               {suggestedUsers.length === 0 ? (
                 <div className="glass-card p-8 rounded-xl text-center text-muted/50 col-span-full">
                   Chưa có gợi ý bạn bè nào mới dành cho bạn.
@@ -249,11 +254,11 @@ function FriendsContent() {
                   <div key={user.id || idx} className="glass-card glass-card-hover rounded-xl overflow-hidden flex flex-col justify-between transition-all duration-300">
                     
                     {/* Header Background */}
-                    <div className="h-20 bg-gradient-to-r from-indigo-600/30 via-indigo-500/20 to-slate-500/15" />
+                    <div className="h-12 xs:h-16 sm:h-20 bg-gradient-to-r from-indigo-600/30 via-indigo-500/20 to-slate-500/15" />
                     
-                    <div className="p-4 flex flex-col items-center text-center -mt-10 flex-1 justify-between">
-                      <div className="flex flex-col items-center">
-                        <Link href={`/profile/${user.id}`} className="relative w-16 h-16 bg-background rounded-full p-1 shadow-md mb-2 hover:opacity-90 transition-opacity">
+                    <div className="p-2.5 xs:p-3 sm:p-4 flex flex-col items-center text-center -mt-7 xs:-mt-8 sm:-mt-10 flex-1 justify-between">
+                      <div className="flex flex-col items-center w-full min-w-0">
+                        <Link href={`/profile/${user.id}`} className="relative w-12 h-12 xs:w-14 xs:h-14 sm:w-16 sm:h-16 bg-background rounded-full p-0.5 sm:p-1 shadow-md mb-1.5 hover:opacity-90 transition-opacity">
                           {user.avatar_url ? (
                             <img 
                               src={user.avatar_url} 
@@ -261,30 +266,30 @@ function FriendsContent() {
                               className="w-full h-full rounded-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-indigo-500/50 to-indigo-600/50 rounded-full flex items-center justify-center text-xl font-bold text-secondary">
+                            <div className="w-full h-full bg-gradient-to-br from-indigo-500/50 to-indigo-600/50 rounded-full flex items-center justify-center text-sm xs:text-lg sm:text-xl font-bold text-secondary">
                               {getInitials(user.username)}
                             </div>
                           )}
                         </Link>
-                        <Link href={`/profile/${user.id}`} className="font-bold text-foreground text-[15px] hover:text-indigo-300 transition-colors">
+                        <Link href={`/profile/${user.id}`} className="font-bold text-foreground text-xs xs:text-sm sm:text-[15px] hover:text-accent-primary transition-colors truncate max-w-full">
                           {user.username}
                         </Link>
-                        <p className="text-xs text-muted/40 truncate max-w-[180px] mt-0.5 mb-4">{user.email}</p>
+                        <p className="text-[10px] xs:text-xs text-muted/40 truncate max-w-full mt-0.5 mb-2 sm:mb-3">{user.email}</p>
                       </div>
 
                       {requestedUserIds.has(user.id) ? (
                         <button
                           disabled
-                          className="w-full py-2 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-xs shadow-sm transition-colors border border-indigo-500/10 cursor-not-allowed"
+                          className="w-full py-1.5 xs:py-2 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-[10px] xs:text-xs shadow-sm transition-colors border border-indigo-500/10 cursor-not-allowed"
                         >
-                          Đã gửi yêu cầu
+                          Đã gửi
                         </button>
                       ) : (
                         <button
                           onClick={() => handleAddFriend(user.id)}
-                          className="w-full py-2 btn-anime rounded-lg text-xs shadow-sm"
+                          className="w-full py-1.5 xs:py-2 btn-anime rounded-lg text-[10px] xs:text-xs shadow-sm font-bold"
                         >
-                          ✨ Thêm bạn bè
+                          ✨ Thêm bạn
                         </button>
                       )}
                     </div>
@@ -295,34 +300,34 @@ function FriendsContent() {
           ) : activeTab === 'requests' ? (
             
             /* Requests Tab */
-            <div className="space-y-3">
+            <div className="space-y-2.5 sm:space-y-3">
               {pendingRequests.length === 0 ? (
                 <div className="glass-card p-10 rounded-xl text-center text-muted/50">
                   Bạn không có lời mời kết bạn nào đang chờ.
                 </div>
               ) : (
                 pendingRequests.map((r: any) => (
-                  <div key={r.id} className="glass-card glass-card-hover p-4 rounded-xl flex items-center justify-between gap-4 transition-all duration-300">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full text-white flex items-center justify-center font-bold shadow-lg">
+                  <div key={r.id} className="glass-card glass-card-hover p-3 sm:p-4 rounded-xl flex flex-col xs:flex-row xs:items-center justify-between gap-3 transition-all duration-300">
+                    <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full text-white flex items-center justify-center font-bold text-xs sm:text-base shadow-lg shrink-0">
                         {getInitials(r.sender_username)}
                       </div>
-                      <div>
-                        <h3 className="font-bold text-foreground text-sm">{r.sender_username}</h3>
-                        <p className="text-xs text-muted/40">Yêu cầu kết bạn gửi cho bạn</p>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-bold text-foreground text-xs sm:text-sm truncate">{r.sender_username}</h3>
+                        <p className="text-[10px] sm:text-xs text-muted/40 truncate">Yêu cầu kết bạn gửi cho bạn</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 w-full xs:w-auto shrink-0">
                       <button
                         onClick={() => handleAccept(r.id)}
-                        className="px-5 py-2 btn-anime rounded-lg text-xs"
+                        className="flex-1 xs:flex-initial px-3 sm:px-5 py-1.5 sm:py-2 btn-anime rounded-lg text-xs font-bold"
                       >
                         Chấp nhận
                       </button>
                       <button
                         onClick={() => handleReject(r.id)}
-                        className="px-5 py-2 bg-black/5 dark:bg-white/5 hover:bg-red-500/10 text-accent-purple/70 hover:text-red-400 rounded-lg font-semibold text-xs transition-colors border border-indigo-500/10"
+                        className="flex-1 xs:flex-initial px-3 sm:px-5 py-1.5 sm:py-2 bg-black/5 dark:bg-white/5 hover:bg-red-500/10 text-muted hover:text-red-400 rounded-lg font-semibold text-xs transition-colors border border-indigo-500/10"
                       >
                         Từ chối
                       </button>
@@ -334,7 +339,7 @@ function FriendsContent() {
           ) : (
             
             /* Friends List Grid */
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-2.5 xs:gap-3 sm:gap-4">
               {friends.length === 0 ? (
                 <div className="glass-card p-8 rounded-xl text-center text-muted/50 col-span-full">
                   Bạn chưa kết nối với người bạn nào. Hãy gửi lời mời tới bạn bè nhé!
@@ -344,11 +349,11 @@ function FriendsContent() {
                   <div key={user.id || idx} className="glass-card glass-card-hover rounded-xl overflow-hidden flex flex-col justify-between transition-all duration-300">
                     
                     {/* Header Background */}
-                    <div className="h-20 bg-gradient-to-r from-indigo-600/25 via-indigo-500/20 to-slate-500/15" />
+                    <div className="h-12 xs:h-16 sm:h-20 bg-gradient-to-r from-indigo-600/25 via-indigo-500/20 to-slate-500/15" />
                     
-                    <div className="p-4 flex flex-col items-center text-center -mt-10 flex-1 justify-between">
-                      <div className="flex flex-col items-center">
-                        <Link href={`/profile/${user.id}`} className="relative w-16 h-16 bg-background rounded-full p-1 shadow-md mb-2 hover:opacity-90 transition-opacity">
+                    <div className="p-2.5 xs:p-3 sm:p-4 flex flex-col items-center text-center -mt-7 xs:-mt-8 sm:-mt-10 flex-1 justify-between">
+                      <div className="flex flex-col items-center w-full min-w-0">
+                        <Link href={`/profile/${user.id}`} className="relative w-12 h-12 xs:w-14 xs:h-14 sm:w-16 sm:h-16 bg-background rounded-full p-0.5 sm:p-1 shadow-md mb-1.5 hover:opacity-90 transition-opacity">
                           {user.avatar_url ? (
                             <img 
                               src={user.avatar_url} 
@@ -356,45 +361,45 @@ function FriendsContent() {
                               className="w-full h-full rounded-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-indigo-500/50 to-indigo-600/50 rounded-full flex items-center justify-center text-xl font-bold text-secondary">
+                            <div className="w-full h-full bg-gradient-to-br from-indigo-500/50 to-indigo-600/50 rounded-full flex items-center justify-center text-sm xs:text-lg sm:text-xl font-bold text-secondary">
                               {getInitials(user.username)}
                             </div>
                           )}
                         </Link>
-                        <Link href={`/profile/${user.id}`} className="font-bold text-foreground text-[15px] hover:text-indigo-300 transition-colors">
+                        <Link href={`/profile/${user.id}`} className="font-bold text-foreground text-xs xs:text-sm sm:text-[15px] hover:text-accent-primary transition-colors truncate max-w-full">
                           {user.username}
                         </Link>
-                        <p className="text-xs text-muted/40 truncate max-w-[180px] mt-0.5 mb-4">{user.email}</p>
+                        <p className="text-[10px] xs:text-xs text-muted/40 truncate max-w-full mt-0.5 mb-2 sm:mb-3">{user.email}</p>
                       </div>
 
-                      <div className="w-full space-y-2">
+                      <div className="w-full space-y-1.5 sm:space-y-2">
                         <button 
                           onClick={() => router.push(`/profile/${user.id}`)}
-                          className="w-full py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-black/10 dark:bg-white/10 text-secondary font-bold rounded-lg text-xs transition-colors border border-indigo-500/10"
+                          className="w-full py-1.5 xs:py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-secondary font-bold rounded-lg text-[10px] xs:text-xs transition-colors border border-indigo-500/10"
                         >
-                          Xem trang cá nhân
+                          Trang cá nhân
                         </button>
                         
                         {/* Unfriend button with confirmation */}
                         {confirmUnfriend === user.id ? (
-                          <div className="flex gap-2">
+                          <div className="flex gap-1.5">
                             <button
                               onClick={() => handleUnfriend(user.id)}
-                              className="flex-1 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-lg text-xs transition-colors border border-red-500/20"
+                              className="flex-1 py-1.5 xs:py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-lg text-[10px] xs:text-xs transition-colors border border-red-500/20"
                             >
-                              ✓ Xác nhận
+                              ✓ Hủy
                             </button>
                             <button
                               onClick={() => setConfirmUnfriend(null)}
-                              className="flex-1 py-2 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-xs transition-colors border border-indigo-500/10"
+                              className="flex-1 py-1.5 xs:py-2 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-[10px] xs:text-xs transition-colors border border-indigo-500/10"
                             >
-                              Hủy
+                              Đóng
                             </button>
                           </div>
                         ) : (
                           <button
                             onClick={() => setConfirmUnfriend(user.id)}
-                            className="w-full py-2 hover:bg-red-500/10 text-muted/40 hover:text-red-400 font-semibold rounded-lg text-xs transition-colors border border-transparent hover:border-red-500/20"
+                            className="w-full py-1 xs:py-1.5 hover:bg-red-500/10 text-muted/40 hover:text-red-400 font-semibold rounded-lg text-[10px] xs:text-xs transition-colors"
                           >
                             Hủy kết bạn
                           </button>

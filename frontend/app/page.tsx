@@ -288,30 +288,19 @@ export default function Home() {
               </div>
               <div className="text-3xl animate-float">🚀</div>
             </div>
-
-            {/* Quick stats mini row */}
-            <div className="grid grid-cols-2 xs:grid-cols-3 gap-2.5 mt-4 pt-4 border-t border-indigo-500/10 text-center">
-              <div className="bg-black/10 dark:bg-white/[0.02] p-2 rounded-xl border border-indigo-500/5">
-                <span className="block text-xs font-bold text-accent-purple">👥 Bạn bè</span>
-                <span className="text-sm font-extrabold font-mono mt-0.5 block">Đang kết nối</span>
-              </div>
-              <div className="bg-black/10 dark:bg-white/[0.02] p-2 rounded-xl border border-indigo-500/5">
-                <span className="block text-xs font-bold text-accent-primary">🏘️ Nhóm</span>
-                <span className="text-sm font-extrabold font-mono mt-0.5 block">{myGroups.length} đã tham gia</span>
-              </div>
-              <Link href="/groups" className="bg-black/10 dark:bg-white/[0.02] p-2 rounded-xl border border-indigo-500/5 hover:bg-indigo-500/10 transition-colors cursor-pointer block">
-                <span className="block text-xs font-bold text-indigo-400">➕ Khám phá</span>
-                <span className="text-xs font-semibold text-muted mt-1 block">Tìm nhóm mới</span>
-              </Link>
-            </div>
           </div>
 
           {/* Stories / Joined Groups Circle Row */}
           {myGroups.length > 0 && (
             <div className="glass-card rounded-2xl p-4 mb-5 border border-indigo-500/10">
-              <div className="flex items-center justify-between mb-3 px-1">
-                <span className="text-xs font-bold uppercase tracking-wider text-accent-purple/80">👥 Nhóm của bạn ({myGroups.length})</span>
-                <Link href="/groups" className="text-[11px] text-accent-primary font-semibold hover:underline">Tất cả nhóm</Link>
+              <div className="flex items-center justify-between gap-2 mb-3 px-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-accent-purple/80 truncate">
+                  👥 Nhóm ({myGroups.length})
+                </span>
+                <Link href="/groups" className="text-[11px] text-accent-primary font-semibold hover:underline flex items-center gap-1 flex-shrink-0">
+                  <span>Khám phá</span>
+                  <span className="text-xs">➔</span>
+                </Link>
               </div>
               <div className="flex gap-4 overflow-x-auto pb-1.5 scrollbar-thin">
                 {myGroups.map((group) => (
@@ -744,10 +733,6 @@ export default function Home() {
                         )}
                         <div className="min-w-0 flex-1">
                           <div className="font-bold text-xs text-foreground group-hover:text-accent-primary transition-colors truncate">{friendName}</div>
-                          <div className="text-[9px] text-emerald-400/80 flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                            Bạn bè
-                          </div>
                         </div>
                       </div>
                       <span className="text-[10px] font-bold text-accent-purple bg-indigo-500/10 px-2 py-0.5 rounded-full group-hover:bg-indigo-500/20 flex-shrink-0">

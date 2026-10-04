@@ -26,6 +26,16 @@ export default function ProfilePage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [activityData, setActivityData] = useState<any[]>([]);
+  const [postFilter, setPostFilter] = useState<'all' | 'media' | 'popular' | 'latest'>('all');
+
+  const filteredPosts = posts.filter(post => {
+    if (postFilter === 'media') return Boolean(post.image_url || post.video_url);
+    return true;
+  }).sort((a, b) => {
+    if (postFilter === 'popular') return (b.likes_count || b.likes || 0) - (a.likes_count || a.likes || 0);
+    if (postFilter === 'latest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    return 0;
+  });
 
   const fetchProfile = async () => {
     try {
@@ -133,35 +143,48 @@ export default function ProfilePage() {
             <div className="space-y-4">
               {/* Profile Header */}
               <div className="glass-card rounded-b-xl overflow-hidden">
-                <div className="h-64 md:h-80 bg-gradient-to-r from-indigo-600/50 via-indigo-500/35 to-slate-500/25 relative group">
+                <div className="h-44 xs:h-52 sm:h-64 md:h-80 bg-gradient-to-r from-indigo-600/50 via-indigo-500/35 to-slate-500/25 relative group">
                   {profileData.cover_url ? <img src={profileData.cover_url} alt="Cover" className="w-full h-full object-cover" /> : <div className="w-full h-full bg-gradient-to-r from-indigo-600/50 via-indigo-500/35 to-slate-500/25" />}
                   {isOwnProfile && (
-                    <label className="absolute bottom-4 right-4 bg-black/40 backdrop-blur-sm hover:bg-black/60 text-secondary text-xs font-bold px-4 py-2 rounded-lg cursor-pointer transition-colors flex items-center gap-1.5 border border-indigo-500/20">
-                      📷 {isUploadingCover ? "Đang tải..." : "Chỉnh sửa ảnh bìa"}
-                      <input type="file" accept="image/*" onChange={e => handleUpload(e, 'cover')} className="hidden" disabled={isUploadingCover} />
-                    </label>
+                    <div className="absolute top-3 right-3 sm:bottom-4 sm:right-4 z-20">
+                      <input 
+                        id="profile-cover-upload"
+                        type="file" 
+                        accept="image/*" 
+                        onChange={e => handleUpload(e, 'cover')} 
+                        className="hidden" 
+                        disabled={isUploadingCover} 
+                      />
+                      <label 
+                        htmlFor="profile-cover-upload"
+                        className="bg-black/50 backdrop-blur-md hover:bg-black/70 text-white text-[11px] sm:text-xs font-bold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl cursor-pointer transition-all flex items-center gap-1.5 border border-white/20 shadow-lg select-none pointer-events-auto"
+                      >
+                        <span>📷</span>
+                        <span>{isUploadingCover ? "Đang tải..." : "Chỉnh sửa ảnh bìa"}</span>
+                      </label>
+                    </div>
                   )}
                 </div>
 
-                <div className="px-6 pb-6 relative">
-                  <div className="flex flex-col md:flex-row md:items-end justify-between -mt-16 md:-mt-10 gap-4 mb-4">
-                    <div className="flex flex-col md:flex-row items-center md:items-end gap-4 text-center md:text-left">
-                      <div className="relative w-36 h-36 md:w-40 md:h-40 bg-background rounded-full p-1.5 shadow-xl flex-shrink-0 group">
+                <div className="px-4 sm:px-6 pb-6 relative">
+                  <div className="flex flex-col md:flex-row md:items-end justify-between -mt-12 xs:-mt-14 sm:-mt-16 md:-mt-10 gap-3 sm:gap-4 mb-4">
+                    <div className="flex flex-col md:flex-row items-center md:items-end gap-3 sm:gap-4 text-center md:text-left">
+                      <div className="relative w-24 h-24 xs:w-28 xs:h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 bg-background rounded-full p-1 sm:p-1.5 shadow-xl flex-shrink-0 group z-10">
                         {profileData.avatar_url ? (
                           <img src={profileData.avatar_url} alt={profileData.username} className="w-full h-full rounded-full object-cover avatar-glow" />
                         ) : (
-                          <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full flex items-center justify-center text-6xl font-bold text-white">{getInitials(profileData.username)}</div>
+                          <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full flex items-center justify-center text-4xl sm:text-6xl font-bold text-white">{getInitials(profileData.username)}</div>
                         )}
                         {isOwnProfile && (
-                          <label className="absolute inset-0 bg-black/45 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer flex flex-col items-center justify-center text-white text-xs font-bold gap-1 border-4 border-[#0F0B1E]">
+                          <label className="absolute inset-0 bg-black/45 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer flex flex-col items-center justify-center text-white text-[10px] sm:text-xs font-bold gap-1 border-2 sm:border-4 border-[#0F0B1E]">
                             <span>📷</span><span>{isUploadingAvatar ? "Đang tải..." : "Cập nhật"}</span>
                             <input type="file" accept="image/*" onChange={e => handleUpload(e, 'avatar')} className="hidden" disabled={isUploadingAvatar} />
                           </label>
                         )}
                       </div>
                       <div className="md:mb-3">
-                        <h1 className="text-3xl font-extrabold gradient-text tracking-tight">{profileData.username}</h1>
-                        <p className="text-sm font-semibold text-indigo-400/50 mt-0.5">{profileData.email}</p>
+                        <h1 className="text-2xl sm:text-3xl font-extrabold gradient-text tracking-tight">{profileData.username}</h1>
+                        <p className="text-xs sm:text-sm font-semibold text-indigo-400/50 mt-0.5">{profileData.email}</p>
                       </div>
                     </div>
                     <div className="md:mb-4">
@@ -280,21 +303,54 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="md:col-span-8 space-y-4">
-                  <div className="glass-card p-4 rounded-xl flex items-center justify-between">
-                    <h3 className="font-bold text-foreground text-[17px]">Bài viết</h3>
-                    <button className="px-3.5 py-1.5 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-muted/70 text-xs font-semibold rounded-lg flex items-center gap-1.5 border border-indigo-500/10">⚙️ Bộ lọc</button>
+                  <div className="glass-card p-3 sm:p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-bold text-foreground text-[16px] sm:text-[17px]">Bài viết</h3>
+                      <span className="text-xs text-muted/60 bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-full font-semibold">
+                        {filteredPosts.length}
+                      </span>
+                    </div>
+
+                    {/* Filter Tabs */}
+                    <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide py-0.5">
+                      {[
+                        { key: 'all', label: 'Tất cả' },
+                        { key: 'latest', label: 'Mới nhất' },
+                        { key: 'media', label: 'Có ảnh' },
+                        { key: 'popular', label: 'Nhiều tim' },
+                      ].map((item) => (
+                        <button
+                          key={item.key}
+                          onClick={() => setPostFilter(item.key as any)}
+                          className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                            postFilter === item.key
+                              ? 'bg-accent-primary text-white shadow-sm'
+                              : 'bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-secondary'
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
+
                   {isLoadingPosts ? (
                     <div className="flex justify-center py-12 glass-card rounded-xl"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-500"></div></div>
-                  ) : posts.length === 0 ? (
-                    <div className="text-center glass-card p-12 rounded-xl">
+                  ) : filteredPosts.length === 0 ? (
+                    <div className="text-center glass-card p-10 sm:p-12 rounded-xl">
                       <div className="text-3xl mb-2">📝</div>
-                      <p className="font-semibold text-foreground">Chưa có bài viết nào.</p>
-                      <p className="text-sm text-muted/40 mt-1">Người dùng chưa chia sẻ gì.</p>
+                      <p className="font-semibold text-foreground">
+                        {postFilter === 'all' ? 'Chưa có bài viết nào.' : 'Không có bài viết phù hợp bộ lọc.'}
+                      </p>
+                      <p className="text-sm text-muted/40 mt-1">
+                        {postFilter === 'all' ? 'Người dùng chưa chia sẻ gì.' : 'Hãy thử chọn bộ lọc "Tất cả".'}
+                      </p>
                     </div>
                   ) : (
                     <div className="space-y-4">
-                      {posts.map((post, idx) => <PostCard key={post.id || idx} post={post} onPostDeleted={fetchUserPosts} onPostUpdated={fetchUserPosts} />)}
+                      {filteredPosts.map((post, idx) => (
+                        <PostCard key={post.id || idx} post={post} onPostDeleted={fetchUserPosts} onPostUpdated={fetchUserPosts} />
+                      ))}
                     </div>
                   )}
                 </div>
