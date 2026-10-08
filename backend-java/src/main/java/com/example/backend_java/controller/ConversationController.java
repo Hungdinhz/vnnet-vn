@@ -1,6 +1,15 @@
 package com.example.backend_java.controller;
 
-import com.example.backend_java.dto.*;
+import com.example.backend_java.dto.auth.*;
+import com.example.backend_java.dto.chat.*;
+import com.example.backend_java.dto.common.*;
+import com.example.backend_java.dto.event.*;
+import com.example.backend_java.dto.game.*;
+import com.example.backend_java.dto.notification.*;
+import com.example.backend_java.dto.post.*;
+import com.example.backend_java.dto.social.*;
+import com.example.backend_java.dto.story.*;
+import com.example.backend_java.dto.user.*;
 import com.example.backend_java.entity.User;
 import com.example.backend_java.service.ChatMessageService;
 import com.example.backend_java.service.ConversationService;
@@ -55,7 +64,7 @@ public class ConversationController {
     @PutMapping("/{id}")
     public ResponseEntity<ConversationResponseDto> updateGroup(
             @PathVariable Long id,
-            @RequestBody UpdateGroupDto request,
+            @RequestBody UpdateConversationGroupDto request,
             Authentication authentication) {
         User currentUser = (User) authentication.getPrincipal();
         return ResponseEntity.ok(conversationService.updateGroup(id, request, currentUser));
@@ -123,7 +132,7 @@ public class ConversationController {
     public ResponseEntity<ConversationResponseDto> setMemberNickname(
             @PathVariable Long id,
             @PathVariable Long targetUserId,
-            @RequestBody com.example.backend_java.dto.SetNicknameDto request,
+            @RequestBody com.example.backend_java.dto.chat.SetNicknameDto request,
             Authentication authentication) {
         User currentUser = (User) authentication.getPrincipal();
         return ResponseEntity.ok(conversationService.setMemberNickname(id, targetUserId, request.getNickname(), currentUser));

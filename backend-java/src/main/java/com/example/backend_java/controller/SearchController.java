@@ -1,9 +1,9 @@
 package com.example.backend_java.controller;
 
-import com.example.backend_java.dto.PagedResponseDto;
-import com.example.backend_java.dto.PostResponseDto;
-import com.example.backend_java.dto.SearchResultDto;
-import com.example.backend_java.dto.UserResponseDto;
+import com.example.backend_java.dto.common.PagedResponseDto;
+import com.example.backend_java.dto.post.PostResponseDto;
+import com.example.backend_java.dto.common.SearchResultDto;
+import com.example.backend_java.dto.user.UserResponseDto;
 import com.example.backend_java.service.PostService;
 import com.example.backend_java.service.SearchService;
 import org.springframework.http.ResponseEntity;

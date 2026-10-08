@@ -1,9 +1,9 @@
 package com.example.backend_java.service;
 
-import com.example.backend_java.dto.PostResponseDto;
-import com.example.backend_java.dto.StoryCreateDto;
-import com.example.backend_java.dto.StoryGroupDto;
-import com.example.backend_java.dto.StoryResponseDto;
+import com.example.backend_java.dto.post.PostResponseDto;
+import com.example.backend_java.dto.story.StoryCreateDto;
+import com.example.backend_java.dto.story.StoryGroupDto;
+import com.example.backend_java.dto.story.StoryResponseDto;
 import com.example.backend_java.entity.Story;
 import com.example.backend_java.entity.StoryView;
 import com.example.backend_java.entity.User;
@@ -25,12 +25,15 @@ public class StoryService {
     private final StoryRepository storyRepository;
     private final StoryViewRepository storyViewRepository;
     private final UserRepository userRepository;
+    private final com.example.backend_java.mapper.StoryMapper storyMapper;
 
     public StoryService(StoryRepository storyRepository, StoryViewRepository storyViewRepository,
-                        UserRepository userRepository) {
+                        UserRepository userRepository,
+                        com.example.backend_java.mapper.StoryMapper storyMapper) {
         this.storyRepository = storyRepository;
         this.storyViewRepository = storyViewRepository;
         this.userRepository = userRepository;
+        this.storyMapper = storyMapper;
     }
 
     // Tạo story mới (hết hạn sau 24h)
@@ -153,32 +156,6 @@ public class StoryService {
     }
 
     private StoryResponseDto toResponseDto(Story story, Long currentUserId) {
-        int viewsCount = (int) storyViewRepository.countByStoryId(story.getId());
-        boolean isViewed = currentUserId != null && storyViewRepository.existsByStoryIdAndViewerId(story.getId(), currentUserId);
-
-        // Chủ story luôn coi là "đã xem"
-        if (currentUserId != null && story.getOwnerId().equals(currentUserId)) {
-            isViewed = true;
-        }
-
-        User owner = story.getOwner();
-
-        return StoryResponseDto.builder()
-                .id(story.getId())
-                .ownerId(story.getOwnerId())
-                .owner(PostResponseDto.UserOutDto.builder()
-                        .id(owner.getId())
-                        .username(owner.getUsername())
-                        .avatarUrl(owner.getAvatarUrl())
-                        .build())
-                .content(story.getContent())
-                .imageUrl(story.getImageUrl())
-                .backgroundColor(story.getBackgroundColor())
-                .textStyle(story.getTextStyle())
-                .createdAt(story.getCreatedAt())
-                .expiresAt(story.getExpiresAt())
-                .viewsCount(viewsCount)
-                .isViewed(isViewed)
-                .build();
+        return storyMapper.toResponseDto(story, currentUserId);
     }
 }

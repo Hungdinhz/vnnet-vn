@@ -1,10 +1,11 @@
 package com.example.backend_java.service;
+import com.example.backend_java.dto.chat.ConversationMemberDto;
 
-import com.example.backend_java.dto.ChatMessageRequestDto;
-import com.example.backend_java.dto.ChatMessageResponseDto;
-import com.example.backend_java.dto.ConversationDto;
-import com.example.backend_java.dto.ConversationResponseDto;
-import com.example.backend_java.dto.UserResponseDto;
+import com.example.backend_java.dto.chat.ChatMessageRequestDto;
+import com.example.backend_java.dto.chat.ChatMessageResponseDto;
+import com.example.backend_java.dto.chat.ConversationDto;
+import com.example.backend_java.dto.chat.ConversationResponseDto;
+import com.example.backend_java.dto.user.UserResponseDto;
 import com.example.backend_java.entity.*;
 import com.example.backend_java.repository.ChatMessageRepository;
 import com.example.backend_java.repository.ConversationMemberRepository;
@@ -208,7 +209,7 @@ public class ChatMessageService {
         return list.stream().map(c -> {
             UserResponseDto contact = null;
             if (c.getType() == ConversationType.DIRECT) {
-                Optional<com.example.backend_java.dto.ConversationMemberDto> other = c.getMembers().stream()
+                Optional<com.example.backend_java.dto.chat.ConversationMemberDto> other = c.getMembers().stream()
                         .filter(m -> !m.getUserId().equals(currentUser.getId()))
                         .findFirst();
                 if (other.isPresent()) {

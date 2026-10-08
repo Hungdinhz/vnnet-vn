@@ -1,7 +1,7 @@
 package com.example.backend_java.controller;
 
-import com.example.backend_java.dto.MessageDto;
-import com.example.backend_java.dto.NotificationResponseDto;
+import com.example.backend_java.dto.common.MessageDto;
+import com.example.backend_java.dto.notification.NotificationResponseDto;
 import com.example.backend_java.entity.User;
 import com.example.backend_java.service.NotificationService;
 import org.springframework.http.ResponseEntity;

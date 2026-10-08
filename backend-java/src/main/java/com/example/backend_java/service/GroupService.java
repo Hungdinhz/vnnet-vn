@@ -1,6 +1,15 @@
 package com.example.backend_java.service;
 
-import com.example.backend_java.dto.*;
+import com.example.backend_java.dto.auth.*;
+import com.example.backend_java.dto.chat.*;
+import com.example.backend_java.dto.common.*;
+import com.example.backend_java.dto.event.*;
+import com.example.backend_java.dto.game.*;
+import com.example.backend_java.dto.notification.*;
+import com.example.backend_java.dto.post.*;
+import com.example.backend_java.dto.social.*;
+import com.example.backend_java.dto.story.*;
+import com.example.backend_java.dto.user.*;
 import com.example.backend_java.entity.Group;
 import com.example.backend_java.entity.GroupMember;
 import com.example.backend_java.entity.Post;
@@ -37,7 +46,7 @@ public class GroupService {
     }
 
     @Transactional
-    public GroupDTO createGroup(CreateGroupRequest request, User currentUser) {
+    public SocialGroupDto createGroup(CreateSocialGroupDto request, User currentUser) {
         Group group = Group.builder()
                 .name(request.getName())
                 .description(request.getDescription())
@@ -62,7 +71,7 @@ public class GroupService {
     }
 
     @Transactional(readOnly = true)
-    public List<GroupDTO> getMyGroups(Long userId) {
+    public List<SocialGroupDto> getMyGroups(Long userId) {
         List<GroupMember> memberships = groupMemberRepository.findByUserId(userId);
         return memberships.stream()
                 .map(m -> toDto(m.getGroup(), userId))
@@ -70,7 +79,7 @@ public class GroupService {
     }
 
     @Transactional(readOnly = true)
-    public List<GroupDTO> getSuggestedGroups(Long userId) {
+    public List<SocialGroupDto> getSuggestedGroups(Long userId) {
         List<Group> suggested = groupRepository.findSuggestedGroups(userId);
         return suggested.stream()
                 .map(g -> toDto(g, userId))
@@ -78,7 +87,7 @@ public class GroupService {
     }
 
     @Transactional(readOnly = true)
-    public GroupDTO getGroupDetails(Long groupId, Long currentUserId) {
+    public SocialGroupDto getGroupDetails(Long groupId, Long currentUserId) {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại"));
         return toDto(group, currentUserId);
@@ -122,7 +131,7 @@ public class GroupService {
     }
 
     @Transactional(readOnly = true)
-    public List<GroupMemberDTO> getGroupMembers(Long groupId) {
+    public List<SocialGroupMemberDto> getGroupMembers(Long groupId) {
         if (!groupRepository.existsById(groupId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại");
         }
@@ -130,7 +139,7 @@ public class GroupService {
         List<GroupMember> members = groupMemberRepository.findByGroupId(groupId);
         return members.stream().map(m -> {
             User u = m.getUser() != null ? m.getUser() : userRepository.findById(m.getUserId()).orElse(null);
-            return GroupMemberDTO.builder()
+            return SocialGroupMemberDto.builder()
                     .id(m.getId())
                     .groupId(groupId)
                     .userId(m.getUserId())
@@ -183,7 +192,7 @@ public class GroupService {
     }
 
     @Transactional
-    public GroupDTO updateGroup(Long groupId, UpdateGroupRequest request, User currentUser) {
+    public SocialGroupDto updateGroup(Long groupId, UpdateSocialGroupDto request, User currentUser) {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại"));
 
@@ -232,7 +241,7 @@ public class GroupService {
         groupRepository.delete(group);
     }
 
-    private GroupDTO toDto(Group group, Long currentUserId) {
+    private SocialGroupDto toDto(Group group, Long currentUserId) {
         List<GroupMember> members = groupMemberRepository.findByGroupId(group.getId());
         boolean isJoined = false;
         String userRole = null;
@@ -255,7 +264,7 @@ public class GroupService {
         // Count posts in group
         int postCount = postRepository.findByGroupIdOrderByIdDesc(group.getId()).size();
 
-        return GroupDTO.builder()
+        return SocialGroupDto.builder()
                 .id(group.getId())
                 .name(group.getName())
                 .description(group.getDescription())

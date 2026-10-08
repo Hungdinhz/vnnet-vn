@@ -1,8 +1,8 @@
 package com.example.backend_java.service;
 
-import com.example.backend_java.dto.CommentCreateDto;
-import com.example.backend_java.dto.CommentResponseDto;
-import com.example.backend_java.dto.MessageDto;
+import com.example.backend_java.dto.post.CommentCreateDto;
+import com.example.backend_java.dto.post.CommentResponseDto;
+import com.example.backend_java.dto.common.MessageDto;
 import com.example.backend_java.entity.Comment;
 import com.example.backend_java.entity.Like;
 import com.example.backend_java.entity.Post;

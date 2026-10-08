@@ -1,7 +1,7 @@
 package com.example.backend_java.controller;
 
-import com.example.backend_java.dto.EventCreateDto;
-import com.example.backend_java.dto.EventResponseDto;
+import com.example.backend_java.dto.event.EventCreateDto;
+import com.example.backend_java.dto.event.EventResponseDto;
 import com.example.backend_java.entity.User;
 import com.example.backend_java.repository.UserRepository;
 import com.example.backend_java.security.JwtTokenProvider;

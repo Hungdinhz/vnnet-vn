@@ -1,6 +1,6 @@
 package com.example.backend_java.service;
 
-import com.example.backend_java.dto.ActivityDataDto;
+import com.example.backend_java.dto.user.ActivityDataDto;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;

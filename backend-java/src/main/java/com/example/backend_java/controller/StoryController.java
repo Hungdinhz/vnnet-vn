@@ -1,10 +1,10 @@
 package com.example.backend_java.controller;
 
-import com.example.backend_java.dto.PostResponseDto;
-import com.example.backend_java.dto.StoryCreateDto;
-import com.example.backend_java.dto.StoryGroupDto;
-import com.example.backend_java.dto.StoryResponseDto;
-import com.example.backend_java.dto.MessageDto;
+import com.example.backend_java.dto.post.PostResponseDto;
+import com.example.backend_java.dto.story.StoryCreateDto;
+import com.example.backend_java.dto.story.StoryGroupDto;
+import com.example.backend_java.dto.story.StoryResponseDto;
+import com.example.backend_java.dto.common.MessageDto;
 import com.example.backend_java.entity.User;
 import com.example.backend_java.service.StoryService;
 import org.springframework.http.ResponseEntity;

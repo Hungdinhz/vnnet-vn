@@ -1,8 +1,11 @@
 package com.example.backend_java.controller;
+import com.example.backend_java.dto.social.SocialGroupMemberDto;
+import com.example.backend_java.dto.social.UpdateGroupRoleRequest;
+import com.example.backend_java.dto.social.UpdateSocialGroupDto;
 
-import com.example.backend_java.dto.CreateGroupRequest;
-import com.example.backend_java.dto.GroupDTO;
-import com.example.backend_java.dto.PostResponseDto;
+import com.example.backend_java.dto.social.CreateSocialGroupDto;
+import com.example.backend_java.dto.social.SocialGroupDto;
+import com.example.backend_java.dto.post.PostResponseDto;
 import com.example.backend_java.entity.User;
 import com.example.backend_java.repository.UserRepository;
 import com.example.backend_java.security.JwtTokenProvider;
@@ -55,21 +58,21 @@ public class GroupController {
     }
 
     @PostMapping
-    public ResponseEntity<GroupDTO> createGroup(@RequestBody CreateGroupRequest request,
+    public ResponseEntity<SocialGroupDto> createGroup(@RequestBody CreateSocialGroupDto request,
                                                 @RequestHeader(value = "Authorization", required = false) String token) {
         User user = getCurrentUser(token);
-        GroupDTO group = groupService.createGroup(request, user);
+        SocialGroupDto group = groupService.createGroup(request, user);
         return ResponseEntity.ok(group);
     }
 
     @GetMapping("/me")
-    public ResponseEntity<List<GroupDTO>> getMyGroups(@RequestHeader(value = "Authorization", required = false) String token) {
+    public ResponseEntity<List<SocialGroupDto>> getMyGroups(@RequestHeader(value = "Authorization", required = false) String token) {
         User user = getCurrentUser(token);
         return ResponseEntity.ok(groupService.getMyGroups(user.getId()));
     }
 
     @GetMapping
-    public ResponseEntity<List<GroupDTO>> getSuggestedGroups(@RequestHeader(value = "Authorization", required = false) String token) {
+    public ResponseEntity<List<SocialGroupDto>> getSuggestedGroups(@RequestHeader(value = "Authorization", required = false) String token) {
         Long userId = getCurrentUserIdSilently(token);
         // If not logged in, just pass null or default. For simplicity, we just return empty or all groups if null.
         if (userId == null) {
@@ -79,7 +82,7 @@ public class GroupController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<GroupDTO> getGroupDetails(@PathVariable Long id,
+    public ResponseEntity<SocialGroupDto> getGroupDetails(@PathVariable Long id,
                                                     @RequestHeader(value = "Authorization", required = false) String token) {
         Long userId = getCurrentUserIdSilently(token);
         return ResponseEntity.ok(groupService.getGroupDetails(id, userId));
@@ -109,14 +112,14 @@ public class GroupController {
     }
 
     @GetMapping("/{id}/members")
-    public ResponseEntity<List<com.example.backend_java.dto.GroupMemberDTO>> getGroupMembers(@PathVariable Long id) {
+    public ResponseEntity<List<com.example.backend_java.dto.social.SocialGroupMemberDto>> getGroupMembers(@PathVariable Long id) {
         return ResponseEntity.ok(groupService.getGroupMembers(id));
     }
 
     @PutMapping("/{id}/members/{userId}/role")
     public ResponseEntity<?> updateMemberRole(@PathVariable Long id,
                                               @PathVariable Long userId,
-                                              @RequestBody com.example.backend_java.dto.UpdateGroupRoleRequest request,
+                                              @RequestBody com.example.backend_java.dto.social.UpdateGroupRoleRequest request,
                                               @RequestHeader(value = "Authorization", required = false) String token) {
         User user = getCurrentUser(token);
         groupService.updateMemberRole(id, userId, request.getRole(), user);
@@ -133,8 +136,8 @@ public class GroupController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<GroupDTO> updateGroup(@PathVariable Long id,
-                                                @RequestBody com.example.backend_java.dto.UpdateGroupRequest request,
+    public ResponseEntity<SocialGroupDto> updateGroup(@PathVariable Long id,
+                                                @RequestBody com.example.backend_java.dto.social.UpdateSocialGroupDto request,
                                                 @RequestHeader(value = "Authorization", required = false) String token) {
         User user = getCurrentUser(token);
         return ResponseEntity.ok(groupService.updateGroup(id, request, user));
