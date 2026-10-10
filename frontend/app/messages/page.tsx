@@ -622,12 +622,12 @@ function MessagesContent() {
     <div className="h-screen overflow-hidden bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 flex flex-col transition-colors duration-200">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto w-full flex-1 min-h-0 flex overflow-hidden p-2 md:p-4 gap-3">
+      <div className="max-w-7xl mx-auto w-full flex-1 min-h-0 flex overflow-hidden p-0 sm:p-2 md:p-4 gap-0 sm:gap-3">
         {/* Sidebar: Conversation List */}
         <div
           className={`${
             activeConversation ? 'hidden md:flex' : 'flex'
-          } w-full md:w-80 lg:w-96 flex-col bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-xl border border-slate-200/80 dark:border-slate-700`}
+          } w-full md:w-80 lg:w-96 flex-col bg-white dark:bg-slate-800 rounded-none sm:rounded-2xl overflow-hidden shadow-xl border-0 sm:border border-slate-200/80 dark:border-slate-700`}
         >
           <ConversationList
             conversations={conversations}
@@ -647,7 +647,7 @@ function MessagesContent() {
           onDrop={activeConversation ? handleDrop : undefined}
           className={`${
             !activeConversation ? 'hidden md:flex' : 'flex'
-          } flex-1 flex-col bg-white dark:bg-slate-800 rounded-2xl overflow-hidden shadow-xl border border-slate-200/80 dark:border-slate-700 relative`}
+          } flex-1 flex-col bg-white dark:bg-slate-800 rounded-none sm:rounded-2xl overflow-hidden shadow-xl border-0 sm:border border-slate-200/80 dark:border-slate-700 relative`}
         >
           {activeConversation ? (
             <>

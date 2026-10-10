@@ -269,10 +269,10 @@ export default function GroupDetailsPage() {
               </div>
 
               {/* Group Tabs */}
-              <div className="flex items-center gap-2 mt-6 border-t border-indigo-500/10 pt-4">
+              <div className="flex items-center gap-2 mt-6 border-t border-indigo-500/10 pt-4 overflow-x-auto scrollbar-hide">
                 <button
                   onClick={() => handleTabChange('feed')}
-                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                  className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                     activeTab === 'feed'
                       ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-md'
                       : 'text-muted hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5'
@@ -282,7 +282,7 @@ export default function GroupDetailsPage() {
                 </button>
                 <button
                   onClick={() => handleTabChange('members')}
-                  className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                  className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                     activeTab === 'members'
                       ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-md'
                       : 'text-muted hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5'
@@ -293,7 +293,7 @@ export default function GroupDetailsPage() {
                 {isAdminOrCreator && (
                   <button
                     onClick={() => handleTabChange('settings')}
-                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                    className={`flex-shrink-0 whitespace-nowrap px-4 py-2 rounded-lg text-sm font-bold transition-all ${
                       activeTab === 'settings'
                         ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-md'
                         : 'text-muted hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5'

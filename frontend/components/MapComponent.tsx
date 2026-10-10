@@ -986,15 +986,15 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
       <div ref={mapContainerRef} className="w-full h-full z-0" />
 
       {/* Top Search Bar */}
-      <div className="absolute top-4 left-4 z-20 w-96 max-w-[calc(100%-6rem)]">
+      <div className="absolute top-2.5 left-2.5 right-14 sm:top-4 sm:left-4 sm:right-auto sm:w-96 z-20">
         <div className="relative">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
             onFocus={() => searchResults.length > 0 && setShowSearchResults(true)}
-            placeholder="🔍 Tìm địa điểm, trường học, bệnh viện..."
-            className="w-full px-4 py-3 pr-10 bg-background/95 backdrop-blur-xl border border-indigo-500/20 rounded-2xl text-sm text-foreground placeholder:text-muted shadow-xl focus:outline-none focus:border-indigo-500/50 transition-all font-medium"
+            placeholder="🔍 Tìm địa điểm, trường học..."
+            className="w-full px-3.5 py-2.5 sm:px-4 sm:py-3 pr-9 sm:pr-10 bg-background/95 backdrop-blur-xl border border-indigo-500/20 rounded-xl sm:rounded-2xl text-xs sm:text-sm text-foreground placeholder:text-muted shadow-xl focus:outline-none focus:border-indigo-500/50 transition-all font-medium"
           />
           {isSearching && (
             <div className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -1017,17 +1017,17 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
 
         {/* Search Results Dropdown */}
         {showSearchResults && searchResults.length > 0 && (
-          <div className="mt-2 bg-background/95 backdrop-blur-xl border border-indigo-500/20 rounded-2xl shadow-2xl overflow-hidden max-h-64 overflow-y-auto">
+          <div className="mt-2 bg-background/95 backdrop-blur-xl border border-indigo-500/20 rounded-2xl shadow-2xl overflow-hidden max-h-60 overflow-y-auto">
             {searchResults.map((result) => (
               <button
                 key={result.id}
                 onClick={() => handleSelectSearchResult(result)}
-                className="w-full text-left px-4 py-3 hover:bg-indigo-500/10 transition-colors border-b border-indigo-500/5 last:border-b-0 cursor-pointer"
+                className="w-full text-left px-3.5 py-2.5 sm:px-4 sm:py-3 hover:bg-indigo-500/10 transition-colors border-b border-indigo-500/5 last:border-b-0 cursor-pointer"
               >
-                <div className="text-sm font-semibold text-foreground truncate">
+                <div className="text-xs sm:text-sm font-semibold text-foreground truncate">
                   📍 {result.place_name.split(",")[0]}
                 </div>
-                <div className="text-xs text-muted mt-0.5 truncate">
+                <div className="text-[11px] sm:text-xs text-muted mt-0.5 truncate">
                   {result.place_name}
                 </div>
               </button>
@@ -1037,22 +1037,22 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
       </div>
 
       {/* Style Picker */}
-      <div className="absolute top-4 right-14 z-10">
+      <div className="absolute top-2.5 right-2.5 sm:top-4 sm:right-14 z-20">
         <button
           onClick={() => setShowStylePicker(!showStylePicker)}
-          className="w-10 h-10 bg-background/90 backdrop-blur-xl border border-indigo-500/20 rounded-xl flex items-center justify-center shadow-lg hover:shadow-indigo-500/20 text-lg transition-all hover:scale-105 active:scale-95 cursor-pointer focus:outline-none"
+          className="w-9 h-9 sm:w-10 sm:h-10 bg-background/90 backdrop-blur-xl border border-indigo-500/20 rounded-xl flex items-center justify-center shadow-lg hover:shadow-indigo-500/20 text-base sm:text-lg transition-all hover:scale-105 active:scale-95 cursor-pointer focus:outline-none"
           title="Đổi kiểu bản đồ"
         >
           {MAP_STYLES[currentStyle].icon}
         </button>
 
         {showStylePicker && (
-          <div className="absolute top-12 right-0 bg-background/95 backdrop-blur-xl border border-indigo-500/20 rounded-xl shadow-xl overflow-hidden min-w-[140px]">
+          <div className="absolute top-11 sm:top-12 right-0 bg-background/95 backdrop-blur-xl border border-indigo-500/20 rounded-xl shadow-xl overflow-hidden min-w-[130px] sm:min-w-[140px]">
             {(Object.keys(MAP_STYLES) as MapStyle[]).map((key) => (
               <button
                 key={key}
                 onClick={() => handleStyleChange(key)}
-                className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer flex items-center gap-2 ${
+                className={`w-full text-left px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm transition-colors cursor-pointer flex items-center gap-2 ${
                   currentStyle === key
                     ? "bg-indigo-500/15 text-indigo-400 font-semibold"
                     : "hover:bg-indigo-500/10 text-foreground"
@@ -1080,21 +1080,21 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
         )}
       </button>
 
-      {/* Google Maps Style Place Details Panel (Sidebar on Left) */}
+      {/* Google Maps Style Place Details Panel (Bottom sheet on mobile, sidebar on desktop) */}
       {selectedPoint && !showDirections && (
-        <div className="absolute top-20 left-4 z-20 w-96 max-w-[calc(100%-2rem)] bg-background/95 backdrop-blur-xl border border-indigo-500/25 rounded-2xl shadow-2xl overflow-hidden animate-slide-up flex flex-col max-h-[calc(100vh-10rem)]">
+        <div className="absolute bottom-0 left-0 right-0 sm:bottom-auto sm:top-20 sm:left-4 sm:w-96 z-30 bg-background/95 backdrop-blur-xl border-t sm:border border-indigo-500/25 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden animate-slide-up flex flex-col max-h-[55vh] sm:max-h-[calc(100vh-10rem)]">
           {/* Header Banner */}
-          <div className="bg-gradient-to-r from-indigo-500/15 via-indigo-500/10 to-transparent px-5 py-4 border-b border-indigo-500/15 flex items-start justify-between gap-3">
+          <div className="bg-gradient-to-r from-indigo-500/15 via-indigo-500/10 to-transparent px-4 sm:px-5 py-3 sm:py-4 border-b border-indigo-500/15 flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="text-2xl">{selectedPoint.icon || "📍"}</span>
+                <span className="text-xl sm:text-2xl">{selectedPoint.icon || "📍"}</span>
                 {selectedPoint.category && (
-                  <span className="text-xs bg-indigo-500/20 text-indigo-400 dark:text-indigo-300 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                  <span className="text-[10px] sm:text-xs bg-indigo-500/20 text-indigo-400 dark:text-indigo-300 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider truncate max-w-[160px]">
                     {selectedPoint.category}
                   </span>
                 )}
               </div>
-              <h2 className="text-lg font-black text-foreground leading-snug line-clamp-2">
+              <h2 className="text-base sm:text-lg font-black text-foreground leading-snug line-clamp-2">
                 {selectedPoint.name}
               </h2>
               {selectedPoint.secondaryName && (
@@ -1114,7 +1114,7 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
           </div>
 
           {/* Quick Action Button */}
-          <div className="p-4 border-b border-indigo-500/10">
+          <div className="p-3 sm:p-4 border-b border-indigo-500/10">
             <button
               onClick={() =>
                 startDirection({
@@ -1123,7 +1123,7 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
                   name: selectedPoint.name,
                 })
               }
-              className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+              className="w-full py-2.5 sm:py-3 px-3 sm:px-4 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer whitespace-nowrap"
             >
               <span className="text-base">🧭</span>
               <span>Chỉ đường tới đây</span>
@@ -1131,12 +1131,12 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
           </div>
 
           {/* Place Info List */}
-          <div className="p-4 space-y-3.5 overflow-y-auto">
+          <div className="p-3 sm:p-4 space-y-3 sm:space-y-3.5 overflow-y-auto">
             {/* Address */}
-            <div className="flex items-start gap-3">
+            <div className="flex items-start gap-2.5 sm:gap-3">
               <span className="text-base text-indigo-400 shrink-0 mt-0.5">📍</span>
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold text-muted mb-0.5">Địa chỉ</div>
+                <div className="text-[11px] sm:text-xs font-semibold text-muted mb-0.5">Địa chỉ</div>
                 <div className="text-xs text-foreground font-medium leading-relaxed">
                   {selectedPoint.address}
                 </div>
@@ -1150,10 +1150,10 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
             </div>
 
             {/* Coordinates */}
-            <div className="flex items-start gap-3 pt-3 border-t border-indigo-500/10">
+            <div className="flex items-start gap-2.5 sm:gap-3 pt-2.5 sm:pt-3 border-t border-indigo-500/10">
               <span className="text-base text-indigo-400 shrink-0 mt-0.5">🌐</span>
               <div className="flex-1 min-w-0">
-                <div className="text-xs font-semibold text-muted mb-0.5">Tọa độ GPS</div>
+                <div className="text-[11px] sm:text-xs font-semibold text-muted mb-0.5">Tọa độ GPS</div>
                 <div className="text-xs font-mono text-foreground font-medium">
                   {selectedPoint.lat.toFixed(6)}, {selectedPoint.lng.toFixed(6)}
                 </div>
@@ -1169,9 +1169,9 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
         </div>
       )}
 
-      {/* Direction Guide Panel */}
+      {/* Direction Guide Panel (Bottom sheet on mobile, sidebar on desktop) */}
       {showDirections && (
-        <div className="absolute top-20 left-4 z-20 w-96 max-w-[calc(100%-2rem)] bg-background/95 backdrop-blur-xl border border-indigo-500/25 rounded-2xl shadow-2xl overflow-hidden animate-slide-up flex flex-col max-h-[calc(100vh-10rem)]">
+        <div className="absolute bottom-0 left-0 right-0 sm:bottom-auto sm:top-20 sm:left-4 sm:w-96 z-30 bg-background/95 backdrop-blur-xl border-t sm:border border-indigo-500/25 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden animate-slide-up flex flex-col max-h-[60vh] sm:max-h-[calc(100vh-10rem)]">
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-indigo-500/15 bg-gradient-to-r from-indigo-500/15 via-indigo-500/5 to-transparent">
             <div className="flex items-center gap-2.5 min-w-0">

@@ -276,11 +276,11 @@ export default function Home() {
         <main className="flex-1 max-w-2xl py-4 md:py-6 mx-auto w-full">
           
           {/* Welcome Dashboard Card */}
-          <div className="glass-card rounded-2xl p-5 mb-5 relative overflow-hidden border border-indigo-500/10 shadow-lg animate-slide-up">
+          <div className="glass-card rounded-2xl p-3.5 sm:p-5 mb-5 relative overflow-hidden border border-indigo-500/10 shadow-lg animate-slide-up">
             <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-gradient-to-br from-accent-primary/15 to-accent-secondary/10 rounded-full blur-3xl pointer-events-none" />
             <div className="flex justify-between items-center relative z-10">
               <div>
-                <h2 className="text-xl md:text-2xl font-extrabold tracking-tight">
+                <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold tracking-tight">
                   {getGreeting()},{' '}
                   <span className="gradient-text">{currentUser?.username || 'Bạn'}</span>! ✨
                 </h2>
@@ -288,30 +288,19 @@ export default function Home() {
               </div>
               <div className="text-3xl animate-float">🚀</div>
             </div>
-
-            {/* Quick stats mini row */}
-            <div className="grid grid-cols-3 gap-2.5 mt-4 pt-4 border-t border-indigo-500/10 text-center">
-              <div className="bg-black/10 dark:bg-white/[0.02] p-2 rounded-xl border border-indigo-500/5">
-                <span className="block text-xs font-bold text-accent-purple">👥 Bạn bè</span>
-                <span className="text-sm font-extrabold font-mono mt-0.5 block">Đang kết nối</span>
-              </div>
-              <div className="bg-black/10 dark:bg-white/[0.02] p-2 rounded-xl border border-indigo-500/5">
-                <span className="block text-xs font-bold text-accent-primary">🏘️ Nhóm</span>
-                <span className="text-sm font-extrabold font-mono mt-0.5 block">{myGroups.length} đã tham gia</span>
-              </div>
-              <Link href="/groups" className="bg-black/10 dark:bg-white/[0.02] p-2 rounded-xl border border-indigo-500/5 hover:bg-indigo-500/10 transition-colors cursor-pointer block">
-                <span className="block text-xs font-bold text-indigo-400">➕ Khám phá</span>
-                <span className="text-xs font-semibold text-muted mt-1 block">Tìm nhóm mới</span>
-              </Link>
-            </div>
           </div>
 
           {/* Stories / Joined Groups Circle Row */}
           {myGroups.length > 0 && (
             <div className="glass-card rounded-2xl p-4 mb-5 border border-indigo-500/10">
-              <div className="flex items-center justify-between mb-3 px-1">
-                <span className="text-xs font-bold uppercase tracking-wider text-accent-purple/80">👥 Nhóm của bạn ({myGroups.length})</span>
-                <Link href="/groups" className="text-[11px] text-accent-primary font-semibold hover:underline">Tất cả nhóm</Link>
+              <div className="flex items-center justify-between gap-2 mb-3 px-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-accent-purple/80 truncate">
+                  👥 Nhóm ({myGroups.length})
+                </span>
+                <Link href="/groups" className="text-[11px] text-accent-primary font-semibold hover:underline flex items-center gap-1 flex-shrink-0">
+                  <span>Khám phá</span>
+                  <span className="text-xs">➔</span>
+                </Link>
               </div>
               <div className="flex gap-4 overflow-x-auto pb-1.5 scrollbar-thin">
                 {myGroups.map((group) => (
@@ -527,10 +516,11 @@ export default function Home() {
                   
                   <hr className="border-indigo-500/10" />
                   
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-wrap items-center gap-2 sm:justify-between">
                     <label className="flex items-center gap-2 cursor-pointer hover:bg-indigo-500/10 dark:bg-white/[0.02] border border-indigo-500/15 px-4 py-2.5 rounded-xl transition-all text-accent-purple/90 text-xs font-bold">
                       <span className="text-base">🖼️</span>
-                      <span>Thêm ảnh bài viết</span>
+                      <span className="hidden sm:inline">Thêm ảnh bài viết</span>
+                      <span className="sm:hidden">Thêm ảnh</span>
                       <input 
                         id="file-upload"
                         type="file" 
@@ -550,7 +540,8 @@ export default function Home() {
                         }`}
                       >
                         <span className="text-base">🏷️</span>
-                        <span>Tag bạn bè {taggedFriends.length > 0 ? `(${taggedFriends.length})` : ''}</span>
+                        <span className="hidden sm:inline">Tag bạn bè {taggedFriends.length > 0 ? `(${taggedFriends.length})` : ''}</span>
+                        <span className="sm:hidden">Tag {taggedFriends.length > 0 ? `(${taggedFriends.length})` : ''}</span>
                       </button>
 
                       {showTagDropdown && (
@@ -609,9 +600,9 @@ export default function Home() {
                     <button
                       type="submit"
                       disabled={isPosting || !newContent.trim()}
-                      className="px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all btn-anime"
+                      className="w-full sm:w-auto mt-2 sm:mt-0 order-last sm:order-none px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all btn-anime"
                     >
-                      {isPosting ? 'Đang gửi...' : '✨ Đăng lên'}
+                      {isPosting ? 'Đang gửi...' : '✨ Đăng'}
                     </button>
                   </div>
 
@@ -699,7 +690,7 @@ export default function Home() {
         </main>
 
         {/* Right Sidebar: Friends & Trending */}
-        <aside className="w-80 hidden lg:block py-6 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto space-y-5">
+        <aside className="lg:w-72 xl:w-80 hidden lg:block py-6 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto space-y-5">
           
           {/* Friends list widget */}
           <div className="glass-card rounded-2xl p-4.5 border border-indigo-500/10">
@@ -742,10 +733,6 @@ export default function Home() {
                         )}
                         <div className="min-w-0 flex-1">
                           <div className="font-bold text-xs text-foreground group-hover:text-accent-primary transition-colors truncate">{friendName}</div>
-                          <div className="text-[9px] text-emerald-400/80 flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                            Bạn bè
-                          </div>
                         </div>
                       </div>
                       <span className="text-[10px] font-bold text-accent-purple bg-indigo-500/10 px-2 py-0.5 rounded-full group-hover:bg-indigo-500/20 flex-shrink-0">

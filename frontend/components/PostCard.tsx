@@ -442,7 +442,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
             </button>
 
             {showMenu && (
-              <div className="absolute right-0 mt-1 w-44 glass-card rounded-lg py-1.5 z-40 animate-slide-up">
+              <div className="absolute right-0 mt-1 w-40 sm:w-44 glass-card rounded-lg py-1.5 z-40 animate-slide-up">
                 <button 
                   onClick={() => { setIsEditing(true); setShowMenu(false); }}
                   className="w-full text-left px-4 py-2 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 text-secondary text-sm font-medium flex items-center gap-2"
@@ -505,11 +505,11 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
 
           {/* Post attachment image */}
           {post.image_url && (
-            <div className="w-[calc(100%+2rem)] -mx-4 md:w-[calc(100%+2.5rem)] md:-mx-5 border-y border-indigo-500/10 overflow-hidden mb-3.5 bg-black/20 flex justify-center max-h-[500px]">
+            <div className="w-[calc(100%+2rem)] -mx-4 md:w-[calc(100%+2.5rem)] md:-mx-5 border-y border-indigo-500/10 overflow-hidden mb-3.5 bg-black/20 flex justify-center max-h-[240px] sm:max-h-[280px] md:max-h-[400px]">
               <img 
                 src={post.image_url} 
                 alt="Đính kèm" 
-                className="w-full h-auto object-cover max-h-[500px] hover:scale-[1.01] transition-transform duration-300"
+                className="w-full h-auto object-cover max-h-[240px] sm:max-h-[280px] md:max-h-[400px] hover:scale-[1.01] transition-transform duration-300"
               />
             </div>
           )}
@@ -574,13 +574,13 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
           <button 
             onClick={() => handleReaction(myReaction || 'like')}
             disabled={isLoadingLike}
-            className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg font-semibold text-sm transition-all focus:outline-none ${
+            className={`w-full flex items-center justify-center gap-1.5 sm:gap-2 py-1.5 sm:py-2 rounded-lg font-semibold text-[13px] sm:text-sm transition-all focus:outline-none ${
               myReaction 
                 ? 'text-pink-400 bg-pink-500/10 hover:bg-pink-500/20' 
                 : 'text-accent-purple/60 hover:bg-black/5 dark:hover:bg-white/5 hover:text-secondary'
             }`}
           >
-            <span className={`text-lg ${likeAnimating ? 'animate-heart-pop' : ''}`}>
+            <span className={`text-[16px] sm:text-lg ${likeAnimating ? 'animate-heart-pop' : ''}`}>
               {myReaction ? getReactionEmoji(myReaction) : '🤍'}
             </span>
             <span>{myReaction ? getReactionLabel(myReaction) : 'Thích'}</span>
@@ -614,22 +614,22 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
 
         <button 
           onClick={toggleComments}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-semibold text-sm transition-all focus:outline-none ${
+          className={`flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-1.5 sm:py-2 rounded-lg font-semibold text-[13px] sm:text-sm transition-all focus:outline-none ${
             showComments 
               ? 'text-accent-purple bg-indigo-500/10 hover:bg-indigo-500/20' 
               : 'text-accent-purple/60 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-secondary'
           }`}
         >
-          <span className="text-lg">💬</span>
+          <span className="text-[16px] sm:text-lg">💬</span>
           <span>Bình luận</span>
         </button>
 
         {!isOwner && (
           <button 
             onClick={() => setShowShareModal(true)}
-            className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg font-semibold text-sm transition-all focus:outline-none text-accent-purple/60 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-secondary"
+            className="flex-1 flex items-center justify-center gap-1.5 sm:gap-2 py-1.5 sm:py-2 rounded-lg font-semibold text-[13px] sm:text-sm transition-all focus:outline-none text-accent-purple/60 hover:bg-black/5 dark:hover:bg-black/5 dark:bg-white/5 hover:text-secondary"
           >
-            <span className="text-lg">↪️</span>
+            <span className="text-[16px] sm:text-lg">↪️</span>
             <span>Chia sẻ</span>
           </button>
         )}
@@ -660,20 +660,20 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
                 </div>
               )}
               <div className="flex-1 relative">
-                <div className="flex input-anime rounded-2xl items-center px-3 py-1.5">
+                <div className="flex input-anime rounded-2xl items-center px-3 py-1.5 min-h-[44px]">
                   <input
                     ref={commentInputRef}
                     type="text"
                     value={newComment}
                     onChange={handleCommentInputChange}
                     placeholder={replyingToId ? `Phản hồi ${replyingToUsername}...` : "Viết bình luận (@ để tag bạn bè)..."}
-                    className="flex-1 bg-transparent border-0 text-[13px] focus:outline-none py-1 placeholder-indigo-500/40 text-foreground"
+                    className="flex-1 bg-transparent border-0 text-[13px] focus:outline-none py-1 placeholder-indigo-500/40 text-foreground min-h-[36px]"
                     required
                   />
                   <button 
                     type="submit"
                     disabled={isSubmitting || !newComment.trim()}
-                    className="text-muted font-bold hover:text-indigo-400 transition-colors disabled:opacity-30 focus:outline-none text-xs px-2"
+                    className="text-muted font-bold hover:text-indigo-400 transition-colors disabled:opacity-30 focus:outline-none text-xs px-2 h-full min-h-[36px]"
                   >
                     {isSubmitting ? "Gửi..." : "Đăng"}
                   </button>
