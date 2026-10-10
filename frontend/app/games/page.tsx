@@ -33,6 +33,40 @@ function GamesContent() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isLeaderboardLoading, setIsLeaderboardLoading] = useState<boolean>(true);
 
+  // Drag to scroll state for category bar
+  const categoryScrollRef = React.useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [scrollLeft, setScrollLeft] = useState(0);
+  const [hasMoved, setHasMoved] = useState(false);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!categoryScrollRef.current) return;
+    setIsDragging(true);
+    setHasMoved(false);
+    setStartX(e.pageX - categoryScrollRef.current.offsetLeft);
+    setScrollLeft(categoryScrollRef.current.scrollLeft);
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !categoryScrollRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - categoryScrollRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    if (Math.abs(walk) > 4) {
+      setHasMoved(true);
+    }
+    categoryScrollRef.current.scrollLeft = scrollLeft - walk;
+  };
+
   useEffect(() => {
     fetchUserDataAndStats();
     fetchGames();
@@ -126,21 +160,54 @@ function GamesContent() {
 
           {/* Search & Category Filter */}
           <div className="flex flex-col md:flex-row items-center justify-between gap-3">
-            {/* Category tabs */}
-            <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0">
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat.key}
-                  onClick={() => setSelectedCategory(cat.key)}
-                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                    selectedCategory === cat.key
-                      ? 'btn-anime text-white shadow-md shadow-indigo-500/20'
-                      : 'bg-surface-hover/60 hover:bg-surface-hover text-text-muted hover:text-foreground border border-indigo-500/10'
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              ))}
+            {/* Category tabs with drag to scroll */}
+            <div className="relative w-full md:w-auto min-w-0 flex items-center group">
+              <button
+                type="button"
+                onClick={() => categoryScrollRef.current?.scrollBy({ left: -120, behavior: 'smooth' })}
+                className="hidden xs:flex absolute left-0 z-10 w-6 h-6 items-center justify-center rounded-full bg-background/90 shadow-md border border-indigo-500/20 text-xs text-muted hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                aria-label="Cuộn sang trái"
+              >
+                ‹
+              </button>
+
+              <div
+                ref={categoryScrollRef}
+                onMouseDown={handleMouseDown}
+                onMouseLeave={handleMouseLeave}
+                onMouseUp={handleMouseUp}
+                onMouseMove={handleMouseMove}
+                className={`flex items-center gap-1.5 xs:gap-2 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 scrollbar-hide px-1 select-none ${
+                  isDragging ? 'cursor-grabbing' : 'cursor-grab'
+                }`}
+                style={{ scrollBehavior: isDragging ? 'auto' : 'smooth' }}
+              >
+                {CATEGORIES.map((cat) => (
+                  <button
+                    key={cat.key}
+                    type="button"
+                    onClick={() => {
+                      if (!hasMoved) setSelectedCategory(cat.key);
+                    }}
+                    className={`flex-shrink-0 px-3.5 py-1.5 xs:px-4 xs:py-2 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap select-none ${
+                      selectedCategory === cat.key
+                        ? 'btn-anime text-white shadow-md shadow-indigo-500/20'
+                        : 'bg-surface-hover/60 hover:bg-surface-hover text-text-muted hover:text-foreground border border-indigo-500/10'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => categoryScrollRef.current?.scrollBy({ left: 120, behavior: 'smooth' })}
+                className="hidden xs:flex absolute right-0 z-10 w-6 h-6 items-center justify-center rounded-full bg-background/90 shadow-md border border-indigo-500/20 text-xs text-muted hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                aria-label="Cuộn sang phải"
+              >
+                ›
+              </button>
             </div>
 
             {/* Search form */}

@@ -215,7 +215,7 @@ export default function MessageInput({
   const isUploadingActive = uploadingCount > 0;
 
   return (
-    <div className="p-3 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 relative">
+    <div className="p-2 sm:p-3 bg-white dark:bg-slate-800 border-t border-gray-200 dark:border-slate-700 relative max-w-full overflow-hidden">
       {/* Upload error banner */}
       {uploadError && (
         <div className="mb-2 p-2 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-500/30 rounded-xl text-xs text-red-600 dark:text-red-400 flex items-center justify-between animate-fade-in">
@@ -324,7 +324,7 @@ export default function MessageInput({
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex items-center gap-2">
+      <form onSubmit={handleSubmit} className="flex items-center gap-1 xs:gap-1.5 sm:gap-2 max-w-full">
         {/* Hidden multiple image input */}
         <input
           type="file"
@@ -350,7 +350,7 @@ export default function MessageInput({
           type="button"
           onClick={() => imageInputRef.current?.click()}
           disabled={isUploadingActive || disabled}
-          className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors disabled:opacity-50"
+          className="p-1.5 xs:p-2 sm:p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors disabled:opacity-50 shrink-0 text-sm xs:text-base"
           title="Chọn hình ảnh (có thể chọn nhiều ảnh cùng lúc)"
         >
           🖼️
@@ -361,7 +361,7 @@ export default function MessageInput({
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={isUploadingActive || disabled}
-          className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors disabled:opacity-50"
+          className="p-1.5 xs:p-2 sm:p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors disabled:opacity-50 shrink-0 text-sm xs:text-base"
           title="Đính kèm tệp (Word, PDF, Zip... có thể chọn nhiều tệp)"
         >
           📎
@@ -371,7 +371,7 @@ export default function MessageInput({
         <button
           type="button"
           onClick={() => setShowEmojiPicker((prev) => !prev)}
-          className="p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors"
+          className="p-1.5 xs:p-2 sm:p-2.5 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors shrink-0 text-sm xs:text-base"
           title="Chọn biểu cảm"
         >
           😊
@@ -386,20 +386,20 @@ export default function MessageInput({
           onKeyDown={handleKeyDown}
           placeholder={
             attachments.length > 0
-              ? 'Thêm chú thích hoặc nhấn Gửi...'
-              : 'Nhập tin nhắn (hoặc kéo thả file vào đây)...'
+              ? 'Thêm chú thích...'
+              : 'Nhập tin nhắn...'
           }
           disabled={disabled}
-          className="flex-1 px-4 py-2.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-600 rounded-xl text-sm outline-none focus:border-sky-500 text-slate-800 dark:text-slate-100 placeholder-slate-400"
+          className="flex-1 min-w-0 px-2.5 xs:px-3 sm:px-4 py-2 sm:py-2.5 bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-600 rounded-xl text-xs xs:text-sm outline-none focus:border-sky-500 text-slate-800 dark:text-slate-100 placeholder-slate-400"
         />
 
         {/* Send Button */}
         <button
           type="submit"
           disabled={(!text.trim() && attachments.length === 0) || disabled || isUploadingActive}
-          className="px-5 py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-sm font-bold disabled:opacity-40 transition-opacity flex items-center gap-1.5 shadow-sm"
+          className="px-2.5 xs:px-3.5 sm:px-5 py-2 sm:py-2.5 bg-sky-500 hover:bg-sky-600 text-white rounded-xl text-xs sm:text-sm font-bold disabled:opacity-40 transition-opacity flex items-center justify-center gap-1 sm:gap-1.5 shadow-sm shrink-0"
         >
-          <span>{isUploadingActive ? 'Đang tải...' : 'Gửi'}</span>
+          <span className="hidden xs:inline">{isUploadingActive ? 'Đang tải...' : 'Gửi'}</span>
           <span>{isUploadingActive ? '⏳' : '🚀'}</span>
         </button>
       </form>

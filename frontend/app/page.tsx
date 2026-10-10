@@ -128,7 +128,7 @@ export default function Home() {
 
         {/* Center: News Feed */}
         <main className="flex-1 max-w-2xl py-4 md:py-6 mx-auto w-full">
-          <WelcomeBanner username={currentUser?.username} myGroupsCount={myGroups.length} />
+<WelcomeBanner username={currentUser?.username} myGroupsCount={myGroups.length} />
 
           <GroupCircleRow myGroups={myGroups} />
 

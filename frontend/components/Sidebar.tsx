@@ -49,14 +49,15 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 h-[calc(100vh-3.5rem)] sticky top-14 hidden md:block overflow-y-auto p-3">
+    <aside className="w-16 lg:w-64 h-[calc(100vh-3.5rem)] sticky top-14 hidden md:block overflow-y-auto p-1.5 lg:p-3">
       <div className="flex flex-col gap-1">
         
         {/* User profile shortcut */}
         {currentUser && (
           <Link 
             href={`/profile/${currentUser.id}`}
-            className={`flex items-center gap-3 p-2.5 hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all ${
+            title={currentUser.username}
+            className={`flex items-center gap-3 p-2 lg:p-2.5 justify-center lg:justify-start hover:bg-black/5 dark:hover:bg-white/5 rounded-xl transition-all ${
               pathname === `/profile/${currentUser.id}` ? 'sidebar-active font-semibold text-foreground' : 'text-secondary hover:text-foreground'
             }`}
           >
@@ -71,7 +72,7 @@ export default function Sidebar() {
                 {getInitials(currentUser.username)}
               </div>
             )}
-            <span className="font-medium text-[15px] truncate text-foreground">{currentUser.username}</span>
+            <span className="font-medium text-[15px] truncate text-foreground hidden lg:block">{currentUser.username}</span>
           </Link>
         )}
 
@@ -84,14 +85,15 @@ export default function Sidebar() {
             <Link 
               key={index} 
               href={item.path}
-              className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${
+              title={item.name}
+              className={`flex items-center gap-3 p-2 lg:p-2.5 justify-center lg:justify-start rounded-xl transition-all ${
                 isActive 
                   ? 'sidebar-active text-foreground font-semibold' 
                   : 'text-secondary font-medium hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground'
               }`}
             >
               <span className="text-xl">{item.icon}</span>
-              <span className="text-[15px]">{item.name}</span>
+              <span className="text-[15px] hidden lg:block">{item.name}</span>
             </Link>
           );
         })}
@@ -105,14 +107,15 @@ export default function Sidebar() {
             <Link 
               key={index} 
               href={item.path}
-              className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${
+              title={item.name}
+              className={`flex items-center gap-3 p-2 lg:p-2.5 justify-center lg:justify-start rounded-xl transition-all ${
                 isActive 
                   ? 'sidebar-active text-foreground font-semibold' 
                   : 'text-secondary font-medium hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground'
               }`}
             >
               <span className="text-xl">{item.icon}</span>
-              <span className="text-[15px]">{item.name}</span>
+              <span className="text-[15px] hidden lg:block">{item.name}</span>
             </Link>
           );
         })}
@@ -120,7 +123,7 @@ export default function Sidebar() {
         <hr className="my-2 border-indigo-500/10 mx-2" />
         
         {/* Footer */}
-        <div className="px-3 py-2 text-xs text-indigo-500/40 leading-relaxed">
+        <div className="px-3 py-2 text-xs text-indigo-500/40 leading-relaxed hidden lg:block">
           <span className="gradient-text font-semibold">VnNet</span> © 2026 ✨
           <br />
           <span className="text-muted">Mạng xã hội thế hệ mới</span>
