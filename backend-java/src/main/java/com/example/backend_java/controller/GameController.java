@@ -21,7 +21,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/games")
-@CrossOrigin(origins = "*")
 public class GameController {
 
     private final GameService gameService;

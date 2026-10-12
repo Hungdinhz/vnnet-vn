@@ -10,7 +10,10 @@ export function useWebSocket(currentUser: any) {
 
   // Get base url for WS
   const getWsUrl = () => {
-    const base = api.defaults.baseURL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:8000');
+    const base =
+      api.defaults.baseURL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      'https://vnnet-vn-java.onrender.com';
     return `${base.replace(/\/$/, '')}/ws`;
   };
 
