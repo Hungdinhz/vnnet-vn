@@ -23,19 +23,19 @@ export default function MapSidebar({
   onCopyCoords,
 }: MapSidebarProps) {
   return (
-    <div className="absolute top-20 left-4 z-20 w-96 max-w-[calc(100%-2rem)] bg-background/95 backdrop-blur-xl border border-indigo-500/25 rounded-2xl shadow-2xl overflow-hidden animate-slide-up flex flex-col max-h-[calc(100vh-10rem)]">
+    <div className="absolute bottom-0 left-0 right-0 sm:bottom-auto sm:top-20 sm:left-4 sm:w-96 z-30 bg-background/95 backdrop-blur-xl border-t sm:border border-indigo-500/25 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden animate-slide-up flex flex-col max-h-[55vh] sm:max-h-[calc(100vh-10rem)]">
       {/* Header Banner */}
-      <div className="bg-gradient-to-r from-indigo-500/15 via-indigo-500/10 to-transparent px-5 py-4 border-b border-indigo-500/15 flex items-start justify-between gap-3">
+      <div className="bg-gradient-to-r from-indigo-500/15 via-indigo-500/10 to-transparent px-4 sm:px-5 py-3 sm:py-4 border-b border-indigo-500/15 flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1.5">
-            <span className="text-2xl">{selectedPoint.icon || "📍"}</span>
+            <span className="text-xl sm:text-2xl">{selectedPoint.icon || "📍"}</span>
             {selectedPoint.category && (
-              <span className="text-xs bg-indigo-500/20 text-indigo-400 dark:text-indigo-300 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
+              <span className="text-[10px] sm:text-xs bg-indigo-500/20 text-indigo-400 dark:text-indigo-300 px-2 sm:px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider truncate max-w-[160px]">
                 {selectedPoint.category}
               </span>
             )}
           </div>
-          <h2 className="text-lg font-black text-foreground leading-snug line-clamp-2">
+          <h2 className="text-base sm:text-lg font-black text-foreground leading-snug line-clamp-2">
             {selectedPoint.name}
           </h2>
           {selectedPoint.secondaryName && (
@@ -55,10 +55,10 @@ export default function MapSidebar({
       </div>
 
       {/* Quick Action Button */}
-      <div className="p-4 border-b border-indigo-500/10">
+      <div className="p-3 sm:p-4 border-b border-indigo-500/10">
         <button
           onClick={onStartDirection}
-          className="w-full py-3 px-4 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer"
+          className="w-full py-2.5 sm:py-3 px-3 sm:px-4 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-700 hover:to-indigo-600 text-white rounded-xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 sm:gap-2 shadow-lg shadow-indigo-500/25 transition-all hover:scale-[1.01] active:scale-[0.99] cursor-pointer whitespace-nowrap"
         >
           <span className="text-base">🧭</span>
           <span>Chỉ đường tới đây</span>
@@ -66,12 +66,12 @@ export default function MapSidebar({
       </div>
 
       {/* Place Info List */}
-      <div className="p-4 space-y-3.5 overflow-y-auto">
+      <div className="p-3 sm:p-4 space-y-3 sm:space-y-3.5 overflow-y-auto">
         {/* Address */}
-        <div className="flex items-start gap-3">
+        <div className="flex items-start gap-2.5 sm:gap-3">
           <span className="text-base text-indigo-400 shrink-0 mt-0.5">📍</span>
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold text-muted mb-0.5">Địa chỉ</div>
+            <div className="text-[11px] sm:text-xs font-semibold text-muted mb-0.5">Địa chỉ</div>
             <div className="text-xs text-foreground font-medium leading-relaxed">
               {selectedPoint.address}
             </div>
@@ -85,10 +85,10 @@ export default function MapSidebar({
         </div>
 
         {/* Coordinates */}
-        <div className="flex items-start gap-3 pt-3 border-t border-indigo-500/10">
+        <div className="flex items-start gap-2.5 sm:gap-3 pt-2.5 sm:pt-3 border-t border-indigo-500/10">
           <span className="text-base text-indigo-400 shrink-0 mt-0.5">🌐</span>
           <div className="flex-1 min-w-0">
-            <div className="text-xs font-semibold text-muted mb-0.5">Tọa độ GPS</div>
+            <div className="text-[11px] sm:text-xs font-semibold text-muted mb-0.5">Tọa độ GPS</div>
             <div className="text-xs font-mono text-foreground font-medium">
               {selectedPoint.lat.toFixed(6)}, {selectedPoint.lng.toFixed(6)}
             </div>

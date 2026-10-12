@@ -26,19 +26,19 @@ export default function MapControls({
       <div className="absolute top-4 right-14 z-10">
         <button
           onClick={() => setShowStylePicker(!showStylePicker)}
-          className="w-10 h-10 bg-background/90 backdrop-blur-xl border border-indigo-500/20 rounded-xl flex items-center justify-center shadow-lg hover:shadow-indigo-500/20 text-lg transition-all hover:scale-105 active:scale-95 cursor-pointer focus:outline-none"
+          className="w-9 h-9 sm:w-10 sm:h-10 bg-background/90 backdrop-blur-xl border border-indigo-500/20 rounded-xl flex items-center justify-center shadow-lg hover:shadow-indigo-500/20 text-base sm:text-lg transition-all hover:scale-105 active:scale-95 cursor-pointer focus:outline-none"
           title="Đổi kiểu bản đồ"
         >
           {MAP_STYLES[currentStyle].icon}
         </button>
 
         {showStylePicker && (
-          <div className="absolute top-12 right-0 bg-background/95 backdrop-blur-xl border border-indigo-500/20 rounded-xl shadow-xl overflow-hidden min-w-[140px]">
+          <div className="absolute top-11 sm:top-12 right-0 bg-background/95 backdrop-blur-xl border border-indigo-500/20 rounded-xl shadow-xl overflow-hidden min-w-[130px] sm:min-w-[140px]">
             {(Object.keys(MAP_STYLES) as MapStyle[]).map((key) => (
               <button
                 key={key}
                 onClick={() => onStyleChange(key)}
-                className={`w-full text-left px-4 py-2.5 text-sm transition-colors cursor-pointer flex items-center gap-2 ${
+                className={`w-full text-left px-3.5 py-2 sm:px-4 sm:py-2.5 text-xs sm:text-sm transition-colors cursor-pointer flex items-center gap-2 ${
                   currentStyle === key
                     ? "bg-indigo-500/15 text-indigo-400 font-semibold"
                     : "hover:bg-indigo-500/10 text-foreground"
@@ -56,11 +56,11 @@ export default function MapControls({
       <button
         onClick={onLocateMe}
         disabled={isLocating}
-        className="absolute bottom-6 right-5 z-10 w-11 h-11 bg-background/90 backdrop-blur-xl hover:bg-background border border-indigo-500/20 rounded-full flex items-center justify-center shadow-lg hover:shadow-indigo-500/20 text-xl transition-all hover:scale-105 active:scale-95 text-foreground cursor-pointer focus:outline-none"
+        className="absolute bottom-4 sm:bottom-6 right-4 sm:right-5 z-10 w-10 h-10 sm:w-11 sm:h-11 bg-background/90 backdrop-blur-xl hover:bg-background border border-indigo-500/20 rounded-full flex items-center justify-center shadow-lg hover:shadow-indigo-500/20 text-lg sm:text-xl transition-all hover:scale-105 active:scale-95 text-foreground cursor-pointer focus:outline-none"
         title="Định vị vị trí của tôi"
       >
         {isLocating ? (
-          <div className="w-5 h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
         ) : (
           "🎯"
         )}

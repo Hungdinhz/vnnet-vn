@@ -25,7 +25,7 @@ export default function MapSearchBar({
   onSelectResult,
 }: MapSearchBarProps) {
   return (
-    <div className="absolute top-4 left-4 z-20 w-96 max-w-[calc(100%-6rem)]">
+    <div className="absolute top-3 sm:top-4 left-3 sm:left-4 z-20 w-96 max-w-[calc(100%-5.5rem)]">
       <div className="relative">
         <input
           type="text"
@@ -33,7 +33,7 @@ export default function MapSearchBar({
           onChange={(e) => onSearchChange(e.target.value)}
           onFocus={onFocus}
           placeholder="🔍 Tìm địa điểm, trường học, bệnh viện..."
-          className="w-full px-4 py-3 pr-10 bg-background/95 backdrop-blur-xl border border-indigo-500/20 rounded-2xl text-sm text-foreground placeholder:text-muted shadow-xl focus:outline-none focus:border-indigo-500/50 transition-all font-medium"
+          className="w-full px-3.5 sm:px-4 py-2.5 sm:py-3 pr-9 sm:pr-10 bg-background/95 backdrop-blur-xl border border-indigo-500/20 rounded-2xl text-xs sm:text-sm text-foreground placeholder:text-muted shadow-xl focus:outline-none focus:border-indigo-500/50 transition-all font-medium"
         />
         {isSearching && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2">

@@ -82,25 +82,26 @@ export default function NotificationDropdown({
   };
 
   return (
-    <div className="relative" ref={notifRef as any}>
+    <div className="relative flex-shrink-0" ref={notifRef as any}>
       <button
         onClick={() => {
           setShowNotifDropdown(!showNotifDropdown);
           onCloseOtherDropdowns();
         }}
-        className="relative cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 w-10 h-10 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 transition-all duration-200 border border-indigo-500/10 focus:outline-none"
+        className="relative cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-black/5 dark:bg-white/5 transition-all duration-200 border border-indigo-500/10 focus:outline-none flex-shrink-0"
+        aria-label="Thông báo"
       >
-        <span className="text-lg">🔔</span>
+        <span className="text-xs sm:text-sm">🔔</span>
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 badge-anime animate-pulse border-2 border-background">
-            {unreadCount}
+          <span className="absolute -top-1 -right-1 min-w-[12px] h-[12px] px-0.5 bg-red-500 text-white text-[7px] font-bold rounded-full flex items-center justify-center border border-background">
+            {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
       </button>
 
       {/* Notifications Dropdown */}
       {showNotifDropdown && (
-        <div className="absolute right-0 mt-2 w-96 bg-background border border-indigo-500/15 shadow-2xl rounded-xl py-2 z-50 animate-slide-up max-h-[480px] overflow-hidden flex flex-col">
+        <div className="dropdown-mobile-full sm:w-96 sm:absolute sm:right-0 mt-2 bg-background border border-indigo-500/15 shadow-2xl rounded-xl py-2 z-50 animate-slide-up max-h-[480px] overflow-hidden flex flex-col">
           <div className="flex items-center justify-between px-4 py-2 border-b border-indigo-500/10">
             <h3 className="font-bold text-foreground text-[15px]">🔔 Thông báo</h3>
             {unreadCount > 0 && (

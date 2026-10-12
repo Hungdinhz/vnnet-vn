@@ -2,15 +2,19 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import api from '@/lib/axios';
 import { getAuthToken, removeAuthToken } from '@/lib/auth';
 import NavSearch from './NavSearch';
 import NavLinks from './NavLinks';
 import NavActions from './NavActions';
+import MobileNavTabs from './MobileNavTabs';
+import MobileDrawer from './MobileDrawer';
+import MobileSearchDrawer from './MobileSearchDrawer';
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
 
   const [unreadCount, setUnreadCount] = useState(0);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -21,10 +25,19 @@ export default function Navbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
+  // Mobile state
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
+
   // Real-time clock state
   const [currentTime, setCurrentTime] = useState<string>('');
   const [currentDateStr, setCurrentDateStr] = useState<string>('');
   const [unreadMessagesCount, setUnreadMessagesCount] = useState<number>(0);
+
+  useEffect(() => {
+    setIsDrawerOpen(false);
+    setShowMobileSearch(false);
+  }, [pathname]);
 
   useEffect(() => {
     const updateTime = () => {
@@ -138,23 +151,48 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="glass-nav sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
-        {/* Left: Logo & Search */}
-        <div className="flex items-center gap-3 flex-1 md:flex-initial">
+    <nav className="glass-nav sticky top-0 z-50 w-full">
+      {/* Row 1: Top Navigation Bar */}
+      <div className="w-full max-w-7xl mx-auto px-1.5 xs:px-2.5 sm:px-4 h-11 sm:h-14 flex items-center justify-between gap-1 sm:gap-3">
+        {/* Left: Hamburger (Mobile), Logo, Clock & Desktop Search */}
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+          {/* Hamburger 3 gạch for Mobile */}
+          <button
+            onClick={() => setIsDrawerOpen(true)}
+            className="md:hidden w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-foreground transition-colors text-xs sm:text-base flex items-center justify-center focus:outline-none flex-shrink-0 cursor-pointer"
+            aria-label="Mở menu"
+            title="Menu"
+          >
+            ☰
+          </button>
+
           <Link
             href="/"
-            className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-600 hover:shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all duration-300 shadow-lg"
+            className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 hover:shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all duration-300 shadow-sm flex-shrink-0"
           >
-            <span className="text-white text-lg font-black tracking-tighter">VN</span>
+            <span className="text-white text-[10px] sm:text-xs font-black tracking-tighter">VN</span>
           </Link>
+
+          {/* Real-time Clock - Compact on mobile */}
+          {currentTime && (
+            <div className="h-6 sm:h-8 flex items-center px-1.5 xs:px-2 rounded-lg bg-indigo-500/10 dark:bg-white/[0.04] border border-indigo-500/15 font-mono select-none flex-shrink-0">
+              <span className="text-[9px] xs:text-[10px] sm:text-xs font-black tracking-tight text-accent-primary leading-tight whitespace-nowrap">
+                {currentTime.slice(0, 5)}
+                <span className="hidden xs:inline">{currentTime.slice(5)}</span>
+              </span>
+              <span className="hidden sm:inline-block ml-1 text-[9px] text-muted font-sans font-medium leading-none whitespace-nowrap">
+                {currentDateStr}
+              </span>
+            </div>
+          )}
+
           <NavSearch />
         </div>
 
-        {/* Center: Navigation Links */}
+        {/* Center: Navigation Links (Desktop only) */}
         <NavLinks />
 
-        {/* Right: Actions, Clock, Theme, Profile */}
+        {/* Right: Actions, Mobile Search Button, Theme, Profile */}
         <NavActions
           currentTime={currentTime}
           currentDateStr={currentDateStr}
@@ -172,8 +210,31 @@ export default function Navbar() {
           onMarkAsRead={handleMarkAsRead}
           onMarkAllRead={handleMarkAllRead}
           onLogout={handleLogout}
+          onToggleMobileSearch={() => setShowMobileSearch(!showMobileSearch)}
         />
       </div>
+
+      {/* Row 2: Top Mobile Navigation Tabs (Nằm ngay dưới thanh header đầu tiên - Ảnh 4) */}
+      <MobileNavTabs
+        pathname={pathname}
+        unreadMessagesCount={unreadMessagesCount}
+      />
+
+      {/* Mobile Search Input Drawer (Dropdown trượt xuống khi bấm kính lúp) */}
+      <MobileSearchDrawer
+        isOpen={showMobileSearch}
+        onClose={() => setShowMobileSearch(false)}
+      />
+
+      {/* Mobile Drawer (Menu 3 gạch trượt từ bên trái) */}
+      <MobileDrawer
+        isOpen={isDrawerOpen}
+        onClose={() => setIsDrawerOpen(false)}
+        currentUser={currentUser}
+        pathname={pathname}
+        unreadMessagesCount={unreadMessagesCount}
+        onLogout={handleLogout}
+      />
     </nav>
   );
 }

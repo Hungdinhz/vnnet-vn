@@ -316,7 +316,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
   const isOwner = currentUserId !== null && (post.owner_id === currentUserId || post.owner?.id === currentUserId);
 
   return (
-    <div className="glass-card glass-card-hover rounded-xl p-4 md:p-5 relative transition-all duration-300 animate-slide-up">
+    <div className="glass-card glass-card-hover rounded-xl p-3.5 sm:p-4 md:p-5 relative transition-all duration-300 animate-slide-up w-full max-w-full overflow-hidden">
       <PostHeader
         post={post}
         isOwner={isOwner}

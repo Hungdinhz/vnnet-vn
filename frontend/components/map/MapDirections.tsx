@@ -21,9 +21,9 @@ export default function MapDirections({
   onClear,
 }: MapDirectionsProps) {
   return (
-    <div className="absolute top-20 left-4 z-20 w-96 max-w-[calc(100%-2rem)] bg-background/95 backdrop-blur-xl border border-indigo-500/25 rounded-2xl shadow-2xl overflow-hidden animate-slide-up flex flex-col max-h-[calc(100vh-10rem)]">
+    <div className="absolute bottom-0 left-0 right-0 sm:bottom-auto sm:top-20 sm:left-4 sm:w-96 z-30 bg-background/95 backdrop-blur-xl border-t sm:border border-indigo-500/25 rounded-t-2xl sm:rounded-2xl shadow-2xl overflow-hidden animate-slide-up flex flex-col max-h-[60vh] sm:max-h-[calc(100vh-10rem)]">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3.5 border-b border-indigo-500/15 bg-gradient-to-r from-indigo-500/15 via-indigo-500/5 to-transparent">
+      <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-3.5 border-b border-indigo-500/15 bg-gradient-to-r from-indigo-500/15 via-indigo-500/5 to-transparent">
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="text-xl">🧭</span>
           <div className="min-w-0">
@@ -41,12 +41,12 @@ export default function MapDirections({
       </div>
 
       {/* Travel Mode Selector */}
-      <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-indigo-500/10">
+      <div className="flex items-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 border-b border-indigo-500/10">
         {(["driving", "walking", "cycling"] as const).map((mode) => (
           <button
             key={mode}
             onClick={() => setTravelMode(mode)}
-            className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1 sm:gap-1.5 ${
               travelMode === mode
                 ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/25"
                 : "hover:bg-indigo-500/10 text-muted hover:text-foreground"
@@ -59,35 +59,35 @@ export default function MapDirections({
       </div>
 
       {isLoadingRoute ? (
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center py-10 sm:py-12">
           <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
           <span className="ml-3 text-xs text-muted font-medium">Đang tìm tuyến đường tối ưu...</span>
         </div>
       ) : directionInfo ? (
         <>
           {/* Summary */}
-          <div className="px-5 py-3.5 flex items-center justify-around border-b border-indigo-500/10 bg-indigo-500/5">
+          <div className="px-4 sm:px-5 py-3 sm:py-3.5 flex items-center justify-around border-b border-indigo-500/10 bg-indigo-500/5">
             <div className="text-center">
-              <div className="text-xl font-black text-indigo-400">
+              <div className="text-lg sm:text-xl font-black text-indigo-400">
                 {formatDistance(directionInfo.distance)}
               </div>
-              <div className="text-[11px] text-muted font-medium">Khoảng cách</div>
+              <div className="text-[10px] sm:text-[11px] text-muted font-medium">Khoảng cách</div>
             </div>
             <div className="w-px h-8 bg-indigo-500/20" />
             <div className="text-center">
-              <div className="text-xl font-black text-indigo-400">
+              <div className="text-lg sm:text-xl font-black text-indigo-400">
                 {formatDuration(directionInfo.duration)}
               </div>
-              <div className="text-[11px] text-muted font-medium">Thời gian ước tính</div>
+              <div className="text-[10px] sm:text-[11px] text-muted font-medium">Thời gian ước tính</div>
             </div>
           </div>
 
           {/* Turn-by-turn steps */}
-          <div className="overflow-y-auto px-4 py-2 max-h-72">
+          <div className="overflow-y-auto px-3 sm:px-4 py-2 max-h-56 sm:max-h-72">
             {directionInfo.steps.map((step, i) => (
               <div
                 key={i}
-                className="flex items-start gap-3 py-2.5 border-t border-indigo-500/5 first:border-t-0"
+                className="flex items-start gap-2.5 sm:gap-3 py-2 sm:py-2.5 border-t border-indigo-500/5 first:border-t-0"
               >
                 <div className="w-5 h-5 rounded-full bg-indigo-500/15 text-indigo-400 flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5">
                   {i + 1}

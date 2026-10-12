@@ -112,33 +112,33 @@ function GamePlayContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col overflow-x-hidden">
       <Navbar />
 
-      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6 flex flex-col space-y-4">
+      <main className="flex-1 max-w-5xl mx-auto w-full px-2 sm:px-4 py-4 sm:py-6 flex flex-col space-y-4 min-w-0">
         {/* Navigation & Header */}
-        <div className="flex items-center justify-between border-b border-indigo-500/15 pb-4">
+        <div className="flex items-center justify-between border-b border-indigo-500/15 pb-4 gap-2 min-w-0">
           <Link
             href={`/games/${game.id}`}
-            className="inline-flex items-center gap-2 text-xs font-semibold text-text-muted hover:text-foreground transition-colors"
+            className="inline-flex items-center gap-1.5 sm:gap-2 text-xs font-semibold text-text-muted hover:text-foreground transition-colors shrink-0"
           >
-            <ArrowLeft className="w-4 h-4" /> Thoát trò chơi
+            <ArrowLeft className="w-4 h-4 shrink-0" /> <span className="hidden xs:inline">Thoát</span>
           </Link>
 
-          <div className="text-center">
-            <h1 className="text-lg font-bold text-foreground">
+          <div className="text-center min-w-0 flex-1 px-1">
+            <h1 className="text-sm sm:text-lg font-bold text-foreground truncate">
               {game.title}
             </h1>
-            <span className="text-xs text-text-muted">
+            <span className="text-[10px] sm:text-xs text-text-muted truncate block">
               Độ khó: {game.difficulty} • Tối đa: {game.max_score} điểm
             </span>
           </div>
 
           <button
             onClick={restartGame}
-            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-xl bg-surface-hover hover:bg-surface-hover/80 text-text-muted hover:text-foreground border border-indigo-500/20 transition-all cursor-pointer"
+            className="flex items-center gap-1.5 text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-xl bg-surface-hover hover:bg-surface-hover/80 text-text-muted hover:text-foreground border border-indigo-500/20 transition-all cursor-pointer shrink-0"
           >
-            <RotateCcw className="w-3.5 h-3.5" /> Chơi lại
+            <RotateCcw className="w-3.5 h-3.5 shrink-0" /> <span className="hidden xs:inline">Chơi lại</span>
           </button>
         </div>
 

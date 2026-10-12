@@ -67,7 +67,7 @@ export default function LoginPage() {
       <div className="absolute bottom-1/4 -right-20 w-72 h-72 bg-indigo-500/15 rounded-full blur-[100px] animate-float" style={{ animationDelay: '1.5s' }}></div>
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-400/10 rounded-full blur-[120px]"></div>
 
-      <div className="glass-card p-8 rounded-2xl shadow-2xl w-full max-w-md relative z-10 animate-slide-up">
+      <div className="glass-card p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-md relative z-10 animate-slide-up mx-3 xs:mx-4 sm:mx-0">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-lg shadow-indigo-500/30 mb-4">
@@ -133,11 +133,11 @@ export default function LoginPage() {
           <GoogleLoginButton onError={(msg) => setError(msg)} />
         </div>
 
-        <div className="mt-6 flex justify-between items-center text-sm">
-          <Link href="/forgot-password" className="text-muted/60 hover:text-indigo-400 transition-colors">
+        <div className="mt-6 flex flex-col items-center gap-2.5 text-sm">
+          <Link href="/forgot-password" className="text-muted/60 hover:text-indigo-400 transition-colors text-xs sm:text-sm">
             Quên mật khẩu?
           </Link>
-          <div className="text-muted/50">
+          <div className="text-muted/50 text-xs sm:text-sm text-center">
             Chưa có tài khoản?{' '}
             <Link href="/register" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
               Đăng ký ngay

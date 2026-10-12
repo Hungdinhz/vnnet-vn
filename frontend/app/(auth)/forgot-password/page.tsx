@@ -112,7 +112,7 @@ export default function ForgotPasswordPage() {
       <div className="absolute top-1/4 -left-20 w-72 h-72 bg-indigo-500/15 rounded-full blur-[100px] animate-float"></div>
       <div className="absolute bottom-1/4 -right-20 w-72 h-72 bg-indigo-600/15 rounded-full blur-[100px] animate-float" style={{ animationDelay: '1.5s' }}></div>
 
-      <div className="glass-card p-8 rounded-2xl shadow-2xl w-full max-w-md relative z-10 animate-slide-up">
+      <div className="glass-card p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-md relative z-10 animate-slide-up mx-3 xs:mx-4 sm:mx-0">
         {/* Logo */}
         <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-lg shadow-indigo-500/30 mb-4">

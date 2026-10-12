@@ -134,14 +134,14 @@ function GamesContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       <Navbar />
-      <div className="max-w-7xl mx-auto flex gap-4 px-2 md:px-4">
+      <div className="max-w-7xl mx-auto flex gap-4 px-2 md:px-4 w-full min-w-0">
         <Sidebar />
 
-        <main className="flex-1 py-4 md:py-6 max-w-5xl mx-auto space-y-6">
+        <main className="flex-1 py-4 md:py-6 max-w-5xl mx-auto space-y-6 w-full min-w-0">
           {/* Header Banner */}
-          <div className="glass-card p-6 md:p-8 rounded-3xl border border-indigo-500/25 relative overflow-hidden">
+          <div className="glass-card p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl border border-indigo-500/25 relative overflow-hidden">
             <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute bottom-0 left-1/3 -mb-8 w-48 h-48 bg-pink-500/10 rounded-full blur-2xl pointer-events-none" />
 
@@ -159,7 +159,7 @@ function GamesContent() {
           </div>
 
           {/* Search & Category Filter */}
-          <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-3 w-full min-w-0">
             {/* Category tabs with drag to scroll */}
             <div className="relative w-full md:w-auto min-w-0 flex items-center group">
               <button
@@ -224,9 +224,9 @@ function GamesContent() {
           </div>
 
           {/* Main Grid & Right Sidebar */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full min-w-0">
             {/* Games Grid (2 cols on desktop) */}
-            <div className="lg:col-span-2 space-y-4">
+            <div className="lg:col-span-2 space-y-4 w-full min-w-0">
               {isLoading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[1, 2, 3, 4].map((i) => (
@@ -251,7 +251,7 @@ function GamesContent() {
             </div>
 
             {/* Sidebar Right Column (Leaderboard & Stats) */}
-            <div className="space-y-6">
+            <div className="space-y-6 w-full min-w-0">
               {/* User Stats if logged in */}
               {myStats && (
                 <div className="glass-card p-4 rounded-3xl border border-indigo-500/20">

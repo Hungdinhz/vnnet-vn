@@ -27,7 +27,7 @@ export default function MapPage() {
       <Navbar />
       <div className="flex">
         <Sidebar />
-        <main className="flex-1 h-[calc(100vh-3.5rem)]">
+        <main className="flex-1 h-[calc(100vh-5.5rem)] md:h-[calc(100vh-3.5rem)]">
           {mapboxToken ? (
             <MapComponent accessToken={mapboxToken} />
           ) : (

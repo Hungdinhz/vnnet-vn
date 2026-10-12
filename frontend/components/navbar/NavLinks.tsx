@@ -16,7 +16,7 @@ export default function NavLinks() {
   ];
 
   return (
-    <div className="flex items-center justify-center gap-1 md:gap-2 flex-1 max-w-lg h-full">
+    <div className="hidden md:flex items-center justify-center gap-1 md:gap-2 flex-1 max-w-lg h-full">
       {navItems.map((item) => {
         const isActive = item.match(pathname);
         return (
