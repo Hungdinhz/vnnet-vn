@@ -1,7 +1,9 @@
 package com.example.backend_java.controller;
+import com.example.backend_java.dto.common.MessageDto;
+import com.example.backend_java.dto.user.UserResponseDto;
 
-import com.example.backend_java.dto.FriendRequestResponseDto;
-import com.example.backend_java.dto.FriendshipResponseDto;
+import com.example.backend_java.dto.social.FriendRequestResponseDto;
+import com.example.backend_java.dto.social.FriendshipResponseDto;
 import com.example.backend_java.entity.User;
 import com.example.backend_java.service.FriendService;
 import org.springframework.http.ResponseEntity;
@@ -54,28 +56,28 @@ public class FriendController {
 
     // GET /friends/suggestions - Gợi ý kết bạn
     @GetMapping("/suggestions")
-    public ResponseEntity<List<com.example.backend_java.dto.UserResponseDto>> getSuggestions(Authentication authentication) {
+    public ResponseEntity<List<com.example.backend_java.dto.user.UserResponseDto>> getSuggestions(Authentication authentication) {
         User currentUser = (User) authentication.getPrincipal();
         return ResponseEntity.ok(friendService.getSuggestions(currentUser.getId()));
     }
 
     // DELETE /friends/{friendshipId} - Hủy kết bạn
     @DeleteMapping("/{friendshipId}")
-    public ResponseEntity<com.example.backend_java.dto.MessageDto> unfriend(
+    public ResponseEntity<com.example.backend_java.dto.common.MessageDto> unfriend(
             @PathVariable Long friendshipId,
             Authentication authentication) {
         User currentUser = (User) authentication.getPrincipal();
         friendService.unfriend(friendshipId, currentUser.getId());
-        return ResponseEntity.ok(new com.example.backend_java.dto.MessageDto("Đã hủy kết bạn thành công"));
+        return ResponseEntity.ok(new com.example.backend_java.dto.common.MessageDto("Đã hủy kết bạn thành công"));
     }
 
     // DELETE /friends/request/{requestId} - Từ chối lời mời kết bạn
     @DeleteMapping("/request/{requestId}")
-    public ResponseEntity<com.example.backend_java.dto.MessageDto> rejectRequest(
+    public ResponseEntity<com.example.backend_java.dto.common.MessageDto> rejectRequest(
             @PathVariable Long requestId,
             Authentication authentication) {
         User currentUser = (User) authentication.getPrincipal();
         friendService.rejectFriendRequest(requestId, currentUser.getId());
-        return ResponseEntity.ok(new com.example.backend_java.dto.MessageDto("Đã từ chối lời mời kết bạn"));
+        return ResponseEntity.ok(new com.example.backend_java.dto.common.MessageDto("Đã từ chối lời mời kết bạn"));
     }
 }

@@ -1,6 +1,15 @@
 package com.example.backend_java.service;
 
-import com.example.backend_java.dto.*;
+import com.example.backend_java.dto.auth.*;
+import com.example.backend_java.dto.chat.*;
+import com.example.backend_java.dto.common.*;
+import com.example.backend_java.dto.event.*;
+import com.example.backend_java.dto.game.*;
+import com.example.backend_java.dto.notification.*;
+import com.example.backend_java.dto.post.*;
+import com.example.backend_java.dto.social.*;
+import com.example.backend_java.dto.story.*;
+import com.example.backend_java.dto.user.*;
 import com.example.backend_java.entity.*;
 import com.example.backend_java.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import com.example.backend_java.mapper.ConversationMapper;
 import java.util.stream.Collectors;
 
 @Service
@@ -24,6 +34,7 @@ public class ConversationService {
     private final ChatMessageRepository messageRepository;
     private final UserRepository userRepository;
     private final OnlineStatusService onlineStatusService;
+    private final ConversationMapper conversationMapper;
     @Lazy
     private final SimpMessagingTemplate messagingTemplate;
 
@@ -252,7 +263,7 @@ public class ConversationService {
     }
 
     @Transactional
-    public ConversationResponseDto updateGroup(Long conversationId, UpdateGroupDto request, User currentUser) {
+    public ConversationResponseDto updateGroup(Long conversationId, UpdateConversationGroupDto request, User currentUser) {
         Conversation conv = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy nhóm."));
 
@@ -432,126 +443,6 @@ public class ConversationService {
     }
 
     public ConversationResponseDto mapToResponseDto(Conversation conv, User currentUser) {
-        List<ConversationMember> members = memberRepository.findByConversationId(conv.getId());
-
-        List<ConversationMemberDto> memberDtos = members.stream().map(m -> {
-            User u = m.getUser();
-            boolean isOnline = onlineStatusService.isUserOnline(u.getId());
-            LocalDateTime lastSeen = onlineStatusService.getLastSeen(u.getId());
-            return ConversationMemberDto.builder()
-                    .userId(u.getId())
-                    .username(u.getUsername())
-                    .nickname(m.getNickname())
-                    .avatarUrl(u.getAvatarUrl())
-                    .role(m.getRole())
-                    .joinedAt(m.getJoinedAt())
-                    .isOnline(isOnline)
-                    .lastSeen(lastSeen)
-                    .build();
-        }).collect(Collectors.toList());
-
-        String displayName = conv.getName();
-        String displayAvatar = conv.getAvatarUrl();
-
-        // For direct conversation, pick partner's username (or nickname) and avatar
-        if (conv.getType() == ConversationType.DIRECT) {
-            Optional<ConversationMember> partner = members.stream()
-                    .filter(m -> !m.getUser().getId().equals(currentUser.getId()))
-                    .findFirst();
-            if (partner.isPresent()) {
-                String nick = partner.get().getNickname();
-                displayName = (nick != null && !nick.trim().isEmpty()) ? nick : partner.get().getUser().getUsername();
-                displayAvatar = partner.get().getUser().getAvatarUrl();
-            } else if (!members.isEmpty()) {
-                String nick = members.get(0).getNickname();
-                displayName = (nick != null && !nick.trim().isEmpty()) ? nick : members.get(0).getUser().getUsername();
-                displayAvatar = members.get(0).getUser().getAvatarUrl();
-            }
-        }
-
-        // Find last message
-        Optional<ChatMessage> latestMsg = messageRepository.findTop1ByConversationIdOrderByCreatedAtDesc(conv.getId());
-        String lastMessage = null;
-        LocalDateTime lastMessageTime = conv.getUpdatedAt();
-        String lastMessageSenderName = null;
-
-        if (latestMsg.isPresent()) {
-            ChatMessage msg = latestMsg.get();
-            lastMessageTime = msg.getCreatedAt();
-            User sender = msg.getSender();
-            boolean isMe = sender != null && sender.getId().equals(currentUser.getId());
-
-            String senderDisplayName = isMe ? "Bạn" : (sender != null ? sender.getUsername() : "Người dùng");
-            if (!isMe && sender != null) {
-                for (ConversationMember m : members) {
-                    if (m.getUser().getId().equals(sender.getId())) {
-                        if (m.getNickname() != null && !m.getNickname().trim().isEmpty()) {
-                            senderDisplayName = m.getNickname().trim();
-                        }
-                        break;
-                    }
-                }
-            }
-            lastMessageSenderName = senderDisplayName;
-
-            if (msg.getMessageType() == MessageType.SYSTEM) {
-                String sysContent = msg.getContent() != null ? msg.getContent() : "";
-                for (ConversationMember m : members) {
-                    if (m.getNickname() != null && !m.getNickname().trim().isEmpty() && m.getUser() != null) {
-                        sysContent = sysContent.replace(m.getUser().getUsername(), m.getNickname().trim());
-                    }
-                }
-                lastMessage = sysContent;
-            } else if (msg.getMessageType() == MessageType.IMAGE || (msg.getImageUrl() != null && !msg.getImageUrl().isEmpty())) {
-                if (msg.getContent() != null && !msg.getContent().trim().isEmpty()) {
-                    lastMessage = senderDisplayName + " đã gửi một hình ảnh: " + msg.getContent().trim();
-                } else {
-                    lastMessage = senderDisplayName + " đã gửi một hình ảnh";
-                }
-            } else if (msg.getMessageType() == MessageType.FILE || (msg.getFileUrl() != null && !msg.getFileUrl().isEmpty())) {
-                String fName = (msg.getFileName() != null && !msg.getFileName().trim().isEmpty())
-                        ? msg.getFileName().trim()
-                        : "tệp";
-                if (msg.getContent() != null && !msg.getContent().trim().isEmpty()) {
-                    lastMessage = senderDisplayName + " đã gửi một tệp (" + fName + "): " + msg.getContent().trim();
-                } else {
-                    lastMessage = senderDisplayName + " đã gửi một tệp: " + fName;
-                }
-            } else {
-                if (conv.getType() == ConversationType.GROUP) {
-                    lastMessage = senderDisplayName + ": " + (msg.getContent() != null ? msg.getContent() : "");
-                } else {
-                    lastMessage = (isMe ? "Bạn: " : "") + (msg.getContent() != null ? msg.getContent() : "");
-                }
-            }
-        }
-
-        // Find unread count
-        Long unreadCount = 0L;
-        Optional<ConversationMember> currentMemberOpt = members.stream()
-                .filter(m -> m.getUser().getId().equals(currentUser.getId()))
-                .findFirst();
-        if (currentMemberOpt.isPresent()) {
-            LocalDateTime lastReadAt = currentMemberOpt.get().getLastReadAt();
-            if (lastReadAt == null) {
-                lastReadAt = LocalDateTime.of(1970, 1, 1, 0, 0);
-            }
-            unreadCount = messageRepository.countUnreadInConversation(conv.getId(), currentUser.getId(), lastReadAt);
-        }
-
-        return ConversationResponseDto.builder()
-                .id(conv.getId())
-                .type(conv.getType())
-                .name(displayName)
-                .avatarUrl(displayAvatar)
-                .creatorId(conv.getCreator() != null ? conv.getCreator().getId() : null)
-                .members(memberDtos)
-                .lastMessage(lastMessage)
-                .lastMessageTime(lastMessageTime)
-                .lastMessageSenderName(lastMessageSenderName)
-                .unreadCount(unreadCount)
-                .createdAt(conv.getCreatedAt())
-                .updatedAt(conv.getUpdatedAt())
-                .build();
+        return conversationMapper.toResponseDto(conv, currentUser);
     }
 }

@@ -1,6 +1,6 @@
 package com.example.backend_java.service;
 
-import com.example.backend_java.dto.NotificationResponseDto;
+import com.example.backend_java.dto.notification.NotificationResponseDto;
 import com.example.backend_java.entity.Notification;
 import com.example.backend_java.repository.NotificationRepository;
 import org.springframework.http.HttpStatus;

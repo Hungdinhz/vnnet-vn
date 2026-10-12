@@ -83,7 +83,7 @@ export default function Leaderboard({
         return (
           <div
             key={`${entry.rank}-${entry.user.id}`}
-            className={`flex items-center justify-between p-3.5 transition-colors ${
+            className={`flex items-center justify-between p-2.5 sm:p-3.5 transition-colors gap-2 min-w-0 ${
               isMe
                 ? 'bg-indigo-500/15 border-l-4 border-indigo-500 font-medium'
                 : isTop3
@@ -92,27 +92,29 @@ export default function Leaderboard({
             }`}
           >
             {/* Rank & User */}
-            <div className="flex items-center gap-3 min-w-0">
-              {getRankBadge(entry.rank)}
+            <div className="flex items-center gap-2 xs:gap-3 min-w-0 flex-1">
+              <div className="shrink-0">
+                {getRankBadge(entry.rank)}
+              </div>
 
-              <Link href={`/profile/${entry.user.id}`} className="flex items-center gap-2.5 min-w-0 group">
+              <Link href={`/profile/${entry.user.id}`} className="flex items-center gap-2 xs:gap-2.5 min-w-0 flex-1 group">
                 <img
                   src={entry.user.avatar_url || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + entry.user.username}
                   alt={entry.user.username}
-                  className="w-9 h-9 rounded-full object-cover border border-indigo-500/30 group-hover:border-indigo-400 transition-colors"
+                  className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border border-indigo-500/30 group-hover:border-indigo-400 transition-colors shrink-0"
                 />
-                <div className="min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-semibold text-foreground group-hover:text-indigo-400 truncate">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+                    <p className="text-xs sm:text-sm font-semibold text-foreground group-hover:text-indigo-400 truncate">
                       {entry.user.username}
                     </p>
                     {isMe && (
-                      <span className="text-[10px] bg-indigo-500 text-white font-bold px-1.5 py-0.2 rounded-md">
+                      <span className="text-[9px] sm:text-[10px] bg-indigo-500 text-white font-bold px-1.5 py-0.2 rounded-md shrink-0">
                         Bạn
                       </span>
                     )}
                   </div>
-                  <p className="text-[11px] text-text-muted">
+                  <p className="text-[10px] sm:text-[11px] text-text-muted truncate">
                     {entry.total_plays} lượt chơi
                   </p>
                 </div>
@@ -120,12 +122,12 @@ export default function Leaderboard({
             </div>
 
             {/* Score */}
-            <div className="text-right pl-3">
-              <div className="flex items-center justify-end gap-1 text-sm font-bold text-indigo-400">
-                <Trophy className="w-3.5 h-3.5 text-amber-400" />
+            <div className="text-right pl-2 shrink-0">
+              <div className="flex items-center justify-end gap-1 text-xs sm:text-sm font-bold text-indigo-400">
+                <Trophy className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-400 shrink-0" />
                 <span>{entry.high_score.toLocaleString()}</span>
               </div>
-              <span className="text-[10px] text-text-muted">điểm kỷ lục</span>
+              <span className="text-[9px] sm:text-[10px] text-text-muted whitespace-nowrap">điểm kỷ lục</span>
             </div>
           </div>
         );

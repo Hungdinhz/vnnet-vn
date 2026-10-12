@@ -1,7 +1,8 @@
 package com.example.backend_java.service;
+import com.example.backend_java.dto.user.UserResponseDto;
 
-import com.example.backend_java.dto.FriendRequestResponseDto;
-import com.example.backend_java.dto.FriendshipResponseDto;
+import com.example.backend_java.dto.social.FriendRequestResponseDto;
+import com.example.backend_java.dto.social.FriendshipResponseDto;
 import com.example.backend_java.entity.Friendship;
 import com.example.backend_java.entity.User;
 import com.example.backend_java.repository.FriendshipRepository;
@@ -89,7 +90,7 @@ public class FriendService {
     }
 
     // Lấy gợi ý kết bạn (bỏ qua bản thân, bạn bè, và người đã gửi/nhận lời mời)
-    public List<com.example.backend_java.dto.UserResponseDto> getSuggestions(Long userId) {
+    public List<com.example.backend_java.dto.user.UserResponseDto> getSuggestions(Long userId) {
         // Lấy tất cả quan hệ bạn bè liên quan đến userId (cả gửi đi và nhận lại, mọi status)
         List<Friendship> relatedFriendships = friendshipRepository.findAll().stream()
                 .filter(f -> f.getUserId().equals(userId) || f.getFriendId().equals(userId))
@@ -105,7 +106,7 @@ public class FriendService {
 
         return userRepository.findAll().stream()
                 .filter(u -> !excludedUserIds.contains(u.getId()))
-                .map(u -> com.example.backend_java.dto.UserResponseDto.builder()
+                .map(u -> com.example.backend_java.dto.user.UserResponseDto.builder()
                         .id(u.getId())
                         .username(u.getUsername())
                         .email(u.getEmail())

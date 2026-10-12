@@ -1,6 +1,15 @@
 package com.example.backend_java.service;
 
-import com.example.backend_java.dto.*;
+import com.example.backend_java.dto.auth.*;
+import com.example.backend_java.dto.chat.*;
+import com.example.backend_java.dto.common.*;
+import com.example.backend_java.dto.event.*;
+import com.example.backend_java.dto.game.*;
+import com.example.backend_java.dto.notification.*;
+import com.example.backend_java.dto.post.*;
+import com.example.backend_java.dto.social.*;
+import com.example.backend_java.dto.story.*;
+import com.example.backend_java.dto.user.*;
 import com.example.backend_java.entity.*;
 import com.example.backend_java.repository.*;
 import com.example.backend_java.security.JwtTokenProvider;
@@ -24,19 +33,22 @@ public class GameService {
     private final UserAchievementRepository userAchievementRepository;
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final com.example.backend_java.mapper.GameMapper gameMapper;
 
     public GameService(GameRepository gameRepository,
                        GameScoreRepository gameScoreRepository,
                        GameAchievementRepository gameAchievementRepository,
                        UserAchievementRepository userAchievementRepository,
                        UserRepository userRepository,
-                       JwtTokenProvider jwtTokenProvider) {
+                       JwtTokenProvider jwtTokenProvider,
+                       com.example.backend_java.mapper.GameMapper gameMapper) {
         this.gameRepository = gameRepository;
         this.gameScoreRepository = gameScoreRepository;
         this.gameAchievementRepository = gameAchievementRepository;
         this.userAchievementRepository = userAchievementRepository;
         this.userRepository = userRepository;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.gameMapper = gameMapper;
     }
 
     public List<GameResponseDto> getAllGames(String category, String keyword, Long currentUserId) {
@@ -346,33 +358,7 @@ public class GameService {
     }
 
     public GameResponseDto toResponseDto(Game game, Long currentUserId) {
-        Integer userHighScore = null;
-        Long userPlays = null;
-
-        if (currentUserId != null) {
-            userHighScore = gameScoreRepository.findTopByGameIdAndUserIdOrderByScoreDesc(game.getId(), currentUserId)
-                    .map(GameScore::getScore).orElse(null);
-            userPlays = gameScoreRepository.countByGameIdAndUserId(game.getId(), currentUserId);
-        }
-
-        int achievementsCount = game.getAchievements() != null ? game.getAchievements().size() : 0;
-
-        return GameResponseDto.builder()
-                .id(game.getId())
-                .title(game.getTitle())
-                .description(game.getDescription())
-                .category(game.getCategory())
-                .imageUrl(game.getImageUrl())
-                .thumbnailUrl(game.getThumbnailUrl())
-                .maxScore(game.getMaxScore())
-                .difficulty(game.getDifficulty())
-                .isActive(game.getIsActive())
-                .playCount(game.getPlayCount() != null ? game.getPlayCount() : 0L)
-                .createdAt(game.getCreatedAt())
-                .currentUserHighScore(userHighScore)
-                .currentUserPlays(userPlays)
-                .achievementsCount(achievementsCount)
-                .build();
+        return gameMapper.toResponseDto(game, currentUserId);
     }
 
     public Long resolveCurrentUserId(String authHeader) {

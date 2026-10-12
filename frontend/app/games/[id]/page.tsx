@@ -89,12 +89,12 @@ function GameDetailContent() {
   const unlockedCount = achievements.filter((a) => a.unlocked_by_current_user).length;
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       <Navbar />
-      <div className="max-w-7xl mx-auto flex gap-4 px-2 md:px-4">
+      <div className="max-w-7xl mx-auto flex gap-4 px-2 md:px-4 w-full min-w-0">
         <Sidebar />
 
-        <main className="flex-1 py-4 md:py-6 max-w-5xl mx-auto space-y-6">
+        <main className="flex-1 py-4 md:py-6 max-w-5xl mx-auto space-y-6 w-full min-w-0">
           {/* Back button */}
           <Link
             href="/games"

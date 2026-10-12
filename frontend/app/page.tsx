@@ -1,26 +1,26 @@
-// app/page.tsx
-"use client";
+'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import api from '@/lib/axios';
-import { getAuthToken, removeAuthToken } from '@/lib/auth';
-import PostCard from '@/components/PostCard';
-import StoryBar from '@/components/StoryBar';
-import toast from 'react-hot-toast';
+import { useAuth } from '@/hooks/useAuth';
+import WelcomeBanner from '@/components/home/WelcomeBanner';
+import GroupCircleRow from '@/components/home/GroupCircleRow';
+import PostComposer from '@/components/home/PostComposer';
+import FeedList from '@/components/home/FeedList';
+import FriendsSidebar from '@/components/home/FriendsSidebar';
+import TrendingSidebar from '@/components/home/TrendingSidebar';
+import Spinner from '@/components/ui/Spinner';
 
 export default function Home() {
-  const router = useRouter();
-  
-  const [isAuthChecking, setIsAuthChecking] = useState(true);
-  const [posts, setPosts] = useState<any[]>([]); 
+  const { currentUser, isLoading: isAuthChecking } = useAuth({ requireAuth: true });
+
+  const [posts, setPosts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState<any>(null);
-  const [suggestedUsers, setSuggestedUsers] = useState<any[]>([]);
   const [myGroups, setMyGroups] = useState<any[]>([]);
+  const [friendsList, setFriendsList] = useState<any[]>([]);
+  const [trendingTopics, setTrendingTopics] = useState<any[]>([]);
 
   // Pagination state
   const [page, setPage] = useState(0);
@@ -28,31 +28,7 @@ export default function Home() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
-  // Form states for creating post
-  const [newTitle, setNewTitle] = useState('');
-  const [newContent, setNewContent] = useState('');
-  const [file, setFile] = useState<File | null>(null); 
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isPosting, setIsPosting] = useState(false);
-  const [isComposing, setIsComposing] = useState(false);
-  
-  // Destination & Visibility
-  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
-  const [selectedVisibility, setSelectedVisibility] = useState<'public' | 'friends' | 'private'>('public');
-  const [showGroupDropdown, setShowGroupDropdown] = useState(false);
-
-  // Trending
-  const [trendingTopics, setTrendingTopics] = useState<any[]>([]);
-
-  // Tag friends
-  const [taggedFriends, setTaggedFriends] = useState<any[]>([]);
-  const [showTagDropdown, setShowTagDropdown] = useState(false);
-  const [friendsList, setFriendsList] = useState<any[]>([]);
-  const [tagSearch, setTagSearch] = useState('');
-
-  const [requestedUserIds, setRequestedUserIds] = useState<Set<number>>(new Set());
-
-  const fetchPosts = async (pageNum: number = 0, reset: boolean = false) => {
+  const fetchPosts = useCallback(async (pageNum: number = 0, reset: boolean = false) => {
     if (reset) {
       setIsLoading(true);
     } else {
@@ -61,7 +37,7 @@ export default function Home() {
     try {
       const response = await api.get(`/posts?page=${pageNum}&size=20`);
       const data = response.data;
-      
+
       if (reset) {
         setPosts(data.content || []);
       } else {
@@ -75,16 +51,7 @@ export default function Home() {
       setIsLoading(false);
       setIsLoadingMore(false);
     }
-  };
-
-  const fetchSuggestedUsers = async () => {
-    try {
-      const res = await api.get('/friends/suggestions');
-      setSuggestedUsers((res.data || []).slice(0, 4));
-    } catch (err) {
-      console.error("Lỗi tải gợi ý bạn bè:", err);
-    }
-  };
+  }, []);
 
   const fetchMyGroups = async () => {
     try {
@@ -95,32 +62,14 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    const token = getAuthToken();
-    if (!token) {
-      router.push('/login');
-      return;
+  const fetchFriendsList = async () => {
+    try {
+      const res = await api.get('/friends/list');
+      setFriendsList(res.data || []);
+    } catch (err) {
+      console.error("Lỗi tải danh sách bạn bè:", err);
     }
-
-    const fetchMe = async () => {
-      try {
-        const res = await api.get('/users/me');
-        setCurrentUser(res.data);
-        setIsAuthChecking(false);
-      } catch (err: any) {
-        console.error("Lỗi tải self user:", err);
-        if (err.response?.status === 401 || err.response?.status === 403) {
-          removeAuthToken();
-          router.push('/login');
-          return;
-        }
-        setIsAuthChecking(false);
-      }
-    };
-
-    fetchMe();
-    fetchPosts(0, true);
-  }, [router]);
+  };
 
   const fetchTrendingHashtags = async () => {
     try {
@@ -133,132 +82,38 @@ export default function Home() {
 
   useEffect(() => {
     if (currentUser) {
-      fetchSuggestedUsers();
+      fetchPosts(0, true);
       fetchMyGroups();
       fetchFriendsList();
       fetchTrendingHashtags();
     }
-  }, [currentUser]);
-
-  const fetchFriendsList = async () => {
-    try {
-      const res = await api.get('/friends/list');
-      setFriendsList(res.data || []);
-    } catch (err) {
-      console.error("Lỗi tải danh sách bạn bè:", err);
-    }
-  };
+  }, [currentUser, fetchPosts]);
 
   // Infinite scroll observer
-  const lastPostCallback = useCallback((node: HTMLDivElement | null) => {
-    if (isLoadingMore) return;
-    if (observerRef.current) observerRef.current.disconnect();
+  const lastPostCallback = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (isLoadingMore) return;
+      if (observerRef.current) observerRef.current.disconnect();
 
-    observerRef.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasNext && !isLoadingMore) {
-        fetchPosts(page + 1, false);
-      }
-    }, { threshold: 0.1 });
+      observerRef.current = new IntersectionObserver(
+        entries => {
+          if (entries[0].isIntersecting && hasNext && !isLoadingMore) {
+            fetchPosts(page + 1, false);
+          }
+        },
+        { threshold: 0.1 }
+      );
 
-    if (node) observerRef.current.observe(node);
-  }, [isLoadingMore, hasNext, page]);
-
-  // Handle image preview
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files ? e.target.files[0] : null;
-    setFile(selectedFile);
-    if (selectedFile) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(selectedFile);
-    } else {
-      setImagePreview(null);
-    }
-  };
-
-  const handleCreatePost = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newContent.trim()) return;
-
-    setIsPosting(true);
-    try {
-      let uploadedImageUrl = null;
-
-      // Upload image to Cloudinary if file exists
-      if (file) {
-        const formData = new FormData();
-        formData.append("file", file);
-        
-        const uploadRes = await api.post("/upload", formData, {
-          headers: { "Content-Type": "multipart/form-data" }
-        });
-        uploadedImageUrl = uploadRes.data.url;
-      }
-
-      // Create post
-      await api.post('/posts', {
-        title: newTitle || "Bài viết mới",
-        content: newContent,
-        image_url: uploadedImageUrl,
-        group_id: selectedGroupId,
-        visibility: selectedGroupId ? 'public' : selectedVisibility,
-        mentioned_user_ids: taggedFriends.map(f => f.id)
-      });
-
-      // Clear form
-      setNewTitle('');
-      setNewContent('');
-      setFile(null);
-      setImagePreview(null);
-      setIsComposing(false);
-      setSelectedGroupId(null);
-      setSelectedVisibility('public');
-      setTaggedFriends([]);
-      
-      const fileInput = document.getElementById('file-upload') as HTMLInputElement;
-      if (fileInput) fileInput.value = '';
-      
-      toast.success("Đăng bài viết thành công!");
-      fetchPosts(0, true); 
-    } catch (error) {
-      console.error("Lỗi khi đăng bài:", error);
-      toast.error("Đăng bài thất bại, vui lòng thử lại!");
-    } finally {
-      setIsPosting(false);
-    }
-  };
-
-  const handleAddFriend = async (friendId: number) => {
-    try {
-      await api.post(`/friends/request/${friendId}`);
-      toast.success('Đã gửi lời mời kết bạn!');
-      setRequestedUserIds(prev => new Set(prev).add(friendId));
-    } catch (err: any) {
-      console.error("Lỗi kết bạn:", err);
-      toast.error(err.response?.data?.detail || "Gửi lời mời thất bại");
-    }
-  };
-
-  const getInitials = (name: string) => {
-    if (!name) return 'U';
-    return name.trim().charAt(0).toUpperCase();
-  };
-
-  // Get current greeting based on local hour
-  const getGreeting = () => {
-    const hour = new Date().getHours();
-    if (hour < 12) return 'Chào buổi sáng';
-    if (hour < 18) return 'Chào buổi chiều';
-    return 'Chào buổi tối';
-  };
+      if (node) observerRef.current.observe(node);
+    },
+    [isLoadingMore, hasNext, page, fetchPosts]
+  );
 
   if (isAuthChecking) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center">
-        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-secondary text-sm">Đang kiểm tra đăng nhập...</p>
+        <Spinner size="lg" color="border-indigo-500 border-t-transparent" />
+        <p className="text-secondary text-sm mt-4">Đang kiểm tra đăng nhập...</p>
       </div>
     );
   }
@@ -266,515 +121,39 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground transition-colors duration-300">
       <Navbar />
-      
+
       <div className="max-w-7xl mx-auto flex gap-4 px-2 md:px-4">
-        
         {/* Left Sidebar */}
         <Sidebar />
-        
+
         {/* Center: News Feed */}
         <main className="flex-1 max-w-2xl py-4 md:py-6 mx-auto w-full">
-          
-          {/* Welcome Dashboard Card */}
-          <div className="glass-card rounded-2xl p-3.5 sm:p-5 mb-5 relative overflow-hidden border border-indigo-500/10 shadow-lg animate-slide-up">
-            <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-gradient-to-br from-accent-primary/15 to-accent-secondary/10 rounded-full blur-3xl pointer-events-none" />
-            <div className="flex justify-between items-center relative z-10">
-              <div>
-                <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold tracking-tight">
-                  {getGreeting()},{' '}
-                  <span className="gradient-text">{currentUser?.username || 'Bạn'}</span>! ✨
-                </h2>
-                <p className="text-xs text-muted/70 mt-1 font-medium">Chào mừng bạn quay trở lại với VnNet. Cập nhật bảng tin ngay nào!</p>
-              </div>
-              <div className="text-3xl animate-float">🚀</div>
-            </div>
-          </div>
+<WelcomeBanner username={currentUser?.username} myGroupsCount={myGroups.length} />
 
-          {/* Stories / Joined Groups Circle Row */}
-          {myGroups.length > 0 && (
-            <div className="glass-card rounded-2xl p-4 mb-5 border border-indigo-500/10">
-              <div className="flex items-center justify-between gap-2 mb-3 px-1">
-                <span className="text-xs font-bold uppercase tracking-wider text-accent-purple/80 truncate">
-                  👥 Nhóm ({myGroups.length})
-                </span>
-                <Link href="/groups" className="text-[11px] text-accent-primary font-semibold hover:underline flex items-center gap-1 flex-shrink-0">
-                  <span>Khám phá</span>
-                  <span className="text-xs">➔</span>
-                </Link>
-              </div>
-              <div className="flex gap-4 overflow-x-auto pb-1.5 scrollbar-thin">
-                {myGroups.map((group) => (
-                  <Link 
-                    key={group.id} 
-                    href={`/groups/${group.id}`} 
-                    className="flex flex-col items-center gap-1.5 flex-shrink-0 group cursor-pointer w-16"
-                  >
-                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-indigo-500/20 group-hover:border-accent-primary group-hover:scale-105 transition-all avatar-glow relative bg-gradient-to-br from-indigo-600/20 to-indigo-500/20 flex items-center justify-center font-bold text-white text-sm">
-                      {group.cover_url ? (
-                        <img src={group.cover_url} alt={group.name} className="w-full h-full object-cover" />
-                      ) : (
-                        getInitials(group.name)
-                      )}
-                    </div>
-                    <span className="text-[10px] font-semibold text-center text-muted group-hover:text-foreground transition-colors truncate w-full">
-                      {group.name}
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
+          <GroupCircleRow myGroups={myGroups} />
 
-          {/* Smart Post Publisher */}
-          <div className="glass-card rounded-2xl p-4.5 mb-5 border border-indigo-500/10 shadow-lg relative">
-            {!isComposing ? (
-              <div className="flex gap-3.5 items-center">
-                {currentUser?.avatar_url ? (
-                  <img 
-                    src={currentUser.avatar_url} 
-                    alt={currentUser.username} 
-                    className="w-10 h-10 rounded-full object-cover avatar-glow"
-                  />
-                ) : (
-                  <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full text-white flex items-center justify-center font-bold shadow-md">
-                    {getInitials(currentUser?.username)}
-                  </div>
-                )}
-                <div 
-                  onClick={() => setIsComposing(true)}
-                  className="flex-1 px-4 py-3 bg-black/5 dark:bg-white/[0.03] hover:bg-black/10 dark:hover:bg-white/[0.06] border border-indigo-500/10 text-accent-purple/60 rounded-full cursor-pointer transition-all text-sm font-medium"
-                >
-                  {currentUser?.username ? currentUser.username : "Bạn"} ơi, hôm nay bạn muốn chia sẻ điều gì? ✨
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4 animate-slide-up">
-                <div className="flex items-center justify-between gap-3 pb-3 border-b border-indigo-500/10">
-                  <div className="flex items-center gap-3">
-                    {currentUser?.avatar_url ? (
-                      <img 
-                        src={currentUser.avatar_url} 
-                        alt={currentUser.username} 
-                        className="w-10 h-10 rounded-full object-cover avatar-glow"
-                      />
-                    ) : (
-                      <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full text-white flex items-center justify-center font-bold">
-                        {getInitials(currentUser?.username)}
-                      </div>
-                    )}
-                    <div>
-                      <div className="text-sm font-bold text-foreground">
-                        {currentUser?.username || "Người dùng"}
-                      </div>
-                      
-                      {/* Destination Selector Dropdown */}
-                      <div className="relative mt-1">
-                        <button
-                          type="button"
-                          onClick={() => setShowGroupDropdown(!showGroupDropdown)}
-                          className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-accent-purple hover:bg-indigo-500/20 transition-all text-[11px] font-bold focus:outline-none"
-                        >
-                          {selectedGroupId ? (
-                            <>👥 Đăng vào nhóm: {myGroups.find(g => g.id === selectedGroupId)?.name || 'Đang chọn'}</>
-                          ) : selectedVisibility === 'friends' ? (
-                            <>👥 Đăng với bạn bè</>
-                          ) : selectedVisibility === 'private' ? (
-                            <>🔒 Chỉ mình tôi (Cá nhân)</>
-                          ) : (
-                            <>🌏 Đăng công khai (Bảng tin)</>
-                          )}
-                          <span className="text-[8px]">▼</span>
-                        </button>
+          <PostComposer
+            currentUser={currentUser}
+            myGroups={myGroups}
+            friendsList={friendsList}
+            onPostCreated={() => fetchPosts(0, true)}
+          />
 
-                        {showGroupDropdown && (
-                          <div className="absolute left-0 mt-1 w-64 glass-card rounded-xl py-1.5 shadow-2xl z-50 animate-slide-up max-h-64 overflow-y-auto border border-indigo-500/20">
-                            <div className="px-3 py-1 text-[10px] uppercase font-bold text-muted tracking-wider">Phạm vi hiển thị</div>
-                            
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedGroupId(null);
-                                setSelectedVisibility('public');
-                                setShowGroupDropdown(false);
-                              }}
-                              className={`w-full text-left px-3.5 py-2 text-xs font-semibold hover:bg-indigo-500/10 flex items-center gap-2 ${
-                                selectedGroupId === null && selectedVisibility === 'public' ? 'text-accent-primary font-bold' : 'text-foreground'
-                              }`}
-                            >
-                              <span>🌏</span>
-                              <div>
-                                <div>Đăng công khai</div>
-                                <div className="text-[10px] text-muted font-normal">Tất cả mọi người đều có thể thấy</div>
-                              </div>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedGroupId(null);
-                                setSelectedVisibility('friends');
-                                setShowGroupDropdown(false);
-                              }}
-                              className={`w-full text-left px-3.5 py-2 text-xs font-semibold hover:bg-indigo-500/10 flex items-center gap-2 ${
-                                selectedGroupId === null && selectedVisibility === 'friends' ? 'text-accent-primary font-bold' : 'text-foreground'
-                              }`}
-                            >
-                              <span>👥</span>
-                              <div>
-                                <div>Bạn bè</div>
-                                <div className="text-[10px] text-muted font-normal">Chỉ bạn bè mới có thể thấy</div>
-                              </div>
-                            </button>
-
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedGroupId(null);
-                                setSelectedVisibility('private');
-                                setShowGroupDropdown(false);
-                              }}
-                              className={`w-full text-left px-3.5 py-2 text-xs font-semibold hover:bg-indigo-500/10 flex items-center gap-2 ${
-                                selectedGroupId === null && selectedVisibility === 'private' ? 'text-accent-primary font-bold' : 'text-foreground'
-                              }`}
-                            >
-                              <span>🔒</span>
-                              <div>
-                                <div>Chỉ mình tôi (Cá nhân)</div>
-                                <div className="text-[10px] text-muted font-normal">Chỉ một mình bạn thấy bài viết</div>
-                              </div>
-                            </button>
-
-                            {myGroups.length > 0 && (
-                              <>
-                                <div className="px-3 pt-2 pb-1 text-[10px] uppercase font-bold text-muted tracking-wider border-t border-indigo-500/10 mt-1">Đăng vào nhóm</div>
-                                {myGroups.map((group) => (
-                                  <button
-                                    key={group.id}
-                                    type="button"
-                                    onClick={() => {
-                                      setSelectedGroupId(group.id);
-                                      setShowGroupDropdown(false);
-                                    }}
-                                    className={`w-full text-left px-3.5 py-2 text-xs font-semibold hover:bg-indigo-500/10 flex items-center gap-2 ${
-                                      selectedGroupId === group.id ? 'text-accent-primary font-bold' : 'text-foreground'
-                                    }`}
-                                  >
-                                    <span>🏘️</span>
-                                    <span className="truncate">{group.name}</span>
-                                  </button>
-                                ))}
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
-
-                    </div>
-                  </div>
-                  
-                  <button 
-                    onClick={() => {
-                      setIsComposing(false);
-                      setSelectedGroupId(null);
-                    }}
-                    className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/[0.04] hover:bg-black/10 dark:hover:bg-white/[0.08] flex items-center justify-center text-muted transition-colors focus:outline-none"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <form onSubmit={handleCreatePost} className="space-y-3.5">
-                  <input
-                    type="text"
-                    placeholder="Tiêu đề bài viết (tùy chọn)..."
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    className="w-full px-3.5 py-2.5 input-anime rounded-xl text-xs font-bold"
-                  />
-                  <textarea
-                    placeholder="Hãy viết gì đó thú vị..."
-                    value={newContent}
-                    onChange={(e) => setNewContent(e.target.value)}
-                    rows={4}
-                    className="w-full px-4 py-3 input-anime rounded-xl resize-none text-[14px]"
-                    required
-                  />
-
-                  {/* Image attachment preview */}
-                  {imagePreview && (
-                    <div className="relative border border-indigo-500/15 rounded-xl overflow-hidden max-h-[280px] bg-black/25 flex justify-center shadow-inner">
-                      <img src={imagePreview} alt="Preview" className="max-w-full h-auto object-contain max-h-[280px]" />
-                      <button 
-                        type="button"
-                        onClick={() => { setFile(null); setImagePreview(null); }}
-                        className="absolute top-2.5 right-2.5 bg-black/70 hover:bg-black/90 text-white rounded-full w-7 h-7 flex items-center justify-center font-bold text-xs focus:outline-none transition-colors border border-white/10"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  )}
-                  
-                  <hr className="border-indigo-500/10" />
-                  
-                  <div className="flex flex-wrap items-center gap-2 sm:justify-between">
-                    <label className="flex items-center gap-2 cursor-pointer hover:bg-indigo-500/10 dark:bg-white/[0.02] border border-indigo-500/15 px-4 py-2.5 rounded-xl transition-all text-accent-purple/90 text-xs font-bold">
-                      <span className="text-base">🖼️</span>
-                      <span className="hidden sm:inline">Thêm ảnh bài viết</span>
-                      <span className="sm:hidden">Thêm ảnh</span>
-                      <input 
-                        id="file-upload"
-                        type="file" 
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        className="hidden"
-                      />
-                    </label>
-
-                    {/* Tag Friends Button */}
-                    <div className="relative">
-                      <button
-                        type="button"
-                        onClick={() => setShowTagDropdown(!showTagDropdown)}
-                        className={`flex items-center gap-2 hover:bg-purple-500/10 border border-purple-500/15 px-4 py-2.5 rounded-xl transition-all text-xs font-bold ${
-                          taggedFriends.length > 0 ? 'text-accent-pink bg-pink-500/5' : 'text-accent-purple/90'
-                        }`}
-                      >
-                        <span className="text-base">🏷️</span>
-                        <span className="hidden sm:inline">Tag bạn bè {taggedFriends.length > 0 ? `(${taggedFriends.length})` : ''}</span>
-                        <span className="sm:hidden">Tag {taggedFriends.length > 0 ? `(${taggedFriends.length})` : ''}</span>
-                      </button>
-
-                      {showTagDropdown && (
-                        <div className="absolute bottom-full left-0 mb-2 w-72 glass-card rounded-xl py-2 shadow-2xl z-50 animate-slide-up max-h-64 overflow-y-auto">
-                          <div className="px-3 pb-2 border-b border-purple-500/10">
-                            <input
-                              type="text"
-                              placeholder="Tìm bạn bè..."
-                              value={tagSearch}
-                              onChange={(e) => setTagSearch(e.target.value)}
-                              className="w-full px-3 py-1.5 input-anime rounded-lg text-xs"
-                              autoFocus
-                            />
-                          </div>
-                          {friendsList
-                            .filter(f => {
-                              const name = (f.friend_username || f.username || '').toLowerCase();
-                              return name.includes(tagSearch.toLowerCase()) && !taggedFriends.find(t => t.id === (f.friend_id || f.id));
-                            })
-                            .slice(0, 10)
-                            .map((friend) => {
-                              const friendId = friend.friend_id || friend.id;
-                              const friendName = friend.friend_username || friend.username;
-                              const friendAvatar = friend.friend_avatar_url || friend.avatar_url;
-                              return (
-                                <button
-                                  key={friendId}
-                                  type="button"
-                                  onClick={() => {
-                                    setTaggedFriends(prev => [...prev, { id: friendId, username: friendName, avatar_url: friendAvatar }]);
-                                    setTagSearch('');
-                                  }}
-                                  className="w-full text-left px-3 py-2 hover:bg-purple-500/10 flex items-center gap-2.5 transition-colors"
-                                >
-                                  {friendAvatar ? (
-                                    <img src={friendAvatar} alt={friendName} className="w-7 h-7 rounded-full object-cover" />
-                                  ) : (
-                                    <div className="w-7 h-7 bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full flex items-center justify-center text-[10px] font-bold text-white">
-                                      {(friendName || 'U').charAt(0).toUpperCase()}
-                                    </div>
-                                  )}
-                                  <span className="text-xs font-semibold text-foreground">{friendName}</span>
-                                </button>
-                              );
-                            })}
-                          {friendsList.filter(f => {
-                            const name = (f.friend_username || f.username || '').toLowerCase();
-                            return name.includes(tagSearch.toLowerCase()) && !taggedFriends.find(t => t.id === (f.friend_id || f.id));
-                          }).length === 0 && (
-                            <p className="text-center text-xs text-muted/40 py-3">Không tìm thấy bạn bè</p>
-                          )}
-                        </div>
-                      )}
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={isPosting || !newContent.trim()}
-                      className="w-full sm:w-auto mt-2 sm:mt-0 order-last sm:order-none px-6 py-2.5 rounded-xl text-xs font-bold shadow-lg transition-all btn-anime"
-                    >
-                      {isPosting ? 'Đang gửi...' : '✨ Đăng'}
-                    </button>
-                  </div>
-
-                  {/* Tagged Friends Chips */}
-                  {taggedFriends.length > 0 && (
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {taggedFriends.map(f => (
-                        <span key={f.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/10 border border-purple-500/20 rounded-full text-[11px] font-semibold text-accent-purple">
-                          {f.avatar_url ? (
-                            <img src={f.avatar_url} alt={f.username} className="w-4 h-4 rounded-full object-cover" />
-                          ) : (
-                            <span className="w-4 h-4 bg-gradient-to-br from-purple-500/50 to-pink-500/50 rounded-full flex items-center justify-center text-[8px] text-white font-bold">
-                              {(f.username || 'U').charAt(0).toUpperCase()}
-                            </span>
-                          )}
-                          {f.username}
-                          <button
-                            type="button"
-                            onClick={() => setTaggedFriends(prev => prev.filter(t => t.id !== f.id))}
-                            className="text-pink-400 hover:text-pink-300 transition-colors text-[10px] ml-0.5"
-                          >
-                            ✕
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </form>
-              </div>
-            )}
-          </div>
-
-          {/* Posts Feed container */}
-          {isLoading ? (
-            <div className="flex flex-col justify-center items-center py-24 glass-card rounded-2xl gap-3 border border-indigo-500/10">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-accent-purple"></div>
-              <span className="text-xs text-muted/60 font-semibold">Đang chuẩn bị bảng tin của bạn...</span>
-            </div>
-          ) : (
-            <div className="space-y-5">
-              {posts.length === 0 ? (
-                <div className="text-center glass-card p-12 rounded-2xl border border-indigo-500/10">
-                  <div className="text-4xl mb-3">📰</div>
-                  <p className="font-extrabold text-foreground">Bảng tin trống</p>
-                  <p className="text-xs text-muted/50 mt-1">Chưa có bài viết phù hợp hiển thị. Hãy kết bạn hoặc tham gia nhóm nhé! ✨</p>
-                </div>
-              ) : (
-                <>
-                  {posts.map((post, index) => (
-                    <PostCard 
-                      key={post.id || index} 
-                      post={post} 
-                      onPostDeleted={() => fetchPosts(0, true)}
-                      onPostUpdated={() => fetchPosts(0, true)}
-                    /> 
-                  ))}
-
-                  {/* Infinite scroll trigger */}
-                  {hasNext && (
-                    <div ref={lastPostCallback} className="flex justify-center items-center py-6">
-                      {isLoadingMore ? (
-                        <div className="flex items-center gap-3 bg-indigo-500/15 border border-indigo-500/20 px-5 py-3 rounded-full shadow-md">
-                          <div className="animate-spin rounded-full h-4.5 w-4.5 border-b-2 border-accent-purple"></div>
-                          <span className="text-xs text-muted font-bold">Đang tải thêm câu chuyện...</span>
-                        </div>
-                      ) : (
-                        <div className="h-4"></div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* End of feed */}
-                  {!hasNext && posts.length > 0 && (
-                    <div className="text-center py-6">
-                      <div className="glass-card inline-flex items-center gap-2 px-6 py-3 rounded-full border border-indigo-500/10">
-                        <span className="text-sm">✨</span>
-                        <span className="text-xs text-muted font-bold">Bạn đã xem hết các bài viết mới nhất</span>
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          )}
+          <FeedList
+            posts={posts}
+            isLoading={isLoading}
+            isLoadingMore={isLoadingMore}
+            hasNext={hasNext}
+            lastPostRef={lastPostCallback}
+            onRefresh={() => fetchPosts(0, true)}
+          />
         </main>
 
         {/* Right Sidebar: Friends & Trending */}
-        <aside className="lg:w-72 xl:w-80 hidden lg:block py-6 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto space-y-5">
-          
-          {/* Friends list widget */}
-          <div className="glass-card rounded-2xl p-4.5 border border-indigo-500/10">
-            <div className="flex justify-between items-center mb-3">
-              <h4 className="text-xs font-bold text-accent-purple uppercase tracking-wider flex items-center gap-1.5">
-                👥 Bạn bè ({friendsList.length})
-              </h4>
-              <Link href="/friends" className="text-[10px] text-accent-primary hover:underline font-bold">Xem tất cả</Link>
-            </div>
-
-            {friendsList.length === 0 ? (
-              <div className="text-center py-5 bg-black/10 dark:bg-white/[0.01] rounded-xl border border-indigo-500/5">
-                <span className="text-xl block mb-1">🤝</span>
-                <span className="text-[11px] text-muted block">Bạn chưa có người bạn nào</span>
-                <Link href="/friends" className="text-[10px] text-accent-purple font-bold hover:underline block mt-1.5">Tìm bạn bè mới ➔</Link>
-              </div>
-            ) : (
-              <div className={`space-y-2.5 pr-1 ${friendsList.length > 10 ? 'max-h-[380px] overflow-y-auto scrollbar-thin' : ''}`}>
-                {friendsList.map((friend, idx) => {
-                  const friendId = friend.friend_id || friend.id;
-                  const friendName = friend.friend_username || friend.username;
-                  const friendAvatar = friend.friend_avatar_url || friend.avatar_url;
-                  return (
-                    <Link
-                      key={friendId || idx}
-                      href={`/profile/${friendId}`}
-                      className="flex items-center justify-between hover:bg-indigo-500/10 p-2 -mx-1.5 rounded-xl transition-all group"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        {friendAvatar ? (
-                          <img 
-                            src={friendAvatar} 
-                            alt={friendName} 
-                            className="w-9 h-9 rounded-full object-cover avatar-glow flex-shrink-0"
-                          />
-                        ) : (
-                          <div className="w-9 h-9 bg-gradient-to-br from-indigo-500/50 to-indigo-600/50 rounded-full text-white flex items-center justify-center font-bold text-xs shadow-sm flex-shrink-0 group-hover:from-indigo-500 group-hover:to-indigo-600 transition-all">
-                            {getInitials(friendName)}
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <div className="font-bold text-xs text-foreground group-hover:text-accent-primary transition-colors truncate">{friendName}</div>
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-bold text-accent-purple bg-indigo-500/10 px-2 py-0.5 rounded-full group-hover:bg-indigo-500/20 flex-shrink-0">
-                        Xem
-                      </span>
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Trending hashtags card */}
-          <div className="glass-card rounded-2xl p-4.5 border border-indigo-500/10">
-            <h4 className="text-xs font-bold text-accent-purple uppercase tracking-wider mb-3 flex items-center gap-1.5">
-              🔥 Xu hướng cộng đồng
-            </h4>
-            {trendingTopics.length === 0 ? (
-              <div className="text-center py-4 bg-black/10 dark:bg-white/[0.01] rounded-xl border border-indigo-500/5">
-                <span className="text-base block mb-0.5">🏷️</span>
-                <span className="text-[10px] text-muted">Chưa có xu hướng thảo luận nào</span>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {trendingTopics.map((topic, idx) => (
-                  <Link 
-                    key={idx} 
-                    href={`/search?q=${encodeURIComponent(topic.tag)}`}
-                    className="flex justify-between items-center hover:bg-indigo-500/10 p-2 -mx-1.5 rounded-xl transition-all cursor-pointer group"
-                  >
-                    <div>
-                      <div className="font-bold text-xs text-foreground group-hover:text-accent-primary transition-colors">{topic.tag}</div>
-                      <div className="text-[9px] text-muted/60 mt-0.5">{topic.count} bài viết</div>
-                    </div>
-                    <span className="text-accent-primary text-xs font-bold opacity-0 group-hover:opacity-100 transition-opacity">➔</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+        <aside className="w-80 hidden lg:block py-6 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto space-y-5">
+          <FriendsSidebar friendsList={friendsList} />
+          <TrendingSidebar trendingTopics={trendingTopics} />
         </aside>
-
       </div>
     </div>
   );

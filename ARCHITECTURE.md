@@ -1,18 +1,18 @@
 # VnNet - Kiến Trúc Dự Án (Architecture Overview)
 
-> **Mục đích file**: Tóm tắt toàn bộ kiến trúc dự án để AI assistant có thể nhanh chóng nắm bắt context mà không cần quét lại toàn bộ source code. Cập nhật file này mỗi khi có thay đổi lớn về cấu trúc.
+> **Mục đích file**: Tóm tắt toàn bộ kiến trúc dự án để AI assistant và developers có thể nhanh chóng nắm bắt context mà không cần quét lại toàn bộ source code. Cập nhật file này mỗi khi có thay đổi lớn về cấu trúc.
 >
-> **Cập nhật lần cuối**: 2026-06-25
+> **Cập nhật lần cuối**: 2026-10-08 (Sau đợt tối ưu hóa toàn diện Backend & Frontend)
 
 ---
 
 ## 1. Tổng Quan Dự Án
 
-**VnNet** là một mạng xã hội (social network) hiện đại, cho phép người dùng đăng bài, tương tác (like, comment), kết bạn, nhận thông báo, chơi game, xem livestream, mua bán và nhắn tin. Dự án gồm 2 phần chính:
+**VnNet** là một mạng xã hội (social network) hiện đại, cho phép người dùng đăng bài, tương tác (like, reaction, comment), kết bạn, nhận thông báo, chơi game, xem livestream, mua bán, bản đồ và nhắn tin real-time. Dự án gồm 2 phần chính:
 
 | Thành phần    | Công nghệ                              | Thư mục            | Deploy          |
 |---------------|----------------------------------------|---------------------|-----------------|
-| **Frontend**  | Next.js 16, React 19, TypeScript, TailwindCSS 4 | `frontend/`       | Vercel (`vnnet-vn.vercel.app`) |
+| **Frontend**  | Next.js 16 (App Router), React 19, TypeScript, TailwindCSS 4 | `frontend/`       | Vercel (`vnnet-vn.vercel.app`) |
 | **Backend**   | Spring Boot 3.4.5, Java 17, Maven     | `backend-java/`    | Render (`vnnet-vn-java.onrender.com`) |
 | **Database**  | PostgreSQL (remote trên Render)        | -                   | Render          |
 | **Storage**   | Cloudinary (upload ảnh)                | -                   | Cloudinary      |
@@ -23,13 +23,14 @@
 
 ## 2. Backend Java (Spring Boot)
 
-### 2.1 Tech Stack & Dependencies (pom.xml)
+### 2.1 Tech Stack & Dependencies (`pom.xml`)
 
 - **Spring Boot 3.4.5** (Java 17)
 - `spring-boot-starter-web` — REST API
 - `spring-boot-starter-data-jpa` — ORM (Hibernate)
 - `spring-boot-starter-security` — Spring Security
 - `spring-boot-starter-validation` — Bean Validation
+- `spring-boot-starter-websocket` — STOMP over WebSocket
 - `postgresql` — JDBC Driver
 - `jjwt 0.12.6` — JWT token (io.jsonwebtoken)
 - `cloudinary-http45 1.38.0` — Upload ảnh
@@ -40,378 +41,235 @@
 ```
 backend-java/src/main/java/com/example/backend_java/
 ├── BackendJavaApplication.java        # Entry point
-├── config/
-│   ├── CloudinaryConfig.java          # Cấu hình Cloudinary bean
-│   ├── CorsConfig.java               # CORS: localhost:3000, vnnet-vn.vercel.app
-│   ├── GlobalExceptionHandler.java    # Xử lý exception tập trung
-│   └── SecurityConfig.java           # Spring Security + JWT filter chain
-├── controller/
+├── bootstrap/                         # Khởi tạo dữ liệu & schema runners
+│   ├── DataMigrationRunner.java
+│   ├── DatabaseSchemaFixer.java
+│   └── GameDataSeeder.java
+├── config/                            # Cấu hình Spring Beans
+│   ├── AsyncConfig.java
+│   ├── CloudinaryConfig.java
+│   ├── CorsConfig.java
+│   ├── GlobalExceptionHandler.java
+│   ├── SecurityConfig.java
+│   ├── WebSocketAuthInterceptor.java
+│   └── WebSocketConfig.java
+├── controller/                        # REST Controllers
+│   ├── ActivityController.java        # /users/{userId}/activity
+│   ├── AuthController.java            # /auth/** (register, login, google, otp, reset-pw)
+│   ├── ChatMessageController.java     # /messages/**
+│   ├── ConversationController.java    # /conversations/**
+│   ├── EventController.java           # /events/**
 │   ├── FriendController.java          # /friends/**
+│   ├── GameController.java            # /games/**
+│   ├── GroupController.java           # /groups/**
 │   ├── NotificationController.java    # /notifications/**
 │   ├── PostController.java            # /posts/**
 │   ├── RootController.java            # / (health check)
+│   ├── SearchController.java          # /search/**
+│   ├── StoryController.java           # /stories/**
 │   ├── UploadController.java          # /upload
-│   └── UserController.java            # /users/**
-├── dto/                               # Data Transfer Objects
-│   ├── CommentCreateDto.java
-│   ├── CommentResponseDto.java
-│   ├── ForgotPasswordDto.java
-│   ├── FriendRequestResponseDto.java
-│   ├── FriendshipResponseDto.java
-│   ├── MessageDto.java                # Generic { message: string }
-│   ├── NotificationResponseDto.java
-│   ├── PostCreateDto.java
-│   ├── PostResponseDto.java           # Chứa nested UserOutDto
-│   ├── PostUpdateDto.java
-│   ├── ResetPasswordDto.java
-│   ├── TokenDto.java                  # { access_token, token_type }
-│   ├── UserCreateDto.java
-│   ├── UserResponseDto.java
-│   └── UserUpdateDto.java
-├── entity/                            # JPA Entities (database tables)
-│   ├── Comment.java                   # comments — hỗ trợ reply (parentId)
-│   ├── CommentLike.java               # comment_likes — unique(comment_id, user_id)
-│   ├── Friendship.java                # friendships — status: pending/accepted
-│   ├── Like.java                      # likes — unique(user_id, post_id)
-│   ├── Notification.java             # notifications — type: like/comment/friend_request
-│   ├── Post.java                      # posts — hỗ trợ share (sharedPostId)
-│   └── User.java                      # users — avatar, cover, bio, reset_password_otp
+│   └── UserController.java            # /users/** (profile & user management)
+├── dto/                               # DTO chia theo domain/feature
+│   ├── auth/                          # TokenDto, Login/Register DTOs, OTP DTOs
+│   ├── chat/                          # Conversation & Message DTOs, WebSockets
+│   ├── common/                        # MessageDto, PagedResponseDto, SearchResultDto
+│   ├── event/                         # EventCreateDto, EventResponseDto
+│   ├── game/                          # GameResponseDto, Score, Leaderboard, Stats
+│   ├── notification/                  # NotificationResponseDto
+│   ├── post/                          # PostCreateDto, PostResponseDto, Comment, Reactions
+│   ├── social/                        # Friendships, SocialGroupDto, SocialGroupMemberDto
+│   ├── story/                         # StoryCreateDto, StoryResponseDto, StoryGroupDto
+│   └── user/                          # UserResponseDto, UserUpdateDto, ActivityDataDto
+├── entity/                            # JPA Entities (Database tables)
+│   ├── Comment.java
+│   ├── CommentLike.java
+│   ├── Conversation.java
+│   ├── ConversationMember.java
+│   ├── Event.java
+│   ├── Friendship.java
+│   ├── Game.java
+│   ├── GameAchievement.java
+│   ├── GameScore.java
+│   ├── Group.java
+│   ├── GroupMember.java
+│   ├── Like.java
+│   ├── Message.java
+│   ├── Notification.java
+│   ├── Post.java
+│   ├── Story.java
+│   ├── User.java
+│   └── UserGameAchievement.java
+├── mapper/                            # Entity ↔ DTO Mappers
+│   ├── ConversationMapper.java
+│   ├── GameMapper.java
+│   ├── PostMapper.java
+│   ├── StoryMapper.java
+│   └── UserMapper.java
 ├── repository/                        # Spring Data JPA Repositories
-│   ├── CommentLikeRepository.java
-│   ├── CommentRepository.java
-│   ├── FriendshipRepository.java
-│   ├── LikeRepository.java
-│   ├── NotificationRepository.java
-│   ├── PostRepository.java
-│   └── UserRepository.java
-├── security/
-│   ├── JwtAuthenticationFilter.java   # OncePerRequestFilter — extract JWT from header
-│   └── JwtTokenProvider.java          # Generate/validate JWT, claim = email
-└── service/
-    ├── FriendService.java             # Gửi/chấp nhận lời mời, gợi ý bạn bè
-    ├── InteractionService.java        # Like/unlike post, like comment, tạo comment
-    ├── NotificationService.java       # Tạo & đọc thông báo
-    ├── PostService.java               # CRUD post, feed ranking algorithm
-    ├── UploadService.java             # Upload ảnh lên Cloudinary
-    └── UserService.java               # Register, login, forgot/reset password, profile
+├── security/                          # JWT filter & token provider
+│   ├── JwtAuthenticationFilter.java
+│   └── JwtTokenProvider.java
+├── service/                           # Business Services
+│   ├── ActivityService.java
+│   ├── AuthService.java               # Authentication, OTP, OAuth logic
+│   ├── ChatMessageService.java
+│   ├── ConversationService.java
+│   ├── EventService.java
+│   ├── FriendService.java
+│   ├── GameService.java
+│   ├── GroupService.java
+│   ├── InteractionService.java
+│   ├── NotificationService.java
+│   ├── PostService.java
+│   ├── SearchService.java
+│   ├── StoryService.java
+│   ├── UploadService.java
+│   └── UserService.java               # Profile & user queries
+└── websocket/                         # WebSocket event listeners
+    └── WebSocketEventListener.java
 ```
 
-### 2.3 Database Schema (Entity Relationships)
+### 2.3 Spring Profiles & Database Configuration
 
-```
-┌─────────────┐     1:N     ┌─────────────┐     1:N     ┌─────────────┐
-│   users     │────────────>│   posts     │────────────>│  comments   │
-│─────────────│             │─────────────│             │─────────────│
-│ id (PK)     │             │ id (PK)     │             │ id (PK)     │
-│ username    │             │ title       │             │ content     │
-│ email       │             │ content     │             │ user_id (FK)│
-│ hashed_pwd  │             │ image_url   │             │ post_id (FK)│
-│ avatar_url  │             │ owner_id(FK)│             │ parent_id   │ ← reply
-│ cover_url   │             │ shared_post │             └─────┬───────┘
-│ bio         │             │ _id (FK)    │ ← share           │ 1:N
-│ reset_otp   │             │ created_at  │             ┌─────┴───────┐
-└──────┬──────┘             └──────┬──────┘             │comment_likes│
-       │                           │ 1:N                │─────────────│
-       │                    ┌──────┴──────┐             │ comment_id  │
-       │                    │   likes     │             │ user_id     │
-       │                    │─────────────│             │ created_at  │
-       │                    │ user_id     │             └─────────────┘
-       │                    │ post_id(FK) │
-       │                    └─────────────┘
-       │
-       │  N:N (qua friendships)
-┌──────┴──────────┐
-│  friendships    │
-│─────────────────│
-│ user_id         │ ← người gửi
-│ friend_id       │ ← người nhận
-│ status          │ ← "pending" | "accepted"
-└─────────────────┘
-
-┌─────────────────┐
-│  notifications  │
-│─────────────────│
-│ recipient_id    │
-│ sender_id       │
-│ type            │ ← "like" | "comment" | "friend_request"
-│ target_id       │ ← post_id liên quan
-│ is_read         │
-│ created_at      │
-└─────────────────┘
-```
-
-### 2.4 API Endpoints
-
-#### Users (`/users`)
-| Method | Path                   | Auth     | Mô tả                        |
-|--------|------------------------|----------|-------------------------------|
-| POST   | `/users/register`      | Public   | Đăng ký tài khoản             |
-| POST   | `/users/login`         | Public   | Đăng nhập (form-urlencoded: username=email, password) |
-| POST   | `/users/forgot-password`| Public  | Gửi OTP reset password (trả OTP trực tiếp - demo) |
-| POST   | `/users/reset-password` | Public  | Đặt lại mật khẩu bằng OTP    |
-| GET    | `/users/me`            | 🔒 Token | Lấy thông tin user hiện tại   |
-| PUT    | `/users/me`            | 🔒 Token | Cập nhật profile              |
-| GET    | `/users`               | Public   | Danh sách tất cả user         |
-| GET    | `/users/{id}`          | Public   | Lấy user theo ID              |
-
-#### Posts (`/posts`)
-| Method | Path                                    | Auth     | Mô tả                          |
-|--------|-----------------------------------------|----------|---------------------------------|
-| POST   | `/posts`                                | 🔒 Token | Tạo bài viết                    |
-| GET    | `/posts`                                | Optional | Danh sách bài (feed, sorted)    |
-| GET    | `/posts/{id}`                           | Public   | Chi tiết bài viết               |
-| GET    | `/posts/user/{userId}`                  | Optional | Bài viết của 1 user             |
-| PUT    | `/posts/{id}`                           | 🔒 Owner | Sửa bài viết                    |
-| DELETE | `/posts/{id}`                           | 🔒 Owner | Xóa bài viết                    |
-| POST   | `/posts/{id}/like`                      | 🔒 Token | Toggle like/unlike              |
-| POST   | `/posts/{id}/comments`                  | 🔒 Token | Tạo bình luận                   |
-| GET    | `/posts/{id}/comments`                  | Optional | Danh sách bình luận             |
-| POST   | `/posts/{id}/comments/{commentId}/like` | 🔒 Token | Toggle like bình luận           |
-
-#### Friends (`/friends`)
-| Method | Path                         | Auth     | Mô tả                     |
-|--------|------------------------------|----------|----------------------------|
-| POST   | `/friends/request/{friendId}`| 🔒 Token | Gửi lời mời kết bạn       |
-| POST   | `/friends/accept/{requestId}`| 🔒 Token | Chấp nhận lời mời         |
-| GET    | `/friends/list`              | 🔒 Token | Danh sách bạn bè           |
-| GET    | `/friends/requests`          | 🔒 Token | Lời mời đang chờ           |
-| GET    | `/friends/suggestions`       | 🔒 Token | Gợi ý kết bạn             |
-
-#### Notifications (`/notifications`)
-| Method | Path                           | Auth     | Mô tả                     |
-|--------|--------------------------------|----------|----------------------------|
-| GET    | `/notifications`               | 🔒 Token | Lấy thông báo              |
-| PUT    | `/notifications/{id}/read`     | 🔒 Token | Đánh dấu đã đọc            |
-
-#### Conversations & Real-time Messages (`/conversations`, `/ws`)
-| Method | Path | Auth | Mô tả |
-|---|---|---|---|
-| GET | `/conversations` | 🔒 Token | Danh sách cuộc trò chuyện (với tin nhắn cuối, số tin chưa đọc) |
-| GET | `/conversations/{id}` | 🔒 Token | Chi tiết cuộc trò chuyện |
-| POST | `/conversations/direct` | 🔒 Token | Tạo/mở cuộc trò chuyện 1-1 (`{ userId }`) |
-| POST | `/conversations/group` | 🔒 Token | Tạo nhóm trò chuyện (`{ name, memberIds, avatarUrl }`) |
-| PUT | `/conversations/{id}` | 🔒 Token | Đổi tên/ảnh nhóm |
-| POST | `/conversations/{id}/members` | 🔒 Token | Thêm thành viên vào nhóm (`{ memberIds }`) |
-| DELETE | `/conversations/{id}/members/{userId}` | 🔒 Token | Xóa thành viên khỏi nhóm |
-| POST | `/conversations/{id}/leave` | 🔒 Token | Rời khỏi nhóm |
-| GET | `/conversations/{id}/messages` | 🔒 Token | Lấy lịch sử tin nhắn (phân trang: `page`, `size`) |
-| POST | `/conversations/{id}/messages` | 🔒 Token | Gửi tin nhắn mới (REST fallback) |
-| PUT | `/conversations/{id}/read` | 🔒 Token | Đánh dấu đã đọc cuộc trò chuyện |
-| DELETE | `/messages/{id}` | 🔒 Token | Thu hồi tin nhắn |
-| WS | `/ws` (STOMP over SockJS) | 🔒 JWT | Real-time chat, typing indicator, read receipts, online status |
-
-#### Activity (`/users/{userId}/activity`)
-| Method | Path                           | Auth     | Mô tả                     |
-|--------|--------------------------------|----------|----------------------------|
-| GET    | `/users/{userId}/activity`     | 🔒 Token | Lấy tần suất hoạt động 30 ngày |
-
-#### Games (`/games`)
-| Method | Path | Auth | Mô tả |
-|---|---|---|---|
-| GET | `/games` | Optional | Danh sách game (lọc category, search keyword, kèm high score nếu có token) |
-| GET | `/games/{id}` | Optional | Chi tiết game + high score |
-| POST | `/games/{id}/scores` | 🔒 Token | Submit điểm lượt chơi (validate maxScore, rate limit 5s, mở khóa achievements) |
-| GET | `/games/{id}/leaderboard` | Public | Bảng xếp hạng từng game (phân trang: `page`, `size`) |
-| GET | `/games/{id}/scores/me` | 🔒 Token | Lịch sử điểm của user hiện tại cho game này |
-| GET | `/games/{id}/achievements` | Optional | Danh sách thành tựu (kèm trạng thái mở khóa nếu có token) |
-| GET | `/games/leaderboard/global` | Public | Bảng xếp hạng toàn server (phân trang: `page`, `size`) |
-| GET | `/games/stats/me` | 🔒 Token | Thống kê chơi game của user hiện tại |
-| GET | `/games/stats/{userId}` | Public | Thống kê chơi game của user bất kỳ |
-
-#### Upload (`/upload`)
-| Method | Path       | Auth   | Mô tả                         |
-|--------|------------|--------|--------------------------------|
-| POST   | `/upload`  | Public | Upload ảnh lên Cloudinary      |
-
-### 2.5 Xác Thực (Authentication Flow)
-
-1. User đăng nhập qua `POST /users/login` (gửi email + password dạng form-urlencoded).
-2. Backend trả về `{ access_token, token_type: "bearer" }`.
-3. Frontend lưu `access_token` vào `localStorage`.
-4. Mỗi request tiếp theo, Axios interceptor tự động gắn header `Authorization: Bearer <token>`.
-5. `JwtAuthenticationFilter` giải mã token → lấy email → tìm User từ DB → set vào SecurityContext.
-6. JWT claim chính: `sub` = email, thuật toán: HMAC-SHA256.
-7. Cấu hình JWT: `jwt.secret` và `jwt.expiration` từ `application.properties` / biến môi trường.
-
-### 2.6 Feed Ranking Algorithm (PostService.getPosts)
-
-Thuật toán xếp hạng bài viết trên News Feed:
-1. **Nếu user đã đăng nhập**: Ưu tiên bài viết của bạn bè + chính mình trước.
-2. **Trong cùng nhóm ưu tiên**: Sắp xếp theo tổng tương tác (likes + comments) giảm dần.
-3. **Nếu tương tác bằng nhau**: Sắp xếp theo ID (mới nhất trước).
-4. **Nếu chưa đăng nhập**: Chỉ sắp xếp theo tương tác, rồi theo ID.
-
-### 2.7 Environment Variables (backend-java/.env)
-
-```
-DATABASE_URL=jdbc:postgresql://<host>:<port>/<dbname>
-DATABASE_USERNAME=<username>
-DATABASE_PASSWORD=<password>
-JWT_SECRET=<secret_key>
-JWT_EXPIRATION=86400000          # 24 giờ tính bằng milliseconds
-CLOUDINARY_CLOUD_NAME=<name>
-CLOUDINARY_API_KEY=<key>
-CLOUDINARY_API_SECRET=<secret>
-```
+- **Development (`application.yaml`)**:
+  - `spring.jpa.hibernate.ddl-auto: update` (tiện cho development).
+- **Production (`application-prod.yaml`)**:
+  - `spring.jpa.hibernate.ddl-auto: validate` (an toàn, bảo vệ dữ liệu sản phẩm).
 
 ---
 
-## 3. Frontend (Next.js)
+## 3. Frontend Next.js
 
 ### 3.1 Tech Stack
 
-- **Next.js 16.2.3** (App Router)
-- **React 19.2.4** + TypeScript
-- **TailwindCSS 4.2.2** (PostCSS plugin)
-- **Axios 1.15.0** — HTTP client
+- **Next.js 16.2.3** (App Router, Turbopack)
+- **React 19.2.4** + TypeScript 5
+- **TailwindCSS 4.2.2**
+- **Axios 1.15.0** (API client với auth interceptor)
+- **Mapbox GL 3.31.0** (Bản đồ tương tác)
+- **STOMPjs 7.3.0 & SockJS 1.6.1** (WebSocket real-time chat)
+- **Lucide React** (Bộ icon hiện đại)
 - Font: **Outfit** (Google Fonts)
 
-### 3.1.1 Design System — Modern Dark Theme
-
-- **Bảng màu chủ đạo**:
-  - Background: Deep Navy `#0F0B1E`
-  - Accent Purple: `#8B5CF6`
-  - Accent Pink (Sakura): `#EC4899`
-  - Accent Cyan: `#06B6D4`
-  - Text Primary: `#F0E6FF`
-  - Text Secondary: `#A78BCA`
-- **Hiệu ứng CSS**: Glassmorphism (`glass-card`, `glass-nav`), gradient borders, glow effects
-- **Animations**: `sparkle`, `float`, `glow-pulse`, `heart-pop`, `slide-up`, `shimmer`
-- **Utility Classes** (globals.css): `btn-anime`, `input-anime`, `avatar-glow`, `gradient-text`, `badge-anime`, `nav-active`, `sidebar-active`
-- **Logo**: Gradient VN (tím-hồng-cyan) thay vì "f" (Facebook)
-
-### 3.2 Cấu Trúc Thư Mục
+### 3.2 Cấu Trúc Thư Mục Frontend
 
 ```
 frontend/
 ├── app/
 │   ├── layout.tsx                     # Root layout (Outfit font, dark theme)
 │   ├── globals.css                    # Anime dark theme CSS + animations + utilities
-│   ├── page.tsx                       # "/" — Trang chủ (News Feed + Trending)
+│   ├── loading.tsx                    # Global Suspense loading spinner
+│   ├── error.tsx                      # Global App Router error boundary
+│   ├── page.tsx                       # "/" — Trang chủ (tối giản, orchestration ~160 dòng)
 │   ├── (auth)/                        # Route group cho auth pages
-│   │   ├── login/page.tsx             # "/login" — Đăng nhập (glassmorphism)
-│   │   ├── register/page.tsx          # "/register" — Đăng ký
-│   │   └── forgot-password/page.tsx   # "/forgot-password" — Quên mật khẩu
-│   ├── profile/
-│   │   ├── page.tsx                   # "/profile" — Profile redirect
-│   │   └── [id]/page.tsx             # "/profile/:id" — Trang cá nhân (+ biểu đồ hoạt động)
+│   │   ├── login/page.tsx
+│   │   ├── register/page.tsx
+│   │   └── forgot-password/page.tsx
 │   ├── friends/page.tsx               # "/friends" — Quản lý bạn bè
-│   ├── games/page.tsx                 # "/games" — Trò chơi (UI placeholder)
-│   ├── livestream/page.tsx            # "/livestream" — Phát trực tiếp (UI placeholder)
-│   ├── marketplace/page.tsx           # "/marketplace" — Chợ mua bán (UI placeholder)
-│   ├── groups/page.tsx                # "/groups" — Nhóm (UI placeholder)
-│   ├── messages/page.tsx              # "/messages" — Tin nhắn (REST API + polling 3s)
-│   └── settings/page.tsx             # "/settings" — Cài đặt tài khoản
+│   ├── games/                         # "/games" — Trò chơi & BXH
+│   │   ├── page.tsx
+│   │   └── [id]/
+│   │       ├── page.tsx
+│   │       └── play/page.tsx
+│   ├── groups/                        # "/groups" — Hội nhóm cộng đồng
+│   ├── livestream/page.tsx            # "/livestream"
+│   ├── map/page.tsx                   # "/map" — Bản đồ tương tác Mapbox
+│   ├── marketplace/page.tsx           # "/marketplace" — Chợ thương mại
+│   ├── messages/page.tsx              # "/messages" — Tin nhắn hội thoại
+│   ├── profile/                       # "/profile", "/profile/[id]"
+│   ├── search/page.tsx                # "/search" — Tìm kiếm người dùng, bài viết
+│   └── settings/page.tsx              # "/settings" — Cài đặt tài khoản
 ├── components/
-│   ├── Navbar.tsx                     # Thanh navigation glassmorphism (logo VN, 5 nav icons, messages, notifications dropdown)
-│   ├── PostCard.tsx                   # Component bài viết dark theme (heart like ❤️, glassmorphism cards)
-│   └── Sidebar.tsx                    # Sidebar trái (7 menu items + cài đặt)
+│   ├── home/                          # Modular Home Components
+│   │   ├── WelcomeBanner.tsx
+│   │   ├── GroupCircleRow.tsx
+│   │   ├── PostComposer.tsx
+│   │   ├── FeedList.tsx
+│   │   ├── FriendsSidebar.tsx
+│   │   └── TrendingSidebar.tsx
+│   ├── post/                          # Modular Post Components
+│   │   ├── PostCard.tsx
+│   │   ├── PostHeader.tsx
+│   │   ├── PostContent.tsx
+│   │   ├── PostReactions.tsx
+│   │   ├── PostComments.tsx
+│   │   ├── PostEditForm.tsx
+│   │   └── ShareModal.tsx
+│   ├── navbar/                        # Modular Navbar Components
+│   │   ├── Navbar.tsx
+│   │   ├── NavSearch.tsx
+│   │   ├── NavLinks.tsx
+│   │   ├── NotificationDropdown.tsx
+│   │   └── NavActions.tsx
+│   ├── map/                           # Modular Map Components
+│   │   ├── MapComponent.tsx
+│   │   ├── MapSearchBar.tsx
+│   │   ├── MapControls.tsx
+│   │   ├── MapSidebar.tsx
+│   │   ├── MapDirections.tsx
+│   │   └── types.ts
+│   ├── ui/                            # Shared Reusable UI Primitives
+│   │   ├── Avatar.tsx                 # Avatar có fallback initials, glow, size
+│   │   ├── Modal.tsx                  # Base modal chuẩn accessibility & animation
+│   │   ├── Spinner.tsx                # Loading spinner nhất quán
+│   │   ├── EmptyState.tsx             # State khi không có dữ liệu
+│   │   └── ConfirmDialog.tsx          # Dialog xác nhận thao tác nguy hiểm
+│   ├── Navbar.tsx                     # Re-export tương thích ngược
+│   ├── PostCard.tsx                   # Re-export tương thích ngược
+│   ├── MapComponent.tsx               # Re-export tương thích ngược
+│   └── Sidebar.tsx                    # Sidebar điều hướng bên trái
+├── hooks/                             # Custom React Hooks
+│   ├── useAuth.ts                     # Kiểm tra session đăng nhập, load user
+│   ├── usePosts.ts                    # Quản lý feed bài viết
+│   ├── useFriends.ts                  # Lời mời, gợi ý bạn bè
+│   ├── useNotifications.ts            # Quản lý & đánh dấu đã đọc thông báo
+│   ├── useInfiniteScroll.ts           # IntersectionObserver hook cho cuộn vô tận
+│   └── useWebSocket.ts                # WebSocket STOMP client hook
 ├── lib/
-│   └── axios.ts                       # Axios instance + JWT interceptor
-│                                      # baseURL: https://vnnet-vn-java.onrender.com
-├── types/                             # TypeScript interfaces (hiện trống)
-├── public/                            # Static assets
-├── package.json
-├── tailwind.config.ts
-├── tsconfig.json
-└── next.config.ts
+│   └── axios.ts                       # Axios client + JWT interceptor
+└── types/                             # Strong TypeScript interfaces
+    ├── api.ts                         # PagedResponse, ApiResponse, ApiError
+    ├── user.ts                        # User, UserBrief, UserProfile
+    ├── post.ts                        # Post, Comment, Reaction
+    ├── friend.ts                      # Friendship, FriendRequest
+    ├── notification.ts                # Notification
+    ├── group.ts                       # Group, GroupMember
+    ├── event.ts                       # Event
+    ├── story.ts                       # Story, StoryGroup
+    ├── game.ts                        # Game, Score, Leaderboard, Achievement
+    └── messages.ts                    # Conversation, Message, Participant
 ```
-
-### 3.3 Luồng Xác Thực (Frontend)
-
-1. Khi vào trang chủ (`/`), kiểm tra `localStorage.getItem('token')`.
-2. Nếu không có token → redirect đến `/login`.
-3. Nếu có token → gọi `GET /users/me` để lấy thông tin user hiện tại.
-4. Token được tự động gắn vào mọi request bởi Axios interceptor (`lib/axios.ts`).
-5. Logout: Xóa token khỏi `localStorage` và redirect về `/login`.
-
-### 3.4 Trang Chủ (page.tsx) — Các Chức Năng Chính
-
-- **Create Post**: Form glassmorphism gồm title (tùy chọn), content (bắt buộc), upload ảnh (Cloudinary).
-- **News Feed**: Hiển thị danh sách bài viết bằng component `PostCard`.
-- **Friend Suggestions**: Sidebar phải hiển thị gợi ý kết bạn (tối đa 5 user) với gradient cards.
-- **Trending Topics**: Sidebar phải hiển thị xu hướng (hashtags tĩnh).
-
-### 3.5 PostCard Component — Tính Năng
-
-- Hiển thị bài viết: avatar (glow effect), username, nội dung, ảnh, thời gian.
-- Like/Unlike bài viết (toggle) — icon ❤️/🤍 với heart-pop animation.
-- Xem & tạo bình luận (accordion).
-- Like bình luận.
-- Chỉnh sửa bài viết (chỉ chủ sở hữu).
-- Xóa bài viết (chỉ chủ sở hữu).
-- Chia sẻ bài viết (share post) — modal glassmorphism.
-
-### 3.6 Các Trang Mới
-
-| Route          | Trang         | Trạng thái | Mô tả                                              |
-|----------------|---------------|------------|-----------------------------------------------------|
-| `/games`       | Trò chơi      | ✅ Hoàn thiện | Catalog mini game (Đố vui kiến thức, Lật thẻ trí nhớ, Gõ phím nhanh), lọc danh mục, BXH toàn server, thống kê cá nhân |
-| `/games/[id]`  | Chi tiết game | ✅ Hoàn thiện | Chi tiết trò chơi, BXH top người chơi, danh sách thành tựu (locked/unlocked), lịch sử điểm |
-| `/games/[id]/play` | Chơi game | ✅ Hoàn thiện | Màn chơi trực tiếp, timer, tính điểm, tự động lưu kết quả và mở khóa thành tựu |
-| `/livestream`  | Phát trực tiếp| Mock UI    | Stream cards với LIVE badge, viewer count, categories|
-| `/marketplace` | Chợ           | Mock UI    | Product cards với giá, địa điểm, categories         |
-| `/groups`      | Nhóm          | Mock UI    | Group cards, member count, nút "Tham gia"           |
-| `/messages`    | Tin nhắn      | ✅ Hoàn thiện | Split-view: danh sách hội thoại + chat WebSocket + gửi tin nhắn |
-
-> ⚠️ Các trang `/livestream`, `/marketplace`, `/groups` hiển thị **dữ liệu tĩnh (mock data)**. Cần thêm API backend nếu muốn dữ liệu thật.
-
-### 3.7 API Base URL
-
-```typescript
-// lib/axios.ts
-const api = axios.create({
-  baseURL: 'https://vnnet-vn-java.onrender.com',
-});
-```
-
-**CORS Origins được phép** (từ backend):
-- `http://localhost:3000` (dev)
-- `https://vnnet-vn.vercel.app` (production)
 
 ---
 
 ## 4. Quy Ước & Pattern Quan Trọng
 
-### 4.1 Naming Convention (API Response)
-- Backend Java dùng **camelCase** cho DTO fields (ví dụ: `avatarUrl`, `likesCount`).
-- Frontend đôi khi truy cập bằng **snake_case** (ví dụ: `avatar_url`) — cần chú ý sự không nhất quán này.
+### 4.1 Re-exporting Pattern cho Components
+Để đảm bảo các file code cũ import `components/PostCard.tsx`, `components/Navbar.tsx`, `components/MapComponent.tsx` không bị ảnh hưởng, các file này thực hiện re-export từ thư mục con tương ứng:
+```tsx
+'use client';
+export * from './post/PostCard';
+export { default } from './post/PostCard';
+```
 
-### 4.2 Authentication Pattern
-- Controller nhận `Authentication authentication` parameter.
-- Lấy user hiện tại: `User currentUser = (User) authentication.getPrincipal();`
-- Tất cả endpoint cần auth → Spring Security tự chặn nếu thiếu token.
-
-### 4.3 Error Handling
-- Backend throw `ResponseStatusException(HttpStatus.XXX, "message")`.
-- `GlobalExceptionHandler` xử lý tập trung.
-- Frontend bắt lỗi bằng `try/catch` + hiển thị `alert()`.
-
-### 4.4 Image Upload Flow
-1. Frontend chọn file → tạo preview bằng `FileReader`.
-2. Gửi `POST /upload` (multipart/form-data) → Cloudinary.
-3. Nhận URL → gửi kèm khi tạo/sửa bài viết.
+### 4.2 Shared UI & Hooks Reusability
+- Mọi avatar trong hệ thống ưu tiên sử dụng `components/ui/Avatar`.
+- Mọi modal và hộp thoại xác nhận sử dụng `components/ui/Modal` và `components/ui/ConfirmDialog`.
+- Logic authentication dùng chung qua hook `useAuth()`.
 
 ---
 
-## 5. Deploy & Infrastructure
+## 5. Build & Verification Commands
 
-```
-┌──────────────┐     HTTPS      ┌───────────────────┐     JDBC     ┌──────────┐
-│   Vercel     │ ──────────────>│   Render          │ ──────────>  │PostgreSQL│
-│  (Frontend)  │   API calls    │  (Spring Boot)    │              │ (Render) │
-│  Next.js 16  │                │  Java 17 + Maven  │              └──────────┘
-└──────────────┘                └────────┬──────────┘
-                                         │ Upload API
-                                         v
-                                  ┌──────────────┐
-                                  │  Cloudinary  │
-                                  │  (Images)    │
-                                  └──────────────┘
+### Backend Java
+```bash
+cd backend-java
+./mvnw clean compile
 ```
 
-### URLs
-- **Frontend Production**: `https://vnnet-vn.vercel.app`
-- **Backend Production**: `https://vnnet-vn-java.onrender.com`
-- **Frontend Local**: `http://localhost:3000`
-- **Backend Local**: `http://localhost:8080`
+### Frontend Next.js
+```bash
+cd frontend
+npm run build
+```
+Cả hai môi trường đều tự động kiểm tra cú pháp, typing và compile trước khi deploy.

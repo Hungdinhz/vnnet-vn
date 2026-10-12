@@ -1,8 +1,8 @@
 package com.example.backend_java.controller;
 
-import com.example.backend_java.dto.ChatMessageRequestDto;
-import com.example.backend_java.dto.ReadReceiptDto;
-import com.example.backend_java.dto.TypingEventDto;
+import com.example.backend_java.dto.chat.ChatMessageRequestDto;
+import com.example.backend_java.dto.chat.ReadReceiptDto;
+import com.example.backend_java.dto.chat.TypingEventDto;
 import com.example.backend_java.entity.User;
 import com.example.backend_java.service.ChatMessageService;
 import lombok.RequiredArgsConstructor;

@@ -1,7 +1,7 @@
 package com.example.backend_java.service;
 
-import com.example.backend_java.dto.EventCreateDto;
-import com.example.backend_java.dto.EventResponseDto;
+import com.example.backend_java.dto.event.EventCreateDto;
+import com.example.backend_java.dto.event.EventResponseDto;
 import com.example.backend_java.entity.Event;
 import com.example.backend_java.entity.Group;
 import com.example.backend_java.entity.User;
