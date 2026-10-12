@@ -1,6 +1,6 @@
 package com.example.backend_java.service;
 
-import jakarta.mail.MessagingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.mail.internet.MimeMessage;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -8,16 +8,37 @@ import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 @Service
 public class EmailService {
 
     private final JavaMailSender mailSender;
+    private final ObjectMapper objectMapper;
+    private final HttpClient httpClient;
 
     @Value("${spring.mail.username:}")
     private String fromEmail;
 
-    public EmailService(JavaMailSender mailSender) {
+    @Value("${brevo.api-key:}")
+    private String brevoApiKey;
+
+    @Value("${resend.api-key:}")
+    private String resendApiKey;
+
+    public EmailService(JavaMailSender mailSender, ObjectMapper objectMapper) {
         this.mailSender = mailSender;
+        this.objectMapper = objectMapper != null ? objectMapper : new ObjectMapper();
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(10))
+                .build();
     }
 
     @Async("taskExecutor")
@@ -35,10 +56,30 @@ public class EmailService {
     }
 
     private void sendHtmlEmail(String to, String subject, String htmlBody) {
+        // 1. Gửi qua Brevo REST API (HTTPS port 443 - hoạt động tốt trên Render Free Tier vì không bị chặn port SMTP)
+        if (brevoApiKey != null && !brevoApiKey.isBlank()) {
+            boolean success = sendViaBrevo(to, subject, htmlBody);
+            if (success) {
+                return;
+            }
+            System.err.println("Brevo API gửi không thành công, kiểm tra các phương thức dự phòng...");
+        }
+
+        // 2. Gửi qua Resend REST API (HTTPS port 443)
+        if (resendApiKey != null && !resendApiKey.isBlank()) {
+            boolean success = sendViaResend(to, subject, htmlBody);
+            if (success) {
+                return;
+            }
+            System.err.println("Resend API gửi không thành công, kiểm tra các phương thức dự phòng...");
+        }
+
+        // 3. Dự phòng gửi qua JavaMailSender (SMTP) - hoạt động tốt ở Local (port 587)
         if (fromEmail == null || fromEmail.isBlank()) {
-            System.err.println("WARN: Chưa cấu hình SPRING_MAIL_USERNAME trong .env, bỏ qua gửi email đến " + to);
+            System.err.println("WARN: Chưa cấu hình SPRING_MAIL_USERNAME hoặc BREVO_API_KEY trong cấu hình, không thể gửi email đến: " + to);
             return;
         }
+
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -47,10 +88,92 @@ public class EmailService {
             helper.setSubject(subject);
             helper.setText(htmlBody, true);
             mailSender.send(message);
-            System.out.println("Đã gửi email OTP thành công đến: " + to);
+            System.out.println("Đã gửi email OTP thành công qua SMTP đến: " + to);
         } catch (Exception e) {
-            System.err.println("Lỗi khi gửi email đến " + to + ": " + e.getMessage());
+            System.err.println("Lỗi khi gửi email SMTP đến " + to + ": " + e.getMessage());
+            System.err.println("CHÚ Ý: Render Free Tier chặn tất cả các port SMTP (587, 465, 25). Vui lòng cấu hình biến môi trường BREVO_API_KEY trên Render Dashboard (Environment) để gửi email qua HTTPS port 443!");
             e.printStackTrace();
+        }
+    }
+
+    private boolean sendViaBrevo(String to, String subject, String htmlBody) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+
+            Map<String, String> sender = new HashMap<>();
+            sender.put("name", "VnNet");
+            sender.put("email", (fromEmail != null && !fromEmail.isBlank()) ? fromEmail.trim() : "hotro.vnnet1@gmail.com");
+            payload.put("sender", sender);
+
+            Map<String, String> recipient = new HashMap<>();
+            recipient.put("email", to.trim());
+            payload.put("to", List.of(recipient));
+
+            payload.put("subject", subject);
+            payload.put("htmlContent", htmlBody);
+
+            String requestBody = objectMapper.writeValueAsString(payload);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.brevo.com/v3/smtp/email"))
+                    .timeout(Duration.ofSeconds(10))
+                    .header("Accept", "application/json")
+                    .header("Content-Type", "application/json")
+                    .header("api-key", brevoApiKey.trim())
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                System.out.println("Đã gửi email OTP thành công qua Brevo REST API đến: " + to);
+                return true;
+            } else {
+                System.err.println("Gửi qua Brevo API thất bại! Mã HTTP: " + response.statusCode() + ", Phản hồi: " + response.body());
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi kết nối khi gửi email qua Brevo API đến " + to + ": " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private boolean sendViaResend(String to, String subject, String htmlBody) {
+        try {
+            Map<String, Object> payload = new HashMap<>();
+            String sender = (fromEmail != null && !fromEmail.isBlank() && !fromEmail.endsWith("@gmail.com"))
+                    ? "VnNet <" + fromEmail.trim() + ">"
+                    : "VnNet <onboarding@resend.dev>";
+
+            payload.put("from", sender);
+            payload.put("to", List.of(to.trim()));
+            payload.put("subject", subject);
+            payload.put("html", htmlBody);
+
+            String requestBody = objectMapper.writeValueAsString(payload);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.resend.com/emails"))
+                    .timeout(Duration.ofSeconds(10))
+                    .header("Authorization", "Bearer " + resendApiKey.trim())
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                System.out.println("Đã gửi email OTP thành công qua Resend REST API đến: " + to);
+                return true;
+            } else {
+                System.err.println("Gửi qua Resend API thất bại! Mã HTTP: " + response.statusCode() + ", Phản hồi: " + response.body());
+                return false;
+            }
+        } catch (Exception e) {
+            System.err.println("Lỗi kết nối khi gửi email qua Resend API đến " + to + ": " + e.getMessage());
+            e.printStackTrace();
+            return false;
         }
     }
 

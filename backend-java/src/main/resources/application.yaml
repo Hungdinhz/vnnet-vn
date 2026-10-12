@@ -54,3 +54,10 @@ cloudinary:
 
 google:
   client-id: ${GOOGLE_CLIENT_ID:}
+
+brevo:
+  api-key: ${BREVO_API_KEY:}
+
+resend:
+  api-key: ${RESEND_API_KEY:}
+
