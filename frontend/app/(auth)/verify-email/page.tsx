@@ -95,6 +95,9 @@ function VerifyEmailContent() {
       setSuccess('Đã gửi lại mã OTP mới. Vui lòng kiểm tra email.');
       setTimeout(() => setSuccess(''), 4000);
     } catch (err: any) {
+      if (err.response?.status === 429) {
+        setCooldown(60);
+      }
       setError(err.response?.data?.detail || 'Không thể gửi lại mã OTP. Vui lòng thử lại sau.');
     }
   };

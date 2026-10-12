@@ -65,6 +65,9 @@ export default function ForgotPasswordPage() {
       setStep(2);
       setCooldown(60);
     } catch (err: any) {
+      if (err.response?.status === 429) {
+        setCooldown(60);
+      }
       setError(err.response?.data?.detail || 'Không thể gửi yêu cầu. Vui lòng kiểm tra lại email.');
     } finally {
       setIsLoading(false);

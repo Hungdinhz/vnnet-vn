@@ -359,8 +359,11 @@ public class AuthService {
                     .or(() -> pendingRegistrationRepository.findByUsername(identifier))
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không tìm thấy thông tin đăng ký chờ xác thực. Vui lòng đăng ký lại!"));
 
-            if (pending.getCreatedAt().plusSeconds(60).isAfter(LocalDateTime.now())) {
-                throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Vui lòng đợi 60 giây trước khi gửi lại mã");
+            if (pending.getCreatedAt() != null) {
+                long secondsDiff = java.time.Duration.between(pending.getCreatedAt(), LocalDateTime.now()).getSeconds();
+                if (secondsDiff >= 0 && secondsDiff < 60) {
+                    throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Vui lòng đợi 60 giây trước khi gửi lại mã");
+                }
             }
 
             int otpNum = 100000 + secureRandom.nextInt(900000);

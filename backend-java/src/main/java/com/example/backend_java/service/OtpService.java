@@ -29,8 +29,12 @@ public class OtpService {
 
         if (latestOpt.isPresent()) {
             VerificationToken latest = latestOpt.get();
-            if (latest.getCreatedAt().plusSeconds(60).isAfter(LocalDateTime.now())) {
-                throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Vui lòng đợi 60 giây trước khi gửi lại mã");
+            if (latest.getCreatedAt() != null) {
+                long secondsDiff = java.time.Duration.between(latest.getCreatedAt(), LocalDateTime.now()).getSeconds();
+                // Chỉ chặn nếu mã được tạo trong khoảng 0 đến 59 giây vừa qua
+                if (secondsDiff >= 0 && secondsDiff < 60) {
+                    throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Vui lòng đợi 60 giây trước khi gửi lại mã");
+                }
             }
         }
 
