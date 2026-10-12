@@ -31,6 +31,20 @@ function isMapReady(map: mapboxgl.Map | null): map is mapboxgl.Map {
   }
 }
 
+function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371e3;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 export default function MapComponent({ accessToken }: MapComponentProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<mapboxgl.Map | null>(null);
@@ -38,6 +52,15 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
   const selectedMarkerRef = useRef<mapboxgl.Marker | null>(null);
   const selectedPopupRef = useRef<mapboxgl.Popup | null>(null);
   const destinationMarkerRef = useRef<mapboxgl.Marker | null>(null);
+  const lastRoutedRef = useRef<{
+    destLat: number;
+    destLng: number;
+    userLat: number;
+    userLng: number;
+    mode: string;
+  } | null>(null);
+  const hasFittedBoundsRef = useRef(false);
+  const routeAbortControllerRef = useRef<AbortController | null>(null);
 
   const [currentStyle, setCurrentStyle] = useState<MapStyle>("streets");
   const [showStylePicker, setShowStylePicker] = useState(false);
@@ -82,6 +105,12 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
       destinationMarkerRef.current.remove();
       destinationMarkerRef.current = null;
     }
+    if (routeAbortControllerRef.current) {
+      routeAbortControllerRef.current.abort();
+      routeAbortControllerRef.current = null;
+    }
+    lastRoutedRef.current = null;
+    hasFittedBoundsRef.current = false;
     setDestination(null);
     setDirectionInfo(null);
     setShowDirections(false);
@@ -256,8 +285,14 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         };
-        setUserLocation(coords);
         updateUserMarker(coords);
+        setUserLocation((prev) => {
+          if (!prev) return coords;
+          const dist = getDistanceMeters(prev.lat, prev.lng, coords.lat, coords.lng);
+          // Only trigger React state re-render if moved more than 15 meters
+          if (dist >= 15) return coords;
+          return prev;
+        });
       },
       () => {},
       { enableHighAccuracy: true }
@@ -367,11 +402,31 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
     [selectPoint]
   );
 
-  // Fetch route when destination changes
+  // Fetch route when destination changes or travelMode changes
   useEffect(() => {
     if (!destination || !userLocation) return;
     const map = mapRef.current;
     if (!isMapReady(map)) return;
+
+    // Check if route was already computed for this destination and mode without significant movement
+    const last = lastRoutedRef.current;
+    if (last) {
+      const isSameDest =
+        Math.abs(last.destLat - destination.lat) < 0.00001 &&
+        Math.abs(last.destLng - destination.lng) < 0.00001;
+      const isSameMode = last.mode === travelMode;
+      const userDist = getDistanceMeters(last.userLat, last.userLng, userLocation.lat, userLocation.lng);
+
+      if (isSameDest && isSameMode && userDist < 50) {
+        return;
+      }
+    }
+
+    if (routeAbortControllerRef.current) {
+      routeAbortControllerRef.current.abort();
+    }
+    const abortController = new AbortController();
+    routeAbortControllerRef.current = abortController;
 
     const fetchRoute = async () => {
       setIsLoadingRoute(true);
@@ -379,7 +434,8 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
 
       try {
         const response = await fetch(
-          `https://api.mapbox.com/directions/v5/mapbox/${travelMode}/${userLocation.lng},${userLocation.lat};${destination.lng},${destination.lat}?access_token=${accessToken}&geometries=geojson&steps=true&overview=full&language=vi`
+          `https://api.mapbox.com/directions/v5/mapbox/${travelMode}/${userLocation.lng},${userLocation.lat};${destination.lng},${destination.lat}?access_token=${accessToken}&geometries=geojson&steps=true&overview=full&language=vi`,
+          { signal: abortController.signal }
         );
         const data = await response.json();
 
@@ -398,45 +454,60 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
             })),
           });
 
-          if (map.getLayer("route-line")) map.removeLayer("route-line");
-          if (map.getLayer("route-line-bg")) map.removeLayer("route-line-bg");
-          if (map.getSource("route")) map.removeSource("route");
+          lastRoutedRef.current = {
+            destLat: destination.lat,
+            destLng: destination.lng,
+            userLat: userLocation.lat,
+            userLng: userLocation.lng,
+            mode: travelMode,
+          };
 
-          map.addSource("route", {
-            type: "geojson",
-            data: {
-              type: "Feature",
-              properties: {},
-              geometry: {
-                type: "LineString",
-                coordinates: coords,
-              },
+          const routeSource = map.getSource("route") as mapboxgl.GeoJSONSource | undefined;
+          const routeGeoJson: GeoJSON.Feature<GeoJSON.LineString> = {
+            type: "Feature",
+            properties: {},
+            geometry: {
+              type: "LineString",
+              coordinates: coords,
             },
-          });
+          };
 
-          map.addLayer({
-            id: "route-line-bg",
-            type: "line",
-            source: "route",
-            layout: { "line-join": "round", "line-cap": "round" },
-            paint: {
-              "line-color": "#4F46E5",
-              "line-width": 8,
-              "line-opacity": 0.4,
-            },
-          });
+          if (routeSource) {
+            routeSource.setData(routeGeoJson);
+          } else {
+            map.addSource("route", {
+              type: "geojson",
+              data: routeGeoJson,
+            });
 
-          map.addLayer({
-            id: "route-line",
-            type: "line",
-            source: "route",
-            layout: { "line-join": "round", "line-cap": "round" },
-            paint: {
-              "line-color": "#818cf8",
-              "line-width": 4.5,
-              "line-opacity": 0.95,
-            },
-          });
+            if (!map.getLayer("route-line-bg")) {
+              map.addLayer({
+                id: "route-line-bg",
+                type: "line",
+                source: "route",
+                layout: { "line-join": "round", "line-cap": "round" },
+                paint: {
+                  "line-color": "#4F46E5",
+                  "line-width": 8,
+                  "line-opacity": 0.4,
+                },
+              });
+            }
+
+            if (!map.getLayer("route-line")) {
+              map.addLayer({
+                id: "route-line",
+                type: "line",
+                source: "route",
+                layout: { "line-join": "round", "line-cap": "round" },
+                paint: {
+                  "line-color": "#818cf8",
+                  "line-width": 4.5,
+                  "line-opacity": 0.95,
+                },
+              });
+            }
+          }
 
           if (destinationMarkerRef.current) {
             destinationMarkerRef.current.remove();
@@ -446,15 +517,19 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
             .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<strong>🏁 ${destination.name}</strong>`))
             .addTo(map);
 
-          const bounds = new mapboxgl.LngLatBounds();
-          coords.forEach((coord: [number, number]) => bounds.extend(coord));
-          bounds.extend([userLocation.lng, userLocation.lat]);
-          map.fitBounds(bounds, { padding: { top: 90, bottom: 90, left: 90, right: 90 }, duration: 1500 });
+          if (!hasFittedBoundsRef.current) {
+            hasFittedBoundsRef.current = true;
+            const bounds = new mapboxgl.LngLatBounds();
+            coords.forEach((coord: [number, number]) => bounds.extend(coord));
+            bounds.extend([userLocation.lng, userLocation.lat]);
+            map.fitBounds(bounds, { padding: { top: 90, bottom: 90, left: 90, right: 90 }, duration: 1500 });
+          }
         } else {
           alert("Không tìm được tuyến đường phù hợp.");
           clearRoute();
         }
-      } catch (err) {
+      } catch (err: any) {
+        if (err.name === 'AbortError') return;
         console.error("Lỗi tìm đường:", err);
         alert("Có lỗi xảy ra khi tính đường đi.");
         clearRoute();
@@ -464,6 +539,10 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
     };
 
     fetchRoute();
+
+    return () => {
+      abortController.abort();
+    };
   }, [destination, travelMode, accessToken, userLocation, clearRoute]);
 
   const handleCopyAddress = () => {
@@ -480,6 +559,11 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
     setCopiedCoordsToast(true);
     setTimeout(() => setCopiedCoordsToast(false), 2000);
   };
+
+  const handleSetTravelMode = useCallback((mode: "driving" | "walking" | "cycling") => {
+    hasFittedBoundsRef.current = false;
+    setTravelMode(mode);
+  }, []);
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-background">
@@ -519,13 +603,14 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
           copiedAddressToast={copiedAddressToast}
           copiedCoordsToast={copiedCoordsToast}
           onClear={clearSelectedPoint}
-          onStartDirection={() =>
+          onStartDirection={() => {
+            hasFittedBoundsRef.current = false;
             setDestination({
               lat: selectedPoint.lat,
               lng: selectedPoint.lng,
               name: selectedPoint.name,
-            })
-          }
+            });
+          }}
           onCopyAddress={handleCopyAddress}
           onCopyCoords={handleCopyCoords}
         />
@@ -536,7 +621,7 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
         <MapDirections
           destination={destination}
           travelMode={travelMode}
-          setTravelMode={setTravelMode}
+          setTravelMode={handleSetTravelMode}
           isLoadingRoute={isLoadingRoute}
           directionInfo={directionInfo}
           onClear={clearRoute}

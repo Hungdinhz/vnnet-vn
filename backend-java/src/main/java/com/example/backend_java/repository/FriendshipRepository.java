@@ -25,4 +25,7 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
 
     // Lấy lời mời đang chờ mà user hiện tại là người nhận
     List<Friendship> findByFriendIdAndStatus(Long friendId, String status);
+
+    // Lấy lời mời đang chờ mà user hiện tại là người gửi
+    List<Friendship> findByUserIdAndStatus(Long userId, String status);
 }

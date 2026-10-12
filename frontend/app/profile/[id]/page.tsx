@@ -17,8 +17,10 @@ export default function ProfilePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
-  const [isFriend, setIsFriend] = useState(false);
+  const [friendshipStatus, setFriendshipStatus] = useState<'none' | 'pending_sent' | 'pending_received' | 'accepted'>('none');
   const [friendshipId, setFriendshipId] = useState<number | null>(null);
+  const [requestId, setRequestId] = useState<number | null>(null);
+  const [isProcessingFriendAction, setIsProcessingFriendAction] = useState(false);
   const [showUnfriendConfirm, setShowUnfriendConfirm] = useState(false);
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [newBio, setNewBio] = useState('');
@@ -54,6 +56,38 @@ export default function ProfilePage() {
     finally { setIsLoadingPosts(false); }
   };
 
+  const fetchFriendshipStatus = async (targetId: number, myId: number) => {
+    try {
+      const res = await api.get(`/friends/status/${targetId}`);
+      const data = res.data;
+      if (data && data.status) {
+        setFriendshipStatus(data.status);
+        setFriendshipId(data.friendship_id || null);
+        setRequestId(data.request_id || null);
+        return;
+      }
+    } catch (e) {
+      console.error('Không thể lấy /friends/status, thử qua /friends/list:', e);
+    }
+    // Fallback qua /friends/list
+    try {
+      const fRes = await api.get('/friends/list');
+      const friendships = fRes.data || [];
+      const matched = friendships.find((f: any) =>
+        (f.user_id === myId && f.friend_id === targetId) ||
+        (f.friend_id === myId && f.user_id === targetId)
+      );
+      if (matched) {
+        setFriendshipStatus('accepted');
+        setFriendshipId(matched.id);
+      } else {
+        setFriendshipStatus('none');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) { router.push('/login'); return; }
@@ -62,17 +96,9 @@ export default function ProfilePage() {
         const r = await api.get('/users/me'); 
         const myId = r.data.id;
         setCurrentUserId(myId); 
-
-        const fRes = await api.get('/friends/list');
-        const friendships = fRes.data || [];
         const targetId = Number(id);
-        const matchedFriendship = friendships.find((f: any) => 
-           (f.user_id === myId && f.friend_id === targetId) || 
-           (f.friend_id === myId && f.user_id === targetId)
-        );
-        setIsFriend(!!matchedFriendship);
-        if (matchedFriendship) {
-          setFriendshipId(matchedFriendship.id);
+        if (targetId && targetId !== myId) {
+          await fetchFriendshipStatus(targetId, myId);
         }
       } catch (e) { console.error(e); }
     };
@@ -87,20 +113,84 @@ export default function ProfilePage() {
   };
 
   const handleAddFriend = async () => {
-    try { await api.post(`/friends/request/${id}`); toast.success(`Đã gửi lời mời kết bạn!`); }
-    catch (e: any) { toast.error(e.response?.data?.detail || "Lỗi"); }
+    setIsProcessingFriendAction(true);
+    try {
+      const res = await api.post(`/friends/request/${id}`);
+      toast.success('Đã gửi lời mời kết bạn!');
+      setFriendshipStatus('pending_sent');
+      if (res.data?.id) {
+        setRequestId(res.data.id);
+      }
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || "Không thể gửi lời mời kết bạn.");
+    } finally {
+      setIsProcessingFriendAction(false);
+    }
+  };
+
+  const handleCancelRequest = async () => {
+    setIsProcessingFriendAction(true);
+    try {
+      if (requestId) {
+        await api.delete(`/friends/request/${requestId}`);
+      } else {
+        await api.delete(`/friends/request/user/${id}`);
+      }
+      toast.success('Đã hủy lời mời kết bạn');
+      setFriendshipStatus('none');
+      setRequestId(null);
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || 'Không thể hủy lời mời.');
+    } finally {
+      setIsProcessingFriendAction(false);
+    }
+  };
+
+  const handleAcceptRequest = async () => {
+    if (!requestId) return;
+    setIsProcessingFriendAction(true);
+    try {
+      const res = await api.post(`/friends/accept/${requestId}`);
+      toast.success('Đã chấp nhận lời mời kết bạn!');
+      setFriendshipStatus('accepted');
+      if (res.data?.id) {
+        setFriendshipId(res.data.id);
+      }
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || 'Không thể chấp nhận lời mời.');
+    } finally {
+      setIsProcessingFriendAction(false);
+    }
+  };
+
+  const handleRejectRequest = async () => {
+    if (!requestId) return;
+    setIsProcessingFriendAction(true);
+    try {
+      await api.delete(`/friends/request/${requestId}`);
+      toast.success('Đã từ chối lời mời kết bạn');
+      setFriendshipStatus('none');
+      setRequestId(null);
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || 'Không thể từ chối lời mời.');
+    } finally {
+      setIsProcessingFriendAction(false);
+    }
   };
 
   const handleUnfriend = async () => {
     if (!friendshipId) return;
+    setIsProcessingFriendAction(true);
     try {
       await api.delete(`/friends/${friendshipId}`);
       toast.success('Đã hủy kết bạn');
-      setIsFriend(false);
+      setFriendshipStatus('none');
       setFriendshipId(null);
       setShowUnfriendConfirm(false);
     } catch (e: any) {
       toast.error(e.response?.data?.detail || 'Không thể hủy kết bạn');
+    } finally {
+      setIsProcessingFriendAction(false);
     }
   };
 
@@ -192,11 +282,11 @@ export default function ProfilePage() {
                         <button onClick={() => setIsEditingBio(!isEditingBio)} className="w-full md:w-auto px-6 py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-secondary font-bold rounded-lg transition-colors text-sm flex items-center justify-center gap-1.5 border border-indigo-500/20">
                           ✏️ {isEditingBio ? "Đóng" : "Chỉnh sửa tiểu sử"}
                         </button>
-                      ) : isFriend ? (
+                      ) : friendshipStatus === 'accepted' ? (
                         <div className="flex flex-col md:flex-row items-center gap-2">
                           {showUnfriendConfirm ? (
                             <>
-                              <button onClick={handleUnfriend} className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-bold rounded-lg text-sm border border-red-500/30 transition-colors">✓ Xác nhận hủy kết bạn</button>
+                              <button onClick={handleUnfriend} disabled={isProcessingFriendAction} className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-bold rounded-lg text-sm border border-red-500/30 transition-colors">✓ Xác nhận hủy kết bạn</button>
                               <button onClick={() => setShowUnfriendConfirm(false)} className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-sm border border-indigo-500/10 transition-colors">Không</button>
                             </>
                           ) : (
@@ -206,8 +296,43 @@ export default function ProfilePage() {
                             </>
                           )}
                         </div>
+                      ) : friendshipStatus === 'pending_sent' ? (
+                        <div className="flex flex-col md:flex-row items-center gap-2">
+                          <button
+                            onClick={handleCancelRequest}
+                            disabled={isProcessingFriendAction}
+                            className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-black/5 dark:bg-white/5 hover:bg-red-500/10 hover:text-red-400 text-secondary font-bold rounded-lg text-sm border border-indigo-500/20 transition-all cursor-pointer"
+                            title="Nhấp để hủy lời mời đã gửi"
+                          >
+                            <span>⏳</span>
+                            <span>Đã gửi lời mời (Hủy)</span>
+                          </button>
+                        </div>
+                      ) : friendshipStatus === 'pending_received' ? (
+                        <div className="flex flex-col md:flex-row items-center gap-2">
+                          <button
+                            onClick={handleAcceptRequest}
+                            disabled={isProcessingFriendAction}
+                            className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 btn-anime rounded-lg text-sm shadow-md font-bold cursor-pointer"
+                          >
+                            ✓ Chấp nhận
+                          </button>
+                          <button
+                            onClick={handleRejectRequest}
+                            disabled={isProcessingFriendAction}
+                            className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-black/5 dark:bg-white/5 hover:bg-red-500/10 text-muted hover:text-red-400 rounded-lg text-sm font-semibold border border-indigo-500/10 transition-colors cursor-pointer"
+                          >
+                            Từ chối
+                          </button>
+                        </div>
                       ) : (
-                        <button onClick={handleAddFriend} className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-2.5 btn-anime rounded-lg text-sm shadow-md">👋 Thêm bạn bè</button>
+                        <button
+                          onClick={handleAddFriend}
+                          disabled={isProcessingFriendAction}
+                          className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-2.5 btn-anime rounded-lg text-sm shadow-md font-bold cursor-pointer"
+                        >
+                          👋 Thêm bạn bè
+                        </button>
                       )}
                     </div>
                   </div>

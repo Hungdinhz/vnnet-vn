@@ -3,6 +3,7 @@ import com.example.backend_java.dto.user.UserResponseDto;
 
 import com.example.backend_java.dto.social.FriendRequestResponseDto;
 import com.example.backend_java.dto.social.FriendshipResponseDto;
+import com.example.backend_java.dto.social.FriendshipStatusResponseDto;
 import com.example.backend_java.entity.Friendship;
 import com.example.backend_java.entity.User;
 import com.example.backend_java.repository.FriendshipRepository;
@@ -74,19 +75,75 @@ public class FriendService {
         List<Friendship> pendingRequests = friendshipRepository.findByFriendIdAndStatus(userId, "pending");
 
         return pendingRequests.stream().map(f -> {
-            // Lấy thông tin người gửi
-            String senderUsername = userRepository.findById(f.getUserId())
-                    .map(User::getUsername)
-                    .orElse("Unknown");
+            User sender = userRepository.findById(f.getUserId()).orElse(null);
 
             return FriendRequestResponseDto.builder()
                     .id(f.getId())
                     .userId(f.getUserId())
                     .friendId(f.getFriendId())
                     .status(f.getStatus())
-                    .senderUsername(senderUsername)
+                    .senderUsername(sender != null ? sender.getUsername() : "Unknown")
+                    .senderAvatarUrl(sender != null ? sender.getAvatarUrl() : null)
                     .build();
         }).collect(Collectors.toList());
+    }
+
+    // Lấy lời mời đã gửi đang chờ
+    public List<FriendRequestResponseDto> getSentPendingRequests(Long userId) {
+        List<Friendship> sentRequests = friendshipRepository.findByUserIdAndStatus(userId, "pending");
+
+        return sentRequests.stream().map(f -> {
+            User receiver = userRepository.findById(f.getFriendId()).orElse(null);
+
+            return FriendRequestResponseDto.builder()
+                    .id(f.getId())
+                    .userId(f.getUserId())
+                    .friendId(f.getFriendId())
+                    .status(f.getStatus())
+                    .receiverUsername(receiver != null ? receiver.getUsername() : "Unknown")
+                    .receiverAvatarUrl(receiver != null ? receiver.getAvatarUrl() : null)
+                    .receiverEmail(receiver != null ? receiver.getEmail() : null)
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    // Lấy chi tiết trạng thái quan hệ bạn bè với targetUserId
+    public FriendshipStatusResponseDto getFriendshipStatus(Long currentUserId, Long targetUserId) {
+        if (currentUserId.equals(targetUserId)) {
+            return FriendshipStatusResponseDto.builder()
+                    .status("self")
+                    .build();
+        }
+
+        return friendshipRepository.findExistingFriendship(currentUserId, targetUserId)
+                .map(f -> {
+                    if ("accepted".equals(f.getStatus())) {
+                        return FriendshipStatusResponseDto.builder()
+                                .status("accepted")
+                                .friendshipId(f.getId())
+                                .build();
+                    } else if ("pending".equals(f.getStatus())) {
+                        if (f.getUserId().equals(currentUserId)) {
+                            return FriendshipStatusResponseDto.builder()
+                                    .status("pending_sent")
+                                    .requestId(f.getId())
+                                    .friendshipId(f.getId())
+                                    .build();
+                        } else {
+                            return FriendshipStatusResponseDto.builder()
+                                    .status("pending_received")
+                                    .requestId(f.getId())
+                                    .friendshipId(f.getId())
+                                    .build();
+                        }
+                    }
+                    return FriendshipStatusResponseDto.builder()
+                            .status("none")
+                            .build();
+                })
+                .orElse(FriendshipStatusResponseDto.builder()
+                        .status("none")
+                        .build());
     }
 
     // Lấy gợi ý kết bạn (bỏ qua bản thân, bạn bè, và người đã gửi/nhận lời mời)
@@ -130,14 +187,14 @@ public class FriendService {
         friendshipRepository.delete(friendship);
     }
 
-    // Từ chối lời mời kết bạn — chỉ người nhận mới có quyền
+    // Hủy hoặc từ chối lời mời kết bạn — người gửi (hủy) hoặc người nhận (từ chối) đều có quyền
     public void rejectFriendRequest(Long requestId, Long currentUserId) {
         Friendship friendship = friendshipRepository.findById(requestId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy lời mời kết bạn"));
 
-        // Chỉ người nhận mới có quyền từ chối
-        if (!friendship.getFriendId().equals(currentUserId)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền từ chối lời mời này");
+        // Người gửi hoặc người nhận đều có quyền hủy / từ chối
+        if (!friendship.getUserId().equals(currentUserId) && !friendship.getFriendId().equals(currentUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền thực hiện hành động này");
         }
 
         if (!"pending".equals(friendship.getStatus())) {
@@ -147,18 +204,36 @@ public class FriendService {
         friendshipRepository.delete(friendship);
     }
 
+    // Hủy lời mời kết bạn theo targetUserId
+    public void cancelFriendRequestByTargetUser(Long currentUserId, Long targetUserId) {
+        Friendship friendship = friendshipRepository.findExistingFriendship(currentUserId, targetUserId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy lời mời kết bạn"));
+
+        if (!"pending".equals(friendship.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Quan hệ này không ở trạng thái chờ");
+        }
+
+        if (!friendship.getUserId().equals(currentUserId) && !friendship.getFriendId().equals(currentUserId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền thực hiện hành động này");
+        }
+
+        friendshipRepository.delete(friendship);
+    }
+
     private FriendshipResponseDto toResponseDto(Friendship friendship, Long currentUserId) {
         // Determine who the "friend" is (the other person)
-        Long friendUserId = friendship.getUserId().equals(currentUserId) 
+        Long friendUserId = (currentUserId != null && friendship.getUserId().equals(currentUserId)) 
                 ? friendship.getFriendId() 
-                : friendship.getUserId();
+                : (currentUserId != null && friendship.getFriendId().equals(currentUserId))
+                    ? friendship.getUserId()
+                    : friendship.getFriendId();
         
         User friendUser = userRepository.findById(friendUserId).orElse(null);
 
         return FriendshipResponseDto.builder()
                 .id(friendship.getId())
                 .userId(friendship.getUserId())
-                .friendId(friendUserId)
+                .friendId(friendship.getFriendId())
                 .status(friendship.getStatus())
                 .friendUsername(friendUser != null ? friendUser.getUsername() : "Unknown")
                 .friendAvatarUrl(friendUser != null ? friendUser.getAvatarUrl() : null)

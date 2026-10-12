@@ -118,9 +118,9 @@ public class EmailService {
                     .uri(URI.create("https://api.brevo.com/v3/smtp/email"))
                     .timeout(Duration.ofSeconds(10))
                     .header("Accept", "application/json")
-                    .header("Content-Type", "application/json")
+                    .header("Content-Type", "application/json; charset=utf-8")
                     .header("api-key", brevoApiKey.trim())
-                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody, java.nio.charset.StandardCharsets.UTF_8))
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
@@ -157,8 +157,8 @@ public class EmailService {
                     .uri(URI.create("https://api.resend.com/emails"))
                     .timeout(Duration.ofSeconds(10))
                     .header("Authorization", "Bearer " + resendApiKey.trim())
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .header("Content-Type", "application/json; charset=utf-8")
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody, java.nio.charset.StandardCharsets.UTF_8))
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
