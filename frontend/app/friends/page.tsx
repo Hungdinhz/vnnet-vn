@@ -15,9 +15,10 @@ function FriendsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState<'suggestions' | 'requests' | 'list'>('suggestions');
+  const [activeTab, setActiveTab] = useState<'suggestions' | 'requests' | 'sent' | 'list'>('suggestions');
   const [suggestedUsers, setSuggestedUsers] = useState<any[]>([]);
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [sentRequests, setSentRequests] = useState<any[]>([]);
   const [friends, setFriends] = useState<any[]>([]);
   const [friendshipMap, setFriendshipMap] = useState<Record<number, number>>({}); // userId -> friendshipId
   const [isLoading, setIsLoading] = useState(false);
@@ -26,10 +27,21 @@ function FriendsContent() {
   // Read tab parameter if present
   useEffect(() => {
     const tabParam = searchParams.get('tab');
-    if (tabParam === 'requests' || tabParam === 'suggestions' || tabParam === 'list') {
+    if (tabParam === 'requests' || tabParam === 'suggestions' || tabParam === 'sent' || tabParam === 'list') {
       setActiveTab(tabParam as any);
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    // Initial fetch of pending and sent counts for badges
+    api.get('/friends/requests').then(r => setPendingRequests(r.data || [])).catch(() => {});
+    api.get('/friends/sent-requests').then(r => {
+      const list = r.data || [];
+      setSentRequests(list);
+      const sIds = new Set<number>(list.map((item: any) => Number(item.friend_id || item.friendId)));
+      setRequestedUserIds(sIds);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -40,6 +52,7 @@ function FriendsContent() {
 
     if (activeTab === 'suggestions') fetchSuggestedUsers();
     if (activeTab === 'requests') fetchPendingRequests();
+    if (activeTab === 'sent') fetchSentRequests();
     if (activeTab === 'list') fetchFriendsList();
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -66,6 +79,21 @@ function FriendsContent() {
       setPendingRequests(res.data || []);
     } catch (error: any) {
       console.error('Lỗi khi tải lời mời:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchSentRequests = async () => {
+    setIsLoading(true);
+    try {
+      const res = await api.get('/friends/sent-requests');
+      const list = res.data || [];
+      setSentRequests(list);
+      const sIds = new Set<number>(list.map((item: any) => Number(item.friend_id || item.friendId)));
+      setRequestedUserIds(prev => new Set([...prev, ...sIds]));
+    } catch (error: any) {
+      console.error('Lỗi khi tải danh sách lời mời đã gửi:', error);
     } finally {
       setIsLoading(false);
     }
@@ -126,9 +154,44 @@ function FriendsContent() {
       await api.post(`/friends/request/${friendId}`);
       toast.success('Đã gửi lời mời kết bạn thành công!');
       setRequestedUserIds(prev => new Set(prev).add(friendId));
+      api.get('/friends/sent-requests').then(r => setSentRequests(r.data || [])).catch(() => {});
     } catch (error: any) {
       console.error('Lỗi kết bạn:', error);
       toast.error(error.response?.data?.detail || 'Không thể gửi lời mời kết bạn.');
+    }
+  };
+
+  const handleCancelSentRequest = async (requestId: number, receiverId?: number) => {
+    try {
+      await api.delete(`/friends/request/${requestId}`);
+      toast.success('Đã hủy lời mời kết bạn');
+      setSentRequests(prev => prev.filter(r => r.id !== requestId));
+      if (receiverId) {
+        setRequestedUserIds(prev => {
+          const next = new Set(prev);
+          next.delete(receiverId);
+          return next;
+        });
+      }
+    } catch (error: any) {
+      console.error('Lỗi hủy lời mời:', error);
+      toast.error(error.response?.data?.detail || 'Không thể hủy lời mời.');
+    }
+  };
+
+  const handleCancelSentRequestByUser = async (userId: number) => {
+    try {
+      await api.delete(`/friends/request/user/${userId}`);
+      toast.success('Đã hủy lời mời kết bạn');
+      setRequestedUserIds(prev => {
+        const next = new Set(prev);
+        next.delete(userId);
+        return next;
+      });
+      setSentRequests(prev => prev.filter(r => (r.friend_id !== userId && r.friendId !== userId)));
+    } catch (error: any) {
+      console.error('Lỗi hủy lời mời:', error);
+      toast.error(error.response?.data?.detail || 'Không thể hủy lời mời.');
     }
   };
 
@@ -219,6 +282,21 @@ function FriendsContent() {
                 )}
               </button>
               <button
+                onClick={() => setActiveTab('sent')}
+                className={`flex-shrink-0 whitespace-nowrap px-3 py-1.5 xs:px-4 xs:py-2 rounded-xl font-bold text-xs xs:text-sm transition-all focus:outline-none cursor-pointer relative ${
+                  activeTab === 'sent' 
+                    ? 'bg-indigo-500/15 text-accent-primary shadow-sm' 
+                    : 'text-muted/60 hover:bg-black/5 dark:hover:bg-white/5 hover:text-foreground'
+                }`}
+              >
+                📤 Đã gửi <span className="hidden xs:inline">lời mời</span>
+                {sentRequests.length > 0 && (
+                  <span className="ml-1.5 badge-anime">
+                    {sentRequests.length}
+                  </span>
+                )}
+              </button>
+              <button
                 onClick={() => setActiveTab('list')}
                 className={`flex-shrink-0 whitespace-nowrap px-3 py-1.5 xs:px-4 xs:py-2 rounded-xl font-bold text-xs xs:text-sm transition-all focus:outline-none cursor-pointer ${
                   activeTab === 'list' 
@@ -278,16 +356,22 @@ function FriendsContent() {
                       </div>
 
                       {requestedUserIds.has(user.id) ? (
-                        <button
-                          disabled
-                          className="w-full py-1.5 xs:py-2 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-[10px] xs:text-xs shadow-sm transition-colors border border-indigo-500/10 cursor-not-allowed"
-                        >
-                          Đã gửi
-                        </button>
+                        <div className="w-full flex gap-1.5">
+                          <span className="flex-1 py-1.5 xs:py-2 bg-indigo-500/10 text-indigo-400 font-bold rounded-lg text-[10px] xs:text-xs text-center border border-indigo-500/20 select-none flex items-center justify-center">
+                            Đã gửi
+                          </span>
+                          <button
+                            onClick={() => handleCancelSentRequestByUser(user.id)}
+                            className="px-2.5 py-1.5 xs:py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-lg text-[10px] xs:text-xs transition-colors border border-red-500/20 cursor-pointer"
+                            title="Hủy lời mời kết bạn"
+                          >
+                            Hủy
+                          </button>
+                        </div>
                       ) : (
                         <button
                           onClick={() => handleAddFriend(user.id)}
-                          className="w-full py-1.5 xs:py-2 btn-anime rounded-lg text-[10px] xs:text-xs shadow-sm font-bold"
+                          className="w-full py-1.5 xs:py-2 btn-anime rounded-lg text-[10px] xs:text-xs shadow-sm font-bold cursor-pointer"
                         >
                           ✨ Thêm bạn
                         </button>
@@ -334,6 +418,62 @@ function FriendsContent() {
                     </div>
                   </div>
                 ))
+              )}
+            </div>
+          ) : activeTab === 'sent' ? (
+            
+            /* Sent Requests Tab */
+            <div className="space-y-2.5 sm:space-y-3">
+              {sentRequests.length === 0 ? (
+                <div className="glass-card p-10 rounded-xl text-center text-muted/50">
+                  Bạn chưa gửi lời mời kết bạn nào đang chờ phản hồi.
+                </div>
+              ) : (
+                sentRequests.map((r: any) => {
+                  const targetUserId = r.friend_id || r.friendId;
+                  const username = r.receiver_username || r.receiverUsername || 'Người dùng';
+                  const avatarUrl = r.receiver_avatar_url || r.receiverAvatarUrl;
+                  const email = r.receiver_email || r.receiverEmail;
+
+                  return (
+                    <div key={r.id} className="glass-card glass-card-hover p-3 sm:p-4 rounded-xl flex flex-col xs:flex-row xs:items-center justify-between gap-3 transition-all duration-300">
+                      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                        <Link href={`/profile/${targetUserId}`} className="relative w-10 h-10 sm:w-12 sm:h-12 rounded-full overflow-hidden shrink-0 hover:opacity-90 transition-opacity">
+                          {avatarUrl ? (
+                            <img src={avatarUrl} alt={username} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-indigo-500 to-indigo-600 text-white flex items-center justify-center font-bold text-xs sm:text-base shadow-lg">
+                              {getInitials(username)}
+                            </div>
+                          )}
+                        </Link>
+                        <div className="min-w-0 flex-1">
+                          <Link href={`/profile/${targetUserId}`} className="font-bold text-foreground text-xs sm:text-sm hover:text-accent-primary transition-colors truncate block">
+                            {username}
+                          </Link>
+                          <p className="text-[10px] sm:text-xs text-muted/40 truncate">
+                            {email || "Đang chờ người dùng này chấp nhận lời mời"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 w-full xs:w-auto shrink-0">
+                        <Link
+                          href={`/profile/${targetUserId}`}
+                          className="flex-1 xs:flex-initial px-3 sm:px-4 py-1.5 sm:py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-secondary rounded-lg font-bold text-xs transition-colors border border-indigo-500/10 text-center"
+                        >
+                          Trang cá nhân
+                        </Link>
+                        <button
+                          onClick={() => handleCancelSentRequest(r.id, targetUserId)}
+                          className="flex-1 xs:flex-initial px-3 sm:px-5 py-1.5 sm:py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg font-bold text-xs transition-colors border border-red-500/20 cursor-pointer"
+                        >
+                          ✕ Hủy lời mời
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })
               )}
             </div>
           ) : (

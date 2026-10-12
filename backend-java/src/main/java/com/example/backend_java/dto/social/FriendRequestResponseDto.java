@@ -23,4 +23,16 @@ public class FriendRequestResponseDto {
 
     @JsonProperty("sender_username")
     private String senderUsername;
+
+    @JsonProperty("sender_avatar_url")
+    private String senderAvatarUrl;
+
+    @JsonProperty("receiver_username")
+    private String receiverUsername;
+
+    @JsonProperty("receiver_avatar_url")
+    private String receiverAvatarUrl;
+
+    @JsonProperty("receiver_email")
+    private String receiverEmail;
 }

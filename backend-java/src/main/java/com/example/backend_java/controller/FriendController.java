@@ -4,6 +4,7 @@ import com.example.backend_java.dto.user.UserResponseDto;
 
 import com.example.backend_java.dto.social.FriendRequestResponseDto;
 import com.example.backend_java.dto.social.FriendshipResponseDto;
+import com.example.backend_java.dto.social.FriendshipStatusResponseDto;
 import com.example.backend_java.entity.User;
 import com.example.backend_java.service.FriendService;
 import org.springframework.http.ResponseEntity;
@@ -71,13 +72,39 @@ public class FriendController {
         return ResponseEntity.ok(new com.example.backend_java.dto.common.MessageDto("Đã hủy kết bạn thành công"));
     }
 
-    // DELETE /friends/request/{requestId} - Từ chối lời mời kết bạn
+    // GET /friends/status/{targetUserId} - Kiểm tra trạng thái quan hệ bạn bè
+    @GetMapping("/status/{targetUserId}")
+    public ResponseEntity<FriendshipStatusResponseDto> getFriendshipStatus(
+            @PathVariable Long targetUserId,
+            Authentication authentication) {
+        User currentUser = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(friendService.getFriendshipStatus(currentUser.getId(), targetUserId));
+    }
+
+    // GET /friends/sent-requests - Danh sách lời mời đã gửi đang chờ
+    @GetMapping("/sent-requests")
+    public ResponseEntity<List<FriendRequestResponseDto>> getSentRequests(Authentication authentication) {
+        User currentUser = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(friendService.getSentPendingRequests(currentUser.getId()));
+    }
+
+    // DELETE /friends/request/{requestId} - Hủy / Từ chối lời mời kết bạn
     @DeleteMapping("/request/{requestId}")
     public ResponseEntity<com.example.backend_java.dto.common.MessageDto> rejectRequest(
             @PathVariable Long requestId,
             Authentication authentication) {
         User currentUser = (User) authentication.getPrincipal();
         friendService.rejectFriendRequest(requestId, currentUser.getId());
-        return ResponseEntity.ok(new com.example.backend_java.dto.common.MessageDto("Đã từ chối lời mời kết bạn"));
+        return ResponseEntity.ok(new com.example.backend_java.dto.common.MessageDto("Đã hủy/từ chối lời mời kết bạn"));
+    }
+
+    // DELETE /friends/request/user/{targetUserId} - Hủy lời mời kết bạn với người dùng chỉ định
+    @DeleteMapping("/request/user/{targetUserId}")
+    public ResponseEntity<com.example.backend_java.dto.common.MessageDto> cancelRequestByUser(
+            @PathVariable Long targetUserId,
+            Authentication authentication) {
+        User currentUser = (User) authentication.getPrincipal();
+        friendService.cancelFriendRequestByTargetUser(currentUser.getId(), targetUserId);
+        return ResponseEntity.ok(new com.example.backend_java.dto.common.MessageDto("Đã hủy lời mời kết bạn"));
     }
 }

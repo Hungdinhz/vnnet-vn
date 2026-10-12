@@ -58,13 +58,19 @@ export default function MapDirections({
         ))}
       </div>
 
-      {isLoadingRoute ? (
+      {isLoadingRoute && !directionInfo ? (
         <div className="flex items-center justify-center py-10 sm:py-12">
           <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
           <span className="ml-3 text-xs text-muted font-medium">Đang tìm tuyến đường tối ưu...</span>
         </div>
       ) : directionInfo ? (
         <>
+          {isLoadingRoute && (
+            <div className="px-4 py-1.5 bg-indigo-500/10 text-indigo-400 text-xs flex items-center justify-center gap-2 border-b border-indigo-500/10">
+              <div className="w-3 h-3 border border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              <span>Đang cập nhật tuyến đường...</span>
+            </div>
+          )}
           {/* Summary */}
           <div className="px-4 sm:px-5 py-3 sm:py-3.5 flex items-center justify-around border-b border-indigo-500/10 bg-indigo-500/5">
             <div className="text-center">
