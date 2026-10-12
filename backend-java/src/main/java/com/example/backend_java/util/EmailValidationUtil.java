@@ -25,10 +25,14 @@ public class EmailValidationUtil {
             return false;
         }
 
-        String domain = email.substring(email.indexOf('@') + 1).trim();
+        String domain = email.substring(email.indexOf('@') + 1).trim().toLowerCase();
 
-        // Local development domains
-        if (domain.equalsIgnoreCase("localhost") || domain.equalsIgnoreCase("test.com")) {
+        // Whitelist các nhà cung cấp email phổ biến & tên miền test/local để tránh phụ thuộc DNS chậm/lỗi
+        if (domain.equals("gmail.com") || domain.equals("googlemail.com")
+                || domain.equals("yahoo.com") || domain.equals("yahoo.com.vn")
+                || domain.equals("hotmail.com") || domain.equals("outlook.com")
+                || domain.equals("icloud.com") || domain.equals("localhost")
+                || domain.equals("test.com")) {
             return true;
         }
 
@@ -51,9 +55,13 @@ public class EmailValidationUtil {
             Attributes aAttrs = ictx.getAttributes(domain, new String[]{"A"});
             Attribute aAttr = aAttrs.get("A");
             return aAttr != null && aAttr.size() > 0;
-        } catch (Exception e) {
-            // DNS resolution failed or domain does not exist
+        } catch (javax.naming.NameNotFoundException e) {
+            // Tên miền thực sự không tồn tại trong hệ thống DNS
             return false;
+        } catch (Exception e) {
+            // Nếu DNS server của cloud (Render) bị lỗi mạng tạm thời, không chặn việc đăng ký của user
+            System.err.println("Cảnh báo: Không thể phân giải DNS MX cho tên miền " + domain + ": " + e.getMessage());
+            return true;
         }
     }
 }
