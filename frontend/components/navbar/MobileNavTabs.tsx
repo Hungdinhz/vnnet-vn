@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Plus } from 'lucide-react';
 
 interface MobileNavTabsProps {
   pathname: string;
@@ -61,11 +62,11 @@ export default function MobileNavTabs({ pathname, unreadMessagesCount }: MobileN
         <div className="flex items-center justify-center">
           <button
             onClick={handleCreatePost}
-            className="w-6 h-6 xs:w-7 xs:h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 text-white flex items-center justify-center text-xs sm:text-sm shadow-[0_0_10px_rgba(99,102,241,0.4)] active:scale-90 transition-all font-bold cursor-pointer"
+            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 text-white flex items-center justify-center shadow-[0_0_12px_rgba(99,102,241,0.45)] active:scale-90 hover:brightness-110 transition-all cursor-pointer flex-shrink-0"
             title="Tạo bài viết"
             aria-label="Tạo bài viết"
           >
-            ➕
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4 stroke-[2.5]" />
           </button>
         </div>
 

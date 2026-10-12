@@ -52,7 +52,7 @@ export default function NavSearch() {
   };
 
   return (
-    <div className="relative max-w-xs w-full hidden sm:block" ref={searchRef}>
+    <div className="relative max-w-xs w-full hidden md:block" ref={searchRef}>
       <span className="absolute inset-y-0 left-3 flex items-center text-muted/60 z-10">
         🔍
       </span>

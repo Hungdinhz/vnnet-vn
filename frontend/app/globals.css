@@ -278,11 +278,6 @@ body {
 
 /* Touch optimization */
 @media (pointer: coarse) {
-  button, a, [role="button"], input[type="submit"], input[type="button"] {
-    min-height: 44px;
-    min-width: 44px;
-  }
-  
   ::-webkit-scrollbar {
     display: none;
   }
@@ -362,9 +357,12 @@ html, body {
 @media (max-width: 639px) {
   .dropdown-mobile-full {
     position: fixed !important;
-    left: 1rem !important;
-    right: 1rem !important;
+    top: 3rem !important;
+    left: 0.5rem !important;
+    right: 0.5rem !important;
     width: auto !important;
+    max-width: calc(100vw - 1rem) !important;
+    z-index: 50 !important;
   }
 
   /* Offset Mapbox zoom controls so they don't collide with top header / search bar on mobile */

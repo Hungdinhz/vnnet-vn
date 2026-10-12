@@ -46,12 +46,12 @@ export default function NavActions({
   onToggleMobileSearch,
 }: NavActionsProps) {
   return (
-    <div className="flex items-center gap-0.5 xs:gap-1 sm:gap-2 flex-shrink-0">
+    <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 flex-shrink-0">
       {/* Mobile Search Toggle Button */}
       {onToggleMobileSearch && (
         <button
           onClick={onToggleMobileSearch}
-          className="sm:hidden w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-xs flex-shrink-0 cursor-pointer"
+          className="md:hidden w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 transition-colors text-xs flex-shrink-0 cursor-pointer"
           aria-label="Tìm kiếm"
         >
           🔍
@@ -59,12 +59,12 @@ export default function NavActions({
       )}
 
       {/* Theme Toggle */}
-      <ThemeToggle className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-foreground transition-all focus:outline-none flex-shrink-0" />
+      <ThemeToggle className="w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-foreground transition-all focus:outline-none flex-shrink-0" />
 
       {/* Messages Icon (Desktop only - mobile has top nav tabs & drawer) */}
       <Link
         href="/messages"
-        className="hidden md:flex relative cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 w-8 h-8 sm:w-9 sm:h-9 items-center justify-center rounded-lg bg-black/5 dark:bg-white/5 transition-all duration-200 border border-indigo-500/10 flex-shrink-0"
+        className="hidden md:flex relative cursor-pointer hover:bg-black/10 dark:hover:bg-white/10 w-8 h-8 md:w-9 md:h-9 items-center justify-center rounded-full bg-black/5 dark:bg-white/5 transition-all duration-200 border border-indigo-500/10 flex-shrink-0"
         title="Tin nhắn"
       >
         <span className="text-sm sm:text-base">💬</span>
@@ -103,18 +103,37 @@ export default function NavActions({
               src={currentUser.avatar_url}
               alt={currentUser.username || 'User'}
               referrerPolicy="no-referrer"
-              className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg object-cover border border-indigo-500/20"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-indigo-500/30 shadow-sm"
             />
           ) : (
-            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-lg text-white flex items-center justify-center font-bold text-[9px] sm:text-xs shadow-sm">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-full text-white flex items-center justify-center font-bold text-[10px] sm:text-xs shadow-sm">
               {(currentUser?.username || 'U').charAt(0).toUpperCase()}
             </div>
           )}
         </button>
 
+        {/* Mobile Backdrop for User Menu */}
+        {showDropdown && (
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-[2px] z-40 sm:hidden"
+            onClick={() => setShowDropdown(false)}
+            aria-hidden="true"
+          />
+        )}
+
         {/* User Dropdown Menu */}
         {showDropdown && (
-          <div className="dropdown-mobile-full sm:w-72 sm:absolute sm:right-0 mt-2 bg-background border border-indigo-500/15 shadow-2xl rounded-xl py-3 z-50 animate-slide-up">
+          <div className="fixed top-12 left-2 right-2 sm:absolute sm:top-full sm:right-0 sm:left-auto sm:w-72 sm:mt-2 bg-background border border-indigo-500/20 shadow-2xl rounded-2xl py-3 z-50 animate-slide-up">
+            <div className="flex items-center justify-between px-2 pb-1 sm:hidden">
+              <span className="text-xs font-bold text-muted px-2">Tài khoản</span>
+              <button
+                onClick={() => setShowDropdown(false)}
+                className="w-6 h-6 rounded-md hover:bg-black/5 dark:hover:bg-white/5 text-muted hover:text-foreground text-xs flex items-center justify-center transition-colors cursor-pointer"
+                aria-label="Đóng menu"
+              >
+                ✕
+              </button>
+            </div>
             <Link
               href="/profile"
               onClick={() => setShowDropdown(false)}
@@ -126,9 +145,9 @@ export default function NavActions({
                 size="md"
                 glow
               />
-              <div className="text-left">
-                <div className="font-bold text-foreground">{currentUser?.username || "Người dùng"}</div>
-                <div className="text-xs text-muted">Xem trang cá nhân của bạn</div>
+              <div className="text-left min-w-0 flex-1">
+                <div className="font-bold text-foreground truncate">{currentUser?.username || "Người dùng"}</div>
+                <div className="text-xs text-muted truncate">Xem trang cá nhân của bạn</div>
               </div>
             </Link>
 

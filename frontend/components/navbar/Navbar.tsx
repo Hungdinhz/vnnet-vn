@@ -153,13 +153,13 @@ export default function Navbar() {
   return (
     <nav className="glass-nav sticky top-0 z-50 w-full">
       {/* Row 1: Top Navigation Bar */}
-      <div className="w-full max-w-7xl mx-auto px-1.5 xs:px-2.5 sm:px-4 h-11 sm:h-14 flex items-center justify-between gap-1 sm:gap-3">
+      <div className="w-full max-w-7xl mx-auto px-2 xs:px-3 sm:px-4 h-11 sm:h-12 md:h-14 flex items-center justify-between gap-1 sm:gap-2 md:gap-3">
         {/* Left: Hamburger (Mobile), Logo, Clock & Desktop Search */}
-        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 flex-shrink-0">
           {/* Hamburger 3 gạch for Mobile */}
           <button
             onClick={() => setIsDrawerOpen(true)}
-            className="md:hidden w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-foreground transition-colors text-xs sm:text-base flex items-center justify-center focus:outline-none flex-shrink-0 cursor-pointer"
+            className="md:hidden w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-foreground transition-colors text-xs sm:text-base flex items-center justify-center focus:outline-none flex-shrink-0 cursor-pointer"
             aria-label="Mở menu"
             title="Menu"
           >
@@ -168,15 +168,15 @@ export default function Navbar() {
 
           <Link
             href="/"
-            className="flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-indigo-600 hover:shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all duration-300 shadow-sm flex-shrink-0"
+            className="flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 hover:shadow-[0_0_20px_rgba(99,102,241,0.4)] transition-all duration-300 shadow-sm flex-shrink-0"
           >
             <span className="text-white text-[10px] sm:text-xs font-black tracking-tighter">VN</span>
           </Link>
 
           {/* Real-time Clock - Compact on mobile */}
           {currentTime && (
-            <div className="h-6 sm:h-8 flex items-center px-1.5 xs:px-2 rounded-lg bg-indigo-500/10 dark:bg-white/[0.04] border border-indigo-500/15 font-mono select-none flex-shrink-0">
-              <span className="text-[9px] xs:text-[10px] sm:text-xs font-black tracking-tight text-accent-primary leading-tight whitespace-nowrap">
+            <div className="h-7 sm:h-8 flex items-center px-2 rounded-full bg-indigo-500/10 dark:bg-white/[0.04] border border-indigo-500/15 font-mono select-none flex-shrink-0">
+              <span className="text-[10px] sm:text-xs font-black tracking-tight text-accent-primary leading-tight whitespace-nowrap">
                 {currentTime.slice(0, 5)}
                 <span className="hidden xs:inline">{currentTime.slice(5)}</span>
               </span>
