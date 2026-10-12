@@ -42,13 +42,15 @@ public class EmailService {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(fromEmail);
+            helper.setFrom(fromEmail, "VnNet");
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlBody, true);
             mailSender.send(message);
+            System.out.println("Đã gửi email OTP thành công đến: " + to);
         } catch (Exception e) {
             System.err.println("Lỗi khi gửi email đến " + to + ": " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
