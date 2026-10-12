@@ -20,14 +20,14 @@ public class EmailService {
         this.mailSender = mailSender;
     }
 
-    @Async
+    @Async("taskExecutor")
     public void sendVerificationEmail(String toEmail, String otpCode) {
         String subject = "Xác nhận đăng ký tài khoản VnNet";
         String content = buildHtmlEmail("Chào mừng đến với VnNet!", "Mã xác nhận đăng ký của bạn là:", otpCode);
         sendHtmlEmail(toEmail, subject, content);
     }
 
-    @Async
+    @Async("taskExecutor")
     public void sendPasswordResetEmail(String toEmail, String otpCode) {
         String subject = "Đặt lại mật khẩu VnNet";
         String content = buildHtmlEmail("Yêu cầu đặt lại mật khẩu", "Mã xác nhận đặt lại mật khẩu của bạn là:", otpCode);
