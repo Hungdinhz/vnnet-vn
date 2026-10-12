@@ -2,12 +2,13 @@
 import axios from 'axios';
 import { getAuthToken, removeAuthToken } from './auth';
 
+// URL backend: ưu tiên biến môi trường NEXT_PUBLIC_API_URL, mặc định là domain Render production
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || 'https://vnnet-vn-java.onrender.com';
+
 // Tạo một instance với cấu hình mặc định
 const api = axios.create({
-  // Thay url này bằng domain backend FastAPI của bạn. Mặc định FastAPI chạy port 8000
-  // baseURL: 'https://vnnet.onrender.com',
-  baseURL: 'http://localhost:8000',
-  // baseURL: 'https://vnnet-vn-java.onrender.com',
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },

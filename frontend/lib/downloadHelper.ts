@@ -4,8 +4,9 @@
 export async function downloadMediaOrFile(url: string, defaultFilename: string) {
   if (!url) return;
 
-  const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-  const proxyUrl = `${backendUrl}/upload/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(defaultFilename)}`;
+  const backendUrl =
+    process.env.NEXT_PUBLIC_API_URL || 'https://vnnet-vn-java.onrender.com';
+  const proxyUrl = `${backendUrl.replace(/\/$/, '')}/upload/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(defaultFilename)}`;
 
   try {
     const res = await fetch(proxyUrl);
