@@ -6,6 +6,7 @@ import Sidebar from '@/components/Sidebar';
 import api from '@/lib/axios';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { getValidGroupCover, handleGroupImageError, DEFAULT_GROUP_COVER } from '@/lib/groupUtils';
 
 export default function GroupsPage() {
   const [myGroups, setMyGroups] = useState<any[]>([]);
@@ -103,17 +104,18 @@ export default function GroupsPage() {
                 {myGroups.map(group => (
                   <Link key={group.id} href={`/groups/${group.id}`} className="glass-card glass-card-hover rounded-xl overflow-hidden transition-all duration-300 group/card block">
                     <div className="h-28 relative">
-                      {group.coverUrl ? (
-                        <img src={group.coverUrl} alt={group.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-accent-purple/30 to-accent-pink/20" />
-                      )}
+                      <img 
+                        src={getValidGroupCover(group.coverUrl || group.cover_url)} 
+                        alt={group.name} 
+                        onError={handleGroupImageError}
+                        className="w-full h-full object-cover" 
+                      />
                     </div>
                     <div className="p-4">
                       <h3 className="font-bold text-foreground text-[14px] mb-1 truncate">{group.name}</h3>
                       <div className="flex items-center gap-3 text-xs text-muted/70 mb-2">
-                        <span>👥 {group.memberCount} thành viên</span>
-                        <span>📝 {group.postCount} bài viết</span>
+                        <span>👥 {group.memberCount ?? group.member_count ?? 1} thành viên</span>
+                        <span>📝 {group.postCount ?? group.post_count ?? 0} bài viết</span>
                       </div>
                       <p className="text-xs text-muted truncate">{group.description || "Chưa có mô tả"}</p>
                     </div>
@@ -136,16 +138,17 @@ export default function GroupsPage() {
               suggestedGroups.map(group => (
                 <div key={group.id} className="glass-card glass-card-hover rounded-xl overflow-hidden transition-all duration-300 group/card">
                   <div className="h-28 relative">
-                    {group.coverUrl ? (
-                      <img src={group.coverUrl} alt={group.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-accent-purple/30 to-accent-pink/20" />
-                    )}
+                    <img 
+                      src={getValidGroupCover(group.coverUrl || group.cover_url)} 
+                      alt={group.name} 
+                      onError={handleGroupImageError}
+                      className="w-full h-full object-cover" 
+                    />
                   </div>
                   <div className="p-4">
                     <h3 className="font-bold text-foreground text-[14px] mb-1 truncate">{group.name}</h3>
                     <div className="flex items-center gap-3 text-xs text-muted/70 mb-3">
-                      <span>👥 {group.memberCount} thành viên</span>
+                      <span>👥 {group.memberCount ?? group.member_count ?? 1} thành viên</span>
                     </div>
                     <p className="text-xs text-muted truncate mb-4">{group.description || "Chưa có mô tả"}</p>
                     <button 
@@ -206,8 +209,9 @@ export default function GroupsPage() {
                 </div>
                 <div className="h-24 rounded-lg overflow-hidden relative border border-indigo-500/20 mb-2">
                   <img 
-                    src="https://images.unsplash.com/photo-1518605368461-1e1e111d4187?auto=format&fit=crop&q=80&w=1200" 
+                    src={DEFAULT_GROUP_COVER} 
                     alt="Default Cover Preview" 
+                    onError={handleGroupImageError}
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-black/20 flex items-center justify-center text-white text-[11px] font-bold">

@@ -8,6 +8,7 @@ import { useParams, useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import PostCard from '@/components/PostCard';
 import Link from 'next/link';
+import { getValidGroupCover, handleGroupImageError, DEFAULT_GROUP_COVER } from '@/lib/groupUtils';
 
 export default function GroupDetailsPage() {
   const router = useRouter();
@@ -34,12 +35,14 @@ export default function GroupDetailsPage() {
   const [editDescription, setEditDescription] = useState('');
   const [editCoverUrl, setEditCoverUrl] = useState('');
   const [isSavingSettings, setIsSavingSettings] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
 
   useEffect(() => {
     if (id) {
       fetchCurrentUser();
       fetchGroupDetails();
       fetchGroupPosts();
+      fetchGroupMembers();
     }
   }, [id]);
 
@@ -58,7 +61,7 @@ export default function GroupDetailsPage() {
       setGroup(res.data);
       setEditName(res.data.name || '');
       setEditDescription(res.data.description || '');
-      setEditCoverUrl(res.data.coverUrl || '');
+      setEditCoverUrl(res.data.coverUrl || res.data.cover_url || '');
     } catch (error) {
       console.error(error);
       toast.error('Không tìm thấy nhóm');
@@ -82,7 +85,7 @@ export default function GroupDetailsPage() {
     setIsLoadingMembers(true);
     try {
       const res = await api.get(`/groups/${id}/members`);
-      setMembers(res.data);
+      setMembers(res.data || []);
     } catch (error) {
       console.error("Lỗi tải thành viên:", error);
     } finally {
@@ -99,17 +102,17 @@ export default function GroupDetailsPage() {
 
   const handleJoinOrLeave = async () => {
     try {
-      if (group.isJoined) {
+      if (isMember && !isCreator) {
         if (!confirm(`Bạn có chắc chắn muốn rời nhóm "${group.name}" không?`)) {
           return;
         }
         await api.delete(`/groups/${id}/leave`);
         toast.success('Đã rời nhóm');
-      } else {
+      } else if (!isMember) {
         await api.post(`/groups/${id}/join`);
         toast.success('Đã tham gia nhóm');
       }
-      fetchGroupDetails();
+      await Promise.all([fetchGroupDetails(), fetchGroupMembers()]);
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Có lỗi xảy ra');
     }
@@ -185,6 +188,25 @@ export default function GroupDetailsPage() {
     }
   };
 
+  const handleUploadCover = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsUploadingCover(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await api.post("/upload", fd, { headers: { "Content-Type": "multipart/form-data" } });
+      if (res.data?.url) {
+        setEditCoverUrl(res.data.url);
+        toast.success("Tải ảnh bìa lên thành công!");
+      }
+    } catch {
+      toast.error("Không thể tải ảnh lên");
+    } finally {
+      setIsUploadingCover(false);
+    }
+  };
+
   const handleDeleteGroup = async () => {
     if (!confirm('CẢNH BÁO: Bạn có chắc chắn muốn xóa nhóm này vĩnh viễn không? Hành động này không thể hoàn tác!')) return;
     try {
@@ -196,8 +218,19 @@ export default function GroupDetailsPage() {
     }
   };
 
-  const isAdminOrCreator = group?.userRole === 'ADMIN' || group?.creatorId === currentUser?.id;
-  const isJoinedOrCreator = group?.isJoined || group?.creatorId === currentUser?.id;
+  const isCreator = Boolean(
+    currentUser?.id && (group?.creatorId === currentUser?.id || group?.creator_id === currentUser?.id)
+  );
+  const isMember = Boolean(
+    group?.isJoined ||
+    group?.joined ||
+    group?.is_joined ||
+    isCreator ||
+    (currentUser?.id && members.some((m: any) => (m.userId || m.user_id || m.id) === currentUser?.id))
+  );
+  const isAdmin = Boolean(group?.userRole === 'ADMIN' || group?.user_role === 'ADMIN');
+  const isAdminOrCreator = isCreator || isAdmin;
+  const isJoinedOrCreator = isMember || isCreator;
 
   const filteredMembers = members.filter(m => 
     m.username?.toLowerCase().includes(memberSearch.toLowerCase())
@@ -225,12 +258,13 @@ export default function GroupDetailsPage() {
           
           {/* Group Header */}
           <div className="glass-card rounded-xl overflow-hidden mb-6 animate-slide-up">
-            <div className="h-48 md:h-64 relative">
-              {group.coverUrl ? (
-                <img src={group.coverUrl} alt={group.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-r from-accent-purple/30 to-accent-pink/20" />
-              )}
+            <div className="h-48 md:h-64 relative bg-black/10">
+              <img 
+                src={getValidGroupCover(group.coverUrl || group.cover_url)} 
+                alt={group.name} 
+                onError={handleGroupImageError}
+                className="w-full h-full object-cover" 
+              />
             </div>
             <div className="p-4 md:p-6 relative">
               <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -238,15 +272,15 @@ export default function GroupDetailsPage() {
                   <h1 className="text-2xl md:text-3xl font-extrabold text-foreground mb-1">{group.name}</h1>
                   <div className="flex items-center gap-4 text-sm text-muted/70">
                     <span className="flex items-center gap-1.5">
-                      <span>👥</span> {group.memberCount} thành viên
+                      <span>👥</span> {group.memberCount ?? group.member_count ?? members.length ?? 1} thành viên
                     </span>
                     <span className="flex items-center gap-1.5">
-                      <span>📝</span> {group.postCount} bài viết
+                      <span>📝</span> {group.postCount ?? group.post_count ?? posts.length ?? 0} bài viết
                     </span>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  {group.creatorId === currentUser?.id ? (
+                  {isCreator ? (
                     <div className="px-5 py-2 rounded-lg font-bold text-sm bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center gap-1.5">
                       👑 Trưởng nhóm
                     </div>
@@ -254,12 +288,12 @@ export default function GroupDetailsPage() {
                     <button 
                       onClick={handleJoinOrLeave}
                       className={`px-6 py-2 rounded-lg font-bold text-sm shadow-md transition-all ${
-                        group.isJoined 
+                        isMember 
                           ? 'bg-red-500/10 hover:bg-red-500/20 border border-red-500/25 text-red-400 hover:text-red-300 cursor-pointer' 
                           : 'btn-anime cursor-pointer'
                       }`}
                     >
-                      {group.isJoined ? '🚪 Rời nhóm' : '👋 Tham gia nhóm'}
+                      {isMember ? '🚪 Rời nhóm' : '👋 Tham gia nhóm'}
                     </button>
                   )}
                 </div>
@@ -316,9 +350,9 @@ export default function GroupDetailsPage() {
                   <div className="text-sm text-muted/80 space-y-2">
                     <p>🌎 Nhóm công khai (tất cả mọi người có thể xem)</p>
                     <p>⏰ Đã tạo vào {new Date(group.createdAt).toLocaleDateString('vi-VN')}</p>
-                    {group.userRole && (
+                    {(group.userRole || group.user_role || isCreator || isMember) && (
                       <p className="pt-2 border-t border-indigo-500/10 font-medium text-accent-purple">
-                        Vai trò của bạn: {group.creatorId === currentUser?.id ? '👑 Trưởng nhóm' : group.userRole === 'ADMIN' ? '🛡️ Quản trị viên' : '👤 Thành viên'}
+                        Vai trò của bạn: {isCreator ? '👑 Trưởng nhóm' : (group.userRole === 'ADMIN' || group.user_role === 'ADMIN') ? '🛡️ Quản trị viên' : '👤 Thành viên'}
                       </p>
                     )}
                   </div>
@@ -526,14 +560,36 @@ export default function GroupDetailsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold mb-1.5 text-foreground">URL Ảnh bìa (Cover Image)</label>
-                  <input
-                    type="text"
-                    value={editCoverUrl}
-                    onChange={(e) => setEditCoverUrl(e.target.value)}
-                    placeholder="https://images.unsplash.com/..."
-                    className="w-full px-4 py-2.5 input-anime rounded-lg text-sm"
-                  />
+                  <label className="block text-sm font-semibold mb-1.5 text-foreground">Ảnh bìa (Cover Image)</label>
+                  <div className="flex gap-2 items-center mb-2">
+                    <input
+                      type="text"
+                      value={editCoverUrl}
+                      onChange={(e) => setEditCoverUrl(e.target.value)}
+                      placeholder="https://images.unsplash.com/..."
+                      className="flex-1 px-4 py-2.5 input-anime rounded-lg text-sm"
+                    />
+                    <label className="px-4 py-2.5 btn-anime rounded-lg text-xs font-semibold cursor-pointer whitespace-nowrap">
+                      {isUploadingCover ? "Đang tải..." : "📁 Tải ảnh từ máy"}
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleUploadCover} 
+                        disabled={isUploadingCover}
+                        className="hidden" 
+                      />
+                    </label>
+                  </div>
+                  {editCoverUrl && (
+                    <div className="h-28 rounded-lg overflow-hidden border border-indigo-500/20 relative">
+                      <img 
+                        src={getValidGroupCover(editCoverUrl)} 
+                        alt="Preview" 
+                        onError={handleGroupImageError}
+                        className="w-full h-full object-cover" 
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex justify-end pt-2">

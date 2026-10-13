@@ -32,21 +32,34 @@ public class GroupController {
     }
 
     private User getCurrentUser(String token) {
-        if (token == null || !token.startsWith("Bearer ")) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập");
+        if (token != null && token.toLowerCase().startsWith("bearer ")) {
+            String jwt = token.substring(7).trim();
+            try {
+                if (jwtTokenProvider.validateToken(jwt)) {
+                    String email = jwtTokenProvider.getEmailFromToken(jwt);
+                    return userRepository.findByEmail(email)
+                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Người dùng không tồn tại"));
+                }
+            } catch (Exception e) {}
         }
-        String jwt = token.substring(7);
-        if (!jwtTokenProvider.validateToken(jwt)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Token không hợp lệ");
-        }
-        String email = jwtTokenProvider.getEmailFromToken(jwt);
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Người dùng không tồn tại"));
+        try {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated()) {
+                if (auth.getPrincipal() instanceof User) {
+                    return (User) auth.getPrincipal();
+                } else if (!"anonymousUser".equals(auth.getPrincipal())) {
+                    String email = auth.getName();
+                    User u = userRepository.findByEmail(email).orElse(null);
+                    if (u != null) return u;
+                }
+            }
+        } catch (Exception e) {}
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Bạn chưa đăng nhập");
     }
 
     private Long getCurrentUserIdSilently(String token) {
-        if (token != null && token.startsWith("Bearer ")) {
-            String jwt = token.substring(7);
+        if (token != null && token.toLowerCase().startsWith("bearer ")) {
+            String jwt = token.substring(7).trim();
             try {
                 if (jwtTokenProvider.validateToken(jwt)) {
                     String email = jwtTokenProvider.getEmailFromToken(jwt);
@@ -54,6 +67,17 @@ public class GroupController {
                 }
             } catch (Exception e) {}
         }
+        try {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated()) {
+                if (auth.getPrincipal() instanceof User) {
+                    return ((User) auth.getPrincipal()).getId();
+                } else if (!"anonymousUser".equals(auth.getPrincipal())) {
+                    String email = auth.getName();
+                    return userRepository.findByEmail(email).map(User::getId).orElse(null);
+                }
+            }
+        } catch (Exception e) {}
         return null;
     }
 
