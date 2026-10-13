@@ -35,6 +35,8 @@ public class GroupService {
     private final PostService postService;
     private final UserRepository userRepository;
 
+    public static final String DEFAULT_GROUP_COVER = "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=1200";
+
     public GroupService(GroupRepository groupRepository, GroupMemberRepository groupMemberRepository, 
                         PostRepository postRepository, PostService postService,
                         UserRepository userRepository) {
@@ -47,10 +49,15 @@ public class GroupService {
 
     @Transactional
     public SocialGroupDto createGroup(CreateSocialGroupDto request, User currentUser) {
+        String cover = request.getCoverUrl();
+        if (cover == null || cover.isBlank() || cover.contains("photo-1518605368461-1e1e111d4187")) {
+            cover = DEFAULT_GROUP_COVER;
+        }
+
         Group group = Group.builder()
                 .name(request.getName())
                 .description(request.getDescription())
-                .coverUrl(request.getCoverUrl() != null ? request.getCoverUrl() : "https://images.unsplash.com/photo-1518605368461-1e1e111d4187?auto=format&fit=crop&q=80&w=1200") // Default cover
+                .coverUrl(cover)
                 .creator(currentUser)
                 .creatorId(currentUser.getId())
                 .build();
@@ -264,11 +271,16 @@ public class GroupService {
         // Count posts in group
         int postCount = postRepository.findByGroupIdOrderByIdDesc(group.getId()).size();
 
+        String coverUrl = group.getCoverUrl();
+        if (coverUrl == null || coverUrl.isBlank() || coverUrl.contains("photo-1518605368461-1e1e111d4187")) {
+            coverUrl = DEFAULT_GROUP_COVER;
+        }
+
         return SocialGroupDto.builder()
                 .id(group.getId())
                 .name(group.getName())
                 .description(group.getDescription())
-                .coverUrl(group.getCoverUrl())
+                .coverUrl(coverUrl)
                 .creatorId(group.getCreatorId())
                 .createdAt(group.getCreatedAt())
                 .memberCount(members.size())

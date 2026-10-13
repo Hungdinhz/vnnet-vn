@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { getValidGroupCover, handleGroupImageError } from '@/lib/groupUtils';
 
 interface GroupCircleRowProps {
   myGroups: any[];
@@ -21,24 +22,28 @@ export default function GroupCircleRow({ myGroups }: GroupCircleRowProps) {
         </Link>
       </div>
       <div className="flex gap-4 overflow-x-auto pb-1.5 scrollbar-thin">
-        {myGroups.map((group) => (
-          <Link
-            key={group.id}
-            href={`/groups/${group.id}`}
-            className="flex flex-col items-center gap-1.5 flex-shrink-0 group cursor-pointer w-16"
-          >
-            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-indigo-500/20 group-hover:border-accent-primary group-hover:scale-105 transition-all avatar-glow relative bg-gradient-to-br from-indigo-600/20 to-indigo-500/20 flex items-center justify-center font-bold text-white text-sm">
-              {group.cover_url ? (
-                <img src={group.cover_url} alt={group.name} className="w-full h-full object-cover" />
-              ) : (
-                group.name?.charAt(0).toUpperCase() || 'G'
-              )}
-            </div>
-            <span className="text-[10px] font-semibold text-center text-muted group-hover:text-foreground transition-colors truncate w-full">
-              {group.name}
-            </span>
-          </Link>
-        ))}
+        {myGroups.map((group) => {
+          const cover = getValidGroupCover(group.coverUrl || group.cover_url);
+          return (
+            <Link
+              key={group.id}
+              href={`/groups/${group.id}`}
+              className="flex flex-col items-center gap-1.5 flex-shrink-0 group cursor-pointer w-16"
+            >
+              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-indigo-500/20 group-hover:border-accent-primary group-hover:scale-105 transition-all avatar-glow relative bg-gradient-to-br from-indigo-600/20 to-indigo-500/20 flex items-center justify-center font-bold text-white text-sm">
+                <img 
+                  src={cover} 
+                  alt={group.name} 
+                  onError={handleGroupImageError}
+                  className="w-full h-full object-cover" 
+                />
+              </div>
+              <span className="text-[10px] font-semibold text-center text-muted group-hover:text-foreground transition-colors truncate w-full">
+                {group.name}
+              </span>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
