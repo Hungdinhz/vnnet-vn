@@ -50,9 +50,41 @@ public class DatabaseSchemaFixer implements CommandLineRunner {
             // Ensure nickname column in conversation_members
             jdbcTemplate.execute("ALTER TABLE conversation_members ADD COLUMN IF NOT EXISTS nickname VARCHAR(100);");
 
-            log.info("Successfully verified and updated message table schema columns and constraints");
+            // Ensure marketplace_items and seller_reviews tables exist
+            jdbcTemplate.execute("""
+                CREATE TABLE IF NOT EXISTS marketplace_items (
+                    id BIGSERIAL PRIMARY KEY,
+                    title VARCHAR(200) NOT NULL,
+                    description TEXT NOT NULL,
+                    price NUMERIC(15, 0) NOT NULL,
+                    category VARCHAR(50) NOT NULL,
+                    condition VARCHAR(30) NOT NULL DEFAULT 'used',
+                    location VARCHAR(200),
+                    image_urls TEXT,
+                    status VARCHAR(20) NOT NULL DEFAULT 'active',
+                    seller_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    buyer_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+                    views_count INT DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP
+                );
+            """);
+
+            jdbcTemplate.execute("""
+                CREATE TABLE IF NOT EXISTS seller_reviews (
+                    id BIGSERIAL PRIMARY KEY,
+                    seller_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    reviewer_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    item_id BIGINT REFERENCES marketplace_items(id) ON DELETE SET NULL,
+                    rating INT NOT NULL,
+                    comment TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """);
+
+            log.info("Successfully verified and updated message table schema columns and marketplace tables");
         } catch (Exception e) {
-            log.warn("Error checking message table schema columns: {}", e.getMessage());
+            log.warn("Error checking table schemas: {}", e.getMessage());
         }
     }
 }
