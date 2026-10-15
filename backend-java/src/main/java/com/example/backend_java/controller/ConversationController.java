@@ -14,7 +14,6 @@ import com.example.backend_java.entity.User;
 import com.example.backend_java.service.ChatMessageService;
 import com.example.backend_java.service.ConversationService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -25,11 +24,15 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/conversations")
-@RequiredArgsConstructor
 public class ConversationController {
 
     private final ConversationService conversationService;
     private final ChatMessageService chatMessageService;
+
+    public ConversationController(ConversationService conversationService, ChatMessageService chatMessageService) {
+        this.conversationService = conversationService;
+        this.chatMessageService = chatMessageService;
+    }
 
     @GetMapping
     public ResponseEntity<List<ConversationResponseDto>> getConversations(Authentication authentication) {

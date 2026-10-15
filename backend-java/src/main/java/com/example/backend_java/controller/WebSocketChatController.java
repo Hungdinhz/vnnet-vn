@@ -5,22 +5,24 @@ import com.example.backend_java.dto.chat.ReadReceiptDto;
 import com.example.backend_java.dto.chat.TypingEventDto;
 import com.example.backend_java.entity.User;
 import com.example.backend_java.service.ChatMessageService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Controller;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
 
 @Controller
-@RequiredArgsConstructor
 public class WebSocketChatController {
 
     private final ChatMessageService chatMessageService;
     private final SimpMessagingTemplate messagingTemplate;
+
+    public WebSocketChatController(ChatMessageService chatMessageService, SimpMessagingTemplate messagingTemplate) {
+        this.chatMessageService = chatMessageService;
+        this.messagingTemplate = messagingTemplate;
+    }
 
     @MessageMapping("/chat.sendMessage")
     public void handleSendMessage(@Payload ChatMessageRequestDto request, Principal principal) {

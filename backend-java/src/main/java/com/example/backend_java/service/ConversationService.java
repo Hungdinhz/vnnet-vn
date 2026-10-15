@@ -12,7 +12,6 @@ import com.example.backend_java.dto.story.*;
 import com.example.backend_java.dto.user.*;
 import com.example.backend_java.entity.*;
 import com.example.backend_java.repository.*;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -26,7 +25,6 @@ import com.example.backend_java.mapper.ConversationMapper;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class ConversationService {
 
     private final ConversationRepository conversationRepository;
@@ -35,8 +33,23 @@ public class ConversationService {
     private final UserRepository userRepository;
     private final OnlineStatusService onlineStatusService;
     private final ConversationMapper conversationMapper;
-    @Lazy
     private final SimpMessagingTemplate messagingTemplate;
+
+    public ConversationService(ConversationRepository conversationRepository,
+                               ConversationMemberRepository memberRepository,
+                               ChatMessageRepository messageRepository,
+                               UserRepository userRepository,
+                               OnlineStatusService onlineStatusService,
+                               ConversationMapper conversationMapper,
+                               @Lazy SimpMessagingTemplate messagingTemplate) {
+        this.conversationRepository = conversationRepository;
+        this.memberRepository = memberRepository;
+        this.messageRepository = messageRepository;
+        this.userRepository = userRepository;
+        this.onlineStatusService = onlineStatusService;
+        this.conversationMapper = conversationMapper;
+        this.messagingTemplate = messagingTemplate;
+    }
 
     @Transactional
     public List<ConversationResponseDto> getConversations(User currentUser) {

@@ -11,7 +11,6 @@ import com.example.backend_java.repository.ChatMessageRepository;
 import com.example.backend_java.repository.ConversationMemberRepository;
 import com.example.backend_java.repository.ConversationRepository;
 import com.example.backend_java.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,7 +27,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class ChatMessageService {
 
     private final ChatMessageRepository messageRepository;
@@ -37,8 +35,23 @@ public class ChatMessageService {
     private final UserRepository userRepository;
     private final ConversationService conversationService;
     private final NotificationService notificationService;
-    @Lazy
     private final SimpMessagingTemplate messagingTemplate;
+
+    public ChatMessageService(ChatMessageRepository messageRepository,
+                              ConversationRepository conversationRepository,
+                              ConversationMemberRepository memberRepository,
+                              UserRepository userRepository,
+                              ConversationService conversationService,
+                              NotificationService notificationService,
+                              @Lazy SimpMessagingTemplate messagingTemplate) {
+        this.messageRepository = messageRepository;
+        this.conversationRepository = conversationRepository;
+        this.memberRepository = memberRepository;
+        this.userRepository = userRepository;
+        this.conversationService = conversationService;
+        this.notificationService = notificationService;
+        this.messagingTemplate = messagingTemplate;
+    }
 
     @Transactional
     public ChatMessageResponseDto sendMessage(User sender, ChatMessageRequestDto request) {

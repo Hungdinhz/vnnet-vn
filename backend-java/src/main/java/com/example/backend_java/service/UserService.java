@@ -8,7 +8,6 @@ import com.example.backend_java.entity.User;
 import com.example.backend_java.mapper.UserMapper;
 import com.example.backend_java.repository.UserRepository;
 import com.example.backend_java.util.PasswordValidationUtil;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,13 +17,22 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthService authService;
     private final UserMapper userMapper;
+
+    public UserService(UserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       AuthService authService,
+                       UserMapper userMapper) {
+        this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.authService = authService;
+        this.userMapper = userMapper;
+    }
 
     // Delegations to AuthService for backward compatibility
     public UserResponseDto registerUser(UserCreateDto dto) {

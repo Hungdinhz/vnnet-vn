@@ -6,7 +6,6 @@ import com.example.backend_java.entity.*;
 import com.example.backend_java.repository.ChatMessageRepository;
 import com.example.backend_java.repository.ConversationMemberRepository;
 import com.example.backend_java.service.OnlineStatusService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -15,12 +14,19 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
-@RequiredArgsConstructor
 public class ConversationMapper {
 
     private final ChatMessageRepository messageRepository;
     private final ConversationMemberRepository memberRepository;
     private final OnlineStatusService onlineStatusService;
+
+    public ConversationMapper(ChatMessageRepository messageRepository,
+                              ConversationMemberRepository memberRepository,
+                              OnlineStatusService onlineStatusService) {
+        this.messageRepository = messageRepository;
+        this.memberRepository = memberRepository;
+        this.onlineStatusService = onlineStatusService;
+    }
 
     public ConversationResponseDto toResponseDto(Conversation conv, User currentUser) {
         List<ConversationMember> members = memberRepository.findByConversationId(conv.getId());
