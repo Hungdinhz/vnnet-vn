@@ -81,6 +81,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/games/stats/*").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/").permitAll()
+                // Marketplace endpoints
+                .requestMatchers(HttpMethod.GET, "/marketplace/my-items").authenticated()
+                .requestMatchers(HttpMethod.GET, "/marketplace", "/marketplace/**").permitAll()
                 // --- PROTECTED endpoints (cần token) ---
                 // Stories endpoints (tất cả cần token)
                 .requestMatchers("/stories/**").authenticated()
