@@ -53,39 +53,39 @@ public class UserController {
 
     // POST /users/forgot-password - Quên mật khẩu
     @PostMapping("/forgot-password")
-    public ResponseEntity<com.example.backend_java.dto.common.MessageDto> forgotPassword(
-            @Valid @RequestBody com.example.backend_java.dto.auth.ForgotPasswordDto dto) {
+    public ResponseEntity<MessageDto> forgotPassword(
+            @Valid @RequestBody ForgotPasswordDto dto) {
         return ResponseEntity.ok(userService.forgotPassword(dto.getEmail()));
     }
 
     // POST /users/reset-password - Đặt lại mật khẩu
     @PostMapping("/reset-password")
-    public ResponseEntity<com.example.backend_java.dto.common.MessageDto> resetPassword(
-            @Valid @RequestBody com.example.backend_java.dto.auth.ResetPasswordDto dto) {
+    public ResponseEntity<MessageDto> resetPassword(
+            @Valid @RequestBody ResetPasswordDto dto) {
         return ResponseEntity.ok(userService.resetPassword(dto));
     }
 
     // POST /users/google - Kiểm tra / Đăng nhập Google
     @PostMapping("/google")
-    public ResponseEntity<com.example.backend_java.dto.auth.GoogleAuthResponseDto> googleLogin(@Valid @RequestBody com.example.backend_java.dto.auth.GoogleLoginDto dto) {
+    public ResponseEntity<GoogleAuthResponseDto> googleLogin(@Valid @RequestBody GoogleLoginDto dto) {
         return ResponseEntity.ok(userService.googleLogin(dto));
     }
 
     // POST /users/google/register - Hoàn tất đăng ký Google (gửi OTP xác thực)
     @PostMapping("/google/register")
-    public ResponseEntity<UserResponseDto> googleRegister(@Valid @RequestBody com.example.backend_java.dto.auth.GoogleRegisterDto dto) {
+    public ResponseEntity<UserResponseDto> googleRegister(@Valid @RequestBody GoogleRegisterDto dto) {
         return ResponseEntity.ok(userService.googleRegister(dto));
     }
 
     // POST /users/verify-email hoặc /users/verify-otp - Xác thực OTP đăng ký
     @PostMapping({"/verify-email", "/verify-otp"})
-    public ResponseEntity<TokenDto> verifyEmail(@Valid @RequestBody com.example.backend_java.dto.auth.VerifyOtpDto dto) {
+    public ResponseEntity<TokenDto> verifyEmail(@Valid @RequestBody VerifyOtpDto dto) {
         return ResponseEntity.ok(userService.verifyEmail(dto));
     }
 
     // POST /users/resend-otp - Gửi lại mã OTP
     @PostMapping("/resend-otp")
-    public ResponseEntity<com.example.backend_java.dto.common.MessageDto> resendOtp(@Valid @RequestBody com.example.backend_java.dto.auth.ResendOtpDto dto) {
+    public ResponseEntity<MessageDto> resendOtp(@Valid @RequestBody ResendOtpDto dto) {
         return ResponseEntity.ok(userService.resendOtp(dto));
     }
 
@@ -107,8 +107,8 @@ public class UserController {
 
     // PUT /users/change-password - Đổi mật khẩu (cần token)
     @PutMapping("/change-password")
-    public ResponseEntity<com.example.backend_java.dto.common.MessageDto> changePassword(
-            @RequestBody com.example.backend_java.dto.auth.ChangePasswordDto dto,
+    public ResponseEntity<MessageDto> changePassword(
+            @RequestBody ChangePasswordDto dto,
             Authentication authentication) {
         User currentUser = (User) authentication.getPrincipal();
         return ResponseEntity.ok(userService.changePassword(currentUser, dto));

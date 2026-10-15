@@ -11,7 +11,6 @@ import com.example.backend_java.repository.UserRepository;
 import com.example.backend_java.security.JwtTokenProvider;
 import com.example.backend_java.util.EmailValidationUtil;
 import com.example.backend_java.util.PasswordValidationUtil;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,7 +20,6 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
 @Service
-@RequiredArgsConstructor
 public class AuthService {
 
     private final UserRepository userRepository;
@@ -32,6 +30,22 @@ public class AuthService {
     private final EmailService emailService;
     private final GoogleAuthService googleAuthService;
     private final SecureRandom secureRandom = new SecureRandom();
+
+    public AuthService(UserRepository userRepository,
+                       PendingRegistrationRepository pendingRegistrationRepository,
+                       PasswordEncoder passwordEncoder,
+                       JwtTokenProvider jwtTokenProvider,
+                       OtpService otpService,
+                       EmailService emailService,
+                       GoogleAuthService googleAuthService) {
+        this.userRepository = userRepository;
+        this.pendingRegistrationRepository = pendingRegistrationRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.otpService = otpService;
+        this.emailService = emailService;
+        this.googleAuthService = googleAuthService;
+    }
 
     // Đăng ký user mới: Lưu tạm vào pending_registrations
     public UserResponseDto registerUser(UserCreateDto dto) {

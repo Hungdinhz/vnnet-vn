@@ -6,7 +6,6 @@ import com.example.backend_java.dto.chat.ConversationDto;
 import com.example.backend_java.entity.User;
 import com.example.backend_java.service.ChatMessageService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -15,10 +14,13 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/messages")
-@RequiredArgsConstructor
 public class ChatMessageController {
 
     private final ChatMessageService messageService;
+
+    public ChatMessageController(ChatMessageService messageService) {
+        this.messageService = messageService;
+    }
 
     @GetMapping("/conversations")
     public ResponseEntity<List<ConversationDto>> getConversations(Authentication authentication) {

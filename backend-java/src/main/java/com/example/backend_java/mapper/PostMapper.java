@@ -7,20 +7,28 @@ import com.example.backend_java.repository.CommentRepository;
 import com.example.backend_java.repository.LikeRepository;
 import com.example.backend_java.repository.PostMentionRepository;
 import com.example.backend_java.repository.UserRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
-@RequiredArgsConstructor
 public class PostMapper {
 
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
     private final PostMentionRepository postMentionRepository;
     private final UserRepository userRepository;
+
+    public PostMapper(LikeRepository likeRepository,
+                      CommentRepository commentRepository,
+                      PostMentionRepository postMentionRepository,
+                      UserRepository userRepository) {
+        this.likeRepository = likeRepository;
+        this.commentRepository = commentRepository;
+        this.postMentionRepository = postMentionRepository;
+        this.userRepository = userRepository;
+    }
 
     public PostResponseDto toResponseDto(Post post, Long currentUserId) {
         long likesCount = likeRepository.countByPostId(post.getId());

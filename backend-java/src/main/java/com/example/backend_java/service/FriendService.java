@@ -147,7 +147,7 @@ public class FriendService {
     }
 
     // Lấy gợi ý kết bạn (bỏ qua bản thân, bạn bè, và người đã gửi/nhận lời mời)
-    public List<com.example.backend_java.dto.user.UserResponseDto> getSuggestions(Long userId) {
+    public List<UserResponseDto> getSuggestions(Long userId) {
         // Lấy tất cả quan hệ bạn bè liên quan đến userId (cả gửi đi và nhận lại, mọi status)
         List<Friendship> relatedFriendships = friendshipRepository.findAll().stream()
                 .filter(f -> f.getUserId().equals(userId) || f.getFriendId().equals(userId))
@@ -163,7 +163,7 @@ public class FriendService {
 
         return userRepository.findAll().stream()
                 .filter(u -> !excludedUserIds.contains(u.getId()))
-                .map(u -> com.example.backend_java.dto.user.UserResponseDto.builder()
+                .map(u -> UserResponseDto.builder()
                         .id(u.getId())
                         .username(u.getUsername())
                         .email(u.getEmail())

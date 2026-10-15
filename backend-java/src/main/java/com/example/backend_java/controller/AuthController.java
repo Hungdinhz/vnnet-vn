@@ -5,16 +5,18 @@ import com.example.backend_java.dto.common.MessageDto;
 import com.example.backend_java.dto.user.UserResponseDto;
 import com.example.backend_java.service.AuthService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
-@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
 
     // POST /auth/register - Đăng ký
     @PostMapping("/register")

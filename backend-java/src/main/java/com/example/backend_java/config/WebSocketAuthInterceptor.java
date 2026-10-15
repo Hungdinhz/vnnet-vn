@@ -4,7 +4,6 @@ import com.example.backend_java.entity.User;
 import com.example.backend_java.repository.UserRepository;
 import com.example.backend_java.security.JwtTokenProvider;
 import com.example.backend_java.service.OnlineStatusService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
 import org.springframework.messaging.simp.stomp.StompCommand;
@@ -17,12 +16,19 @@ import org.springframework.stereotype.Component;
 import java.util.Collections;
 
 @Component
-@RequiredArgsConstructor
 public class WebSocketAuthInterceptor implements ChannelInterceptor {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
     private final OnlineStatusService onlineStatusService;
+
+    public WebSocketAuthInterceptor(JwtTokenProvider jwtTokenProvider,
+                                    UserRepository userRepository,
+                                    OnlineStatusService onlineStatusService) {
+        this.jwtTokenProvider = jwtTokenProvider;
+        this.userRepository = userRepository;
+        this.onlineStatusService = onlineStatusService;
+    }
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {

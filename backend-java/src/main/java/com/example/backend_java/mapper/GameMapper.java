@@ -4,14 +4,16 @@ import com.example.backend_java.dto.game.GameResponseDto;
 import com.example.backend_java.entity.Game;
 import com.example.backend_java.entity.GameScore;
 import com.example.backend_java.repository.GameScoreRepository;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class GameMapper {
 
     private final GameScoreRepository gameScoreRepository;
+
+    public GameMapper(GameScoreRepository gameScoreRepository) {
+        this.gameScoreRepository = gameScoreRepository;
+    }
 
     public GameResponseDto toResponseDto(Game game, Long currentUserId) {
         Integer userHighScore = null;
