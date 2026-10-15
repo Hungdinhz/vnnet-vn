@@ -136,14 +136,14 @@ public class GroupController {
     }
 
     @GetMapping("/{id}/members")
-    public ResponseEntity<List<com.example.backend_java.dto.social.SocialGroupMemberDto>> getGroupMembers(@PathVariable Long id) {
+    public ResponseEntity<List<SocialGroupMemberDto>> getGroupMembers(@PathVariable Long id) {
         return ResponseEntity.ok(groupService.getGroupMembers(id));
     }
 
     @PutMapping("/{id}/members/{userId}/role")
     public ResponseEntity<?> updateMemberRole(@PathVariable Long id,
                                               @PathVariable Long userId,
-                                              @RequestBody com.example.backend_java.dto.social.UpdateGroupRoleRequest request,
+                                              @RequestBody UpdateGroupRoleRequest request,
                                               @RequestHeader(value = "Authorization", required = false) String token) {
         User user = getCurrentUser(token);
         groupService.updateMemberRole(id, userId, request.getRole(), user);
@@ -161,7 +161,7 @@ public class GroupController {
 
     @PutMapping("/{id}")
     public ResponseEntity<SocialGroupDto> updateGroup(@PathVariable Long id,
-                                                @RequestBody com.example.backend_java.dto.social.UpdateSocialGroupDto request,
+                                                @RequestBody UpdateSocialGroupDto request,
                                                 @RequestHeader(value = "Authorization", required = false) String token) {
         User user = getCurrentUser(token);
         return ResponseEntity.ok(groupService.updateGroup(id, request, user));

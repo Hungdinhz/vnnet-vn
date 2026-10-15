@@ -222,7 +222,7 @@ public class ChatMessageService {
         return list.stream().map(c -> {
             UserResponseDto contact = null;
             if (c.getType() == ConversationType.DIRECT) {
-                Optional<com.example.backend_java.dto.chat.ConversationMemberDto> other = c.getMembers().stream()
+                Optional<ConversationMemberDto> other = c.getMembers().stream()
                         .filter(m -> !m.getUserId().equals(currentUser.getId()))
                         .findFirst();
                 if (other.isPresent()) {

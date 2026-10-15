@@ -1,15 +1,6 @@
 package com.example.backend_java.service;
 
-import com.example.backend_java.dto.auth.*;
 import com.example.backend_java.dto.chat.*;
-import com.example.backend_java.dto.common.*;
-import com.example.backend_java.dto.event.*;
-import com.example.backend_java.dto.game.*;
-import com.example.backend_java.dto.notification.*;
-import com.example.backend_java.dto.post.*;
-import com.example.backend_java.dto.social.*;
-import com.example.backend_java.dto.story.*;
-import com.example.backend_java.dto.user.*;
 import com.example.backend_java.entity.*;
 import com.example.backend_java.repository.*;
 import org.springframework.http.HttpStatus;

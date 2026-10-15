@@ -1,15 +1,7 @@
 package com.example.backend_java.controller;
 
-import com.example.backend_java.dto.auth.*;
-import com.example.backend_java.dto.chat.*;
-import com.example.backend_java.dto.common.*;
-import com.example.backend_java.dto.event.*;
+import com.example.backend_java.dto.common.PagedResponseDto;
 import com.example.backend_java.dto.game.*;
-import com.example.backend_java.dto.notification.*;
-import com.example.backend_java.dto.post.*;
-import com.example.backend_java.dto.social.*;
-import com.example.backend_java.dto.story.*;
-import com.example.backend_java.dto.user.*;
 import com.example.backend_java.entity.User;
 import com.example.backend_java.service.GameService;
 import jakarta.validation.Valid;

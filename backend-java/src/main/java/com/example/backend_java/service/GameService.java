@@ -1,16 +1,9 @@
 package com.example.backend_java.service;
 
-import com.example.backend_java.dto.auth.*;
-import com.example.backend_java.dto.chat.*;
-import com.example.backend_java.dto.common.*;
-import com.example.backend_java.dto.event.*;
+import com.example.backend_java.dto.common.PagedResponseDto;
 import com.example.backend_java.dto.game.*;
-import com.example.backend_java.dto.notification.*;
-import com.example.backend_java.dto.post.*;
-import com.example.backend_java.dto.social.*;
-import com.example.backend_java.dto.story.*;
-import com.example.backend_java.dto.user.*;
 import com.example.backend_java.entity.*;
+import com.example.backend_java.mapper.GameMapper;
 import com.example.backend_java.repository.*;
 import com.example.backend_java.security.JwtTokenProvider;
 import org.springframework.data.domain.PageRequest;
@@ -33,7 +26,7 @@ public class GameService {
     private final UserAchievementRepository userAchievementRepository;
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
-    private final com.example.backend_java.mapper.GameMapper gameMapper;
+    private final GameMapper gameMapper;
 
     public GameService(GameRepository gameRepository,
                        GameScoreRepository gameScoreRepository,
@@ -41,7 +34,7 @@ public class GameService {
                        UserAchievementRepository userAchievementRepository,
                        UserRepository userRepository,
                        JwtTokenProvider jwtTokenProvider,
-                       com.example.backend_java.mapper.GameMapper gameMapper) {
+                       GameMapper gameMapper) {
         this.gameRepository = gameRepository;
         this.gameScoreRepository = gameScoreRepository;
         this.gameAchievementRepository = gameAchievementRepository;

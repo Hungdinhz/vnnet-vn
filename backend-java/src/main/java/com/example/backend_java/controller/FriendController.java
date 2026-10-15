@@ -57,19 +57,19 @@ public class FriendController {
 
     // GET /friends/suggestions - Gợi ý kết bạn
     @GetMapping("/suggestions")
-    public ResponseEntity<List<com.example.backend_java.dto.user.UserResponseDto>> getSuggestions(Authentication authentication) {
+    public ResponseEntity<List<UserResponseDto>> getSuggestions(Authentication authentication) {
         User currentUser = (User) authentication.getPrincipal();
         return ResponseEntity.ok(friendService.getSuggestions(currentUser.getId()));
     }
 
     // DELETE /friends/{friendshipId} - Hủy kết bạn
     @DeleteMapping("/{friendshipId}")
-    public ResponseEntity<com.example.backend_java.dto.common.MessageDto> unfriend(
+    public ResponseEntity<MessageDto> unfriend(
             @PathVariable Long friendshipId,
             Authentication authentication) {
         User currentUser = (User) authentication.getPrincipal();
         friendService.unfriend(friendshipId, currentUser.getId());
-        return ResponseEntity.ok(new com.example.backend_java.dto.common.MessageDto("Đã hủy kết bạn thành công"));
+        return ResponseEntity.ok(new MessageDto("Đã hủy kết bạn thành công"));
     }
 
     // GET /friends/status/{targetUserId} - Kiểm tra trạng thái quan hệ bạn bè
@@ -90,21 +90,21 @@ public class FriendController {
 
     // DELETE /friends/request/{requestId} - Hủy / Từ chối lời mời kết bạn
     @DeleteMapping("/request/{requestId}")
-    public ResponseEntity<com.example.backend_java.dto.common.MessageDto> rejectRequest(
+    public ResponseEntity<MessageDto> rejectRequest(
             @PathVariable Long requestId,
             Authentication authentication) {
         User currentUser = (User) authentication.getPrincipal();
         friendService.rejectFriendRequest(requestId, currentUser.getId());
-        return ResponseEntity.ok(new com.example.backend_java.dto.common.MessageDto("Đã hủy/từ chối lời mời kết bạn"));
+        return ResponseEntity.ok(new MessageDto("Đã hủy/từ chối lời mời kết bạn"));
     }
 
     // DELETE /friends/request/user/{targetUserId} - Hủy lời mời kết bạn với người dùng chỉ định
     @DeleteMapping("/request/user/{targetUserId}")
-    public ResponseEntity<com.example.backend_java.dto.common.MessageDto> cancelRequestByUser(
+    public ResponseEntity<MessageDto> cancelRequestByUser(
             @PathVariable Long targetUserId,
             Authentication authentication) {
         User currentUser = (User) authentication.getPrincipal();
         friendService.cancelFriendRequestByTargetUser(currentUser.getId(), targetUserId);
-        return ResponseEntity.ok(new com.example.backend_java.dto.common.MessageDto("Đã hủy lời mời kết bạn"));
+        return ResponseEntity.ok(new MessageDto("Đã hủy lời mời kết bạn"));
     }
 }
