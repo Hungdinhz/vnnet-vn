@@ -29,10 +29,11 @@ export default function ItemGrid({
       <EmptyState
         title="Chưa có sản phẩm nào phù hợp"
         description="Hãy thử tìm với từ khóa khác, thay đổi danh mục hoặc là người đầu tiên đăng bán sản phẩm tại đây!"
+        className="py-6 sm:py-10 px-3 sm:px-6"
         action={
           <button
             onClick={onOpenCreate}
-            className="px-5 py-2.5 rounded-xl btn-anime text-xs sm:text-sm font-bold flex items-center gap-2 shadow-lg"
+            className="px-4 py-2 sm:px-5 sm:py-2.5 rounded-xl btn-anime text-xs sm:text-sm font-bold flex items-center gap-1.5 sm:gap-2 shadow-lg shadow-sky-500/20"
           >
             <PlusCircle className="w-4 h-4" />
             <span>+ Đăng bán ngay</span>
@@ -43,9 +44,9 @@ export default function ItemGrid({
   }
 
   return (
-    <div className="space-y-6">
-      {/* 2 cols on mobile, 3 on md, 4 on xl */}
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+    <div className="space-y-4 sm:space-y-6 w-full min-w-0">
+      {/* 1 col on ultra-narrow (<380px), 2 cols on mobile, 3 on md, 4 on xl */}
+      <div className="grid grid-cols-1 min-[380px]:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4">
         {items.map((item) => (
           <ItemCard
             key={item.id}
@@ -57,7 +58,7 @@ export default function ItemGrid({
 
       {/* Loading indicator */}
       {loading && (
-        <div className="flex justify-center py-8">
+        <div className="flex justify-center py-6 sm:py-8">
           <Spinner size="lg" />
         </div>
       )}
@@ -67,7 +68,7 @@ export default function ItemGrid({
         <div className="flex justify-center pt-2 pb-6">
           <button
             onClick={onLoadMore}
-            className="px-6 py-2.5 rounded-xl bg-card border border-border hover:border-sky-500/50 hover:bg-sky-500/5 text-xs sm:text-sm font-semibold transition-all shadow-sm"
+            className="px-5 py-2 sm:px-6 sm:py-2.5 rounded-xl bg-card border border-border hover:border-sky-500/50 hover:bg-sky-500/5 text-xs sm:text-sm font-semibold transition-all shadow-sm"
           >
             Xem thêm sản phẩm khác
           </button>

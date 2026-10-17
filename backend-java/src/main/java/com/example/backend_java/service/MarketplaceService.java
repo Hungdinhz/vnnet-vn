@@ -71,15 +71,52 @@ public class MarketplaceService {
             BigDecimal maxPrice,
             String query) {
 
-        Pageable pageable = PageRequest.of(Math.max(0, page), Math.max(1, size));
-        Page<MarketplaceItem> itemPage = marketplaceItemRepository.searchAndFilterItems(
-                "active",
-                category,
-                minPrice,
-                maxPrice,
-                query,
-                pageable
-        );
+        Pageable pageable = PageRequest.of(page, size);
+        java.time.LocalDateTime sixHoursAgo = java.time.LocalDateTime.now().minusHours(6);
+
+        org.springframework.data.jpa.domain.Specification<MarketplaceItem> spec = (root, q, cb) -> {
+            List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
+
+            // Chỉ hiển thị sản phẩm đang bán (active) HOẶC sản phẩm đã bán trong vòng 6 tiếng gần nhất
+            jakarta.persistence.criteria.Predicate isActive = cb.equal(root.get("status"), "active");
+            jakarta.persistence.criteria.Predicate isRecentlySold = cb.and(
+                    cb.equal(root.get("status"), "sold"),
+                    cb.greaterThanOrEqualTo(
+                            cb.coalesce(root.get("updatedAt"), root.get("createdAt")),
+                            sixHoursAgo
+                    )
+            );
+            predicates.add(cb.or(isActive, isRecentlySold));
+
+            if (category != null && !category.isBlank() && !"all".equalsIgnoreCase(category.trim())) {
+                predicates.add(cb.equal(root.get("category"), category.trim()));
+            }
+
+            if (minPrice != null && minPrice.compareTo(BigDecimal.ZERO) > 0) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("price"), minPrice));
+            }
+
+            if (maxPrice != null && maxPrice.compareTo(BigDecimal.ZERO) > 0) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("price"), maxPrice));
+            }
+
+            if (query != null && !query.trim().isBlank()) {
+                String pattern = "%" + query.trim().toLowerCase() + "%";
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("title")), pattern),
+                        cb.like(cb.lower(root.get("description")), pattern),
+                        cb.like(cb.lower(root.get("location")), pattern)
+                ));
+            }
+
+            if (q != null) {
+                q.orderBy(cb.desc(root.get("id")));
+            }
+
+            return cb.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
+        };
+
+        Page<MarketplaceItem> itemPage = marketplaceItemRepository.findAll(spec, pageable);
 
         List<MarketplaceItemResponseDto> content = itemPage.getContent().stream()
                 .map(marketplaceMapper::toResponseDto)

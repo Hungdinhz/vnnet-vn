@@ -58,8 +58,11 @@ export function useMarketplace() {
       setHasMore(data.has_next ?? false);
       setTotalElements(data.total_elements ?? 0);
     } catch (err: any) {
-      console.error('Lỗi tải danh sách chợ:', err);
-      toast.error('Không thể tải danh sách sản phẩm');
+      console.warn('Lỗi tải danh sách chợ:', err?.message);
+      // Chỉ hiện toast khi người dùng chủ động tải thêm trang
+      if (isLoadMore) {
+        toast.error('Không thể tải thêm sản phẩm');
+      }
     } finally {
       setLoading(false);
     }
@@ -82,12 +85,18 @@ export function useMarketplace() {
 
   // Fetch tin đăng của người dùng hiện tại
   const fetchMyItems = useCallback(async () => {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setMyItems([]);
+      return;
+    }
     setLoadingMyItems(true);
     try {
       const res = await api.get('/marketplace/my-items');
       setMyItems(res.data || []);
-    } catch (err) {
-      console.error('Lỗi tải tin đăng của tôi:', err);
+    } catch (err: any) {
+      console.warn('Lỗi tải tin đăng của tôi:', err?.message);
     } finally {
       setLoadingMyItems(false);
     }

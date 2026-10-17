@@ -8,7 +8,6 @@ import {
   MapPin,
   Calendar,
   Eye,
-  Star,
   Share2,
   Edit3,
   Trash2,
@@ -29,8 +28,6 @@ interface ItemDetailModalProps {
   onEdit: (item: MarketplaceItem) => void;
   onDelete: (id: number) => void;
   onMarkAsSold: (item: MarketplaceItem) => void;
-  onOpenReviewSeller: (sellerId: number, itemId: number) => void;
-  onViewSellerProfile: (sellerId: number) => void;
 }
 
 export default function ItemDetailModal({
@@ -40,8 +37,6 @@ export default function ItemDetailModal({
   onEdit,
   onDelete,
   onMarkAsSold,
-  onOpenReviewSeller,
-  onViewSellerProfile,
 }: ItemDetailModalProps) {
   const router = useRouter();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
@@ -50,7 +45,6 @@ export default function ItemDetailModal({
 
   const isOwner = Boolean(currentUserId && item.seller_id === currentUserId);
   const isSold = item.status === 'sold';
-  const isBuyer = Boolean(currentUserId && item.buyer_id === currentUserId);
   const images = item.image_urls && item.image_urls.length > 0 ? item.image_urls : [];
 
   const handleNextImage = () => {
@@ -80,17 +74,17 @@ export default function ItemDetailModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
 
-      <div className="relative z-10 w-full max-w-4xl bg-card border border-border/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      <div className="relative z-10 w-full max-w-4xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border/60 bg-card/60 backdrop-blur-md">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3.5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-900/90">
           <div className="flex items-center gap-2">
             <span className="text-xl">
               {CATEGORY_LABELS[item.category]?.icon || '📦'}
             </span>
-            <span className="text-xs font-semibold text-secondary uppercase tracking-wider">
+            <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
               {CATEGORY_LABELS[item.category]?.label || item.category}
             </span>
           </div>
@@ -98,14 +92,14 @@ export default function ItemDetailModal({
           <div className="flex items-center gap-2">
             <button
               onClick={handleShare}
-              className="p-1.5 rounded-full text-secondary hover:text-foreground hover:bg-card-border transition-colors"
+              className="p-1.5 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
               title="Chia sẻ sản phẩm"
             >
               <Share2 className="w-4 h-4" />
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-full text-secondary hover:text-foreground hover:bg-card-border transition-colors"
+              className="p-1.5 rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -238,47 +232,24 @@ export default function ItemDetailModal({
               </div>
 
               {/* Seller Information Box */}
-              <div className="p-3.5 rounded-xl bg-card-border/30 border border-border/70 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <Avatar
-                      src={item.seller?.avatar_url}
-                      name={item.seller?.full_name || item.seller?.username}
-                      size="md"
-                    />
-                    <div>
-                      <div className="text-xs sm:text-sm font-bold text-foreground">
-                        {item.seller?.full_name || item.seller?.username}
-                      </div>
-                      <div className="text-[11px] text-muted">
-                        @{item.seller?.username}
-                      </div>
+              <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <Avatar
+                    src={item.seller?.avatar_url}
+                    name={item.seller?.full_name || item.seller?.username}
+                    size="md"
+                  />
+                  <div>
+                    <div className="text-xs sm:text-sm font-bold text-foreground">
+                      {item.seller?.full_name || item.seller?.username}
+                    </div>
+                    <div className="text-[11px] text-muted">
+                      @{item.seller?.username}
                     </div>
                   </div>
-
-                  {/* Rating indicator */}
-                  <div className="text-right">
-                    {item.seller?.rating_avg ? (
-                      <div className="flex items-center gap-1 text-xs font-bold text-amber-400">
-                        <Star className="w-3.5 h-3.5 fill-amber-400" />
-                        <span>{item.seller.rating_avg.toFixed(1)}</span>
-                        <span className="text-muted text-[11px]">
-                          ({item.seller.rating_count} đánh giá)
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="text-[11px] text-muted">Chưa có đánh giá</span>
-                    )}
-                  </div>
                 </div>
-
-                <div className="pt-2 flex justify-end">
-                  <button
-                    onClick={() => onViewSellerProfile(item.seller_id)}
-                    className="text-xs text-sky-400 hover:text-sky-300 font-semibold hover:underline"
-                  >
-                    Xem hồ sơ & đánh giá người bán →
-                  </button>
+                <div className="text-xs text-sky-400 font-semibold px-2.5 py-1 rounded-full bg-sky-500/10 border border-sky-500/20">
+                  Người bán
                 </div>
               </div>
             </div>
@@ -317,22 +288,17 @@ export default function ItemDetailModal({
               ) : (
                 /* Buyer Controls */
                 <div className="space-y-2">
-                  <button
-                    onClick={handleContactSeller}
-                    className="w-full py-3 rounded-xl btn-anime text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-sky-500/25"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>Nhắn tin cho người bán qua Messenger</span>
-                  </button>
-
-                  {/* If item is marked sold and current user is buyer, show review button */}
-                  {isSold && (isBuyer || currentUserId) && (
+                  {isSold ? (
+                    <div className="w-full py-3 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-center text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
+                      Sản phẩm này đã được bán
+                    </div>
+                  ) : (
                     <button
-                      onClick={() => onOpenReviewSeller(item.seller_id, item.id)}
-                      className="w-full py-2.5 rounded-xl bg-amber-500/15 text-amber-400 hover:bg-amber-500/20 border border-amber-500/30 text-xs font-bold flex items-center justify-center gap-2 transition-all"
+                      onClick={handleContactSeller}
+                      className="w-full py-3 rounded-xl btn-anime text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-sky-500/25"
                     >
-                      <Star className="w-4 h-4 fill-amber-400" />
-                      <span>Đánh giá người bán cho sản phẩm này</span>
+                      <MessageCircle className="w-4 h-4" />
+                      <span>Nhắn tin cho người bán qua Messenger</span>
                     </button>
                   )}
                 </div>

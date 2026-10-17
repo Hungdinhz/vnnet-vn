@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
-import { Toaster } from 'react-hot-toast';
+import CustomToaster from "@/components/CustomToaster";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 const outfit = Outfit({
@@ -29,16 +29,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-300">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
           {children}
-          <Toaster 
-          position="bottom-center"
-          toastOptions={{
-            style: {
-              background: '#1a1030',
-              color: '#F0E6FF',
-              border: '1px solid rgba(168, 85, 247, 0.2)',
-            },
-          }}
-          />
+          <CustomToaster />
         </ThemeProvider>
       </body>
     </html>
