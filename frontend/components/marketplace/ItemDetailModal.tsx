@@ -6,9 +6,7 @@ import {
   X,
   MessageCircle,
   MapPin,
-  Calendar,
   Eye,
-  Share2,
   Edit3,
   Trash2,
   CheckCircle,
@@ -18,7 +16,7 @@ import {
 } from 'lucide-react';
 import { MarketplaceItem, CONDITION_LABELS, CATEGORY_LABELS } from '@/types/marketplace';
 import Avatar from '@/components/ui/Avatar';
-import { formatPrice, timeAgo } from './ItemCard';
+import { formatPrice } from './ItemCard';
 import toast from 'react-hot-toast';
 
 interface ItemDetailModalProps {
@@ -66,13 +64,6 @@ export default function ItemDetailModal({
     onClose();
   };
 
-  const handleShare = () => {
-    if (typeof window !== 'undefined') {
-      navigator.clipboard.writeText(window.location.href);
-      toast.success('Đã sao chép liên kết sản phẩm!');
-    }
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
@@ -90,13 +81,6 @@ export default function ItemDetailModal({
           </div>
 
           <div className="flex items-center gap-2">
-            <button
-              onClick={handleShare}
-              className="p-1.5 rounded-full text-slate-500 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-              title="Chia sẻ sản phẩm"
-            >
-              <Share2 className="w-4 h-4" />
-            </button>
             <button
               onClick={onClose}
               className="p-1.5 rounded-full text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
@@ -202,22 +186,18 @@ export default function ItemDetailModal({
               </h2>
 
               {/* Meta Grid */}
-              <div className="grid grid-cols-2 gap-2 py-3 border-y border-border/60 text-xs text-secondary">
+              <div className="grid grid-cols-3 gap-2 py-3 border-y border-border/60 text-xs text-secondary">
                 <div className="flex items-center gap-1.5 truncate">
                   <MapPin className="w-3.5 h-3.5 text-sky-400 shrink-0" />
                   <span className="truncate">{item.location || 'Toàn quốc'}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                  <span>{timeAgo(item.created_at)}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
                   <Eye className="w-3.5 h-3.5 text-sky-400 shrink-0" />
-                  <span>{item.views_count || 0} lượt xem</span>
+                  <span className="font-semibold text-foreground/90">{item.views_count || 0} lượt xem</span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-sky-400">🏷️</span>
-                  <span>{CATEGORY_LABELS[item.category]?.label || item.category}</span>
+                <div className="flex items-center gap-1.5 truncate">
+                  <span className="text-sky-400 shrink-0">🏷️</span>
+                  <span className="truncate">{CATEGORY_LABELS[item.category]?.label || item.category}</span>
                 </div>
               </div>
 
@@ -236,15 +216,15 @@ export default function ItemDetailModal({
                 <div className="flex items-center gap-2.5">
                   <Avatar
                     src={item.seller?.avatar_url}
-                    name={item.seller?.full_name || item.seller?.username}
+                    name={item.seller?.username || 'Người bán'}
                     size="md"
                   />
                   <div>
                     <div className="text-xs sm:text-sm font-bold text-foreground">
-                      {item.seller?.full_name || item.seller?.username}
+                      {item.seller?.username || 'Người bán'}
                     </div>
                     <div className="text-[11px] text-muted">
-                      @{item.seller?.username}
+                      Người bán trên VnNet
                     </div>
                   </div>
                 </div>

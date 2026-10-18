@@ -203,9 +203,31 @@ export function useMarketplace() {
     return res.data;
   };
 
+  // Lấy chi tiết sản phẩm và ghi nhận lượt xem theo thời gian thực
+  const viewItem = async (id: number): Promise<MarketplaceItem | null> => {
+    try {
+      const res = await api.get(`/marketplace/${id}`);
+      if (res.data) {
+        setItems((prev) =>
+          prev.map((i) => (i.id === id ? { ...i, views_count: res.data.views_count } : i))
+        );
+        setMyItems((prev) =>
+          prev.map((i) => (i.id === id ? { ...i, views_count: res.data.views_count } : i))
+        );
+        return res.data;
+      }
+      return null;
+    } catch (err: any) {
+      console.warn('Lỗi khi tải chi tiết sản phẩm:', err?.message);
+      return null;
+    }
+  };
+
   return {
     items,
+    setItems,
     myItems,
+    setMyItems,
     loading,
     loadingMyItems,
     page,
@@ -220,6 +242,7 @@ export function useMarketplace() {
     updateItem,
     deleteItem,
     markAsSold,
+    viewItem,
     submitReview,
     getSellerProfile,
   };

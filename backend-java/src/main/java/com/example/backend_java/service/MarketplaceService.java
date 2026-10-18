@@ -135,11 +135,10 @@ public class MarketplaceService {
     // 3. Chi tiết sản phẩm (tăng lượt xem)
     @Transactional
     public MarketplaceItemResponseDto getItemById(Long id) {
+        marketplaceItemRepository.incrementViewsCount(id);
+
         MarketplaceItem item = marketplaceItemRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Sản phẩm không tồn tại"));
-
-        item.setViewsCount(item.getViewsCount() != null ? item.getViewsCount() + 1 : 1);
-        marketplaceItemRepository.save(item);
 
         return marketplaceMapper.toResponseDto(item);
     }

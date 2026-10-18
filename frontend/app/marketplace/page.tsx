@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
@@ -21,7 +21,9 @@ export default function MarketplacePage() {
   const { currentUser } = useAuth();
   const {
     items,
+    setItems,
     myItems,
+    setMyItems,
     loading,
     loadingMyItems,
     hasMore,
@@ -34,6 +36,7 @@ export default function MarketplacePage() {
     updateItem,
     deleteItem,
     markAsSold,
+    viewItem,
   } = useMarketplace();
 
   // Modals state
@@ -41,6 +44,12 @@ export default function MarketplacePage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MarketplaceItem | null>(null);
   const [isMyItemsOpen, setIsMyItemsOpen] = useState(false);
+  const activeDetailIdRef = useRef<number | null>(null);
+
+  const handleCloseDetail = () => {
+    activeDetailIdRef.current = null;
+    setSelectedItem(null);
+  };
 
   // Interactive Confirmation Dialog State
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -148,6 +157,30 @@ export default function MarketplacePage() {
     });
   };
 
+  const handleSelectItem = async (item: MarketplaceItem) => {
+    activeDetailIdRef.current = item.id;
+
+    // 1. Phản hồi tức thì trên giao diện: mở modal và tăng 1 lượt xem ngay lập tức
+    const optimisticViews = (item.views_count || 0) + 1;
+    const optimisticItem = { ...item, views_count: optimisticViews };
+    setSelectedItem(optimisticItem);
+
+    // Cập nhật lượt xem trên card trong danh sách tức thì
+    setItems((prev) =>
+      prev.map((i) => (i.id === item.id ? { ...i, views_count: optimisticViews } : i))
+    );
+    setMyItems((prev) =>
+      prev.map((i) => (i.id === item.id ? { ...i, views_count: optimisticViews } : i))
+    );
+
+    // 2. Gọi API để backend ghi nhận lượt xem vào Database theo thời gian thực
+    const fresh = await viewItem(item.id);
+    // Chỉ cập nhật nếu modal vẫn đang mở đúng sản phẩm này (không tự ý hiện lại khi đã đóng)
+    if (fresh && activeDetailIdRef.current === item.id) {
+      setSelectedItem(fresh);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
@@ -180,7 +213,7 @@ export default function MarketplacePage() {
             loading={loading}
             hasMore={hasMore}
             onLoadMore={loadMore}
-            onSelectItem={(item) => setSelectedItem(item)}
+            onSelectItem={handleSelectItem}
             onOpenCreate={handleOpenCreate}
           />
         </main>
@@ -189,7 +222,7 @@ export default function MarketplacePage() {
       {/* Item Detail Modal */}
       <ItemDetailModal
         item={selectedItem}
-        onClose={() => setSelectedItem(null)}
+        onClose={handleCloseDetail}
         currentUserId={currentUser?.id}
         onEdit={handleOpenEdit}
         onDelete={handleDeleteItem}
@@ -219,7 +252,7 @@ export default function MarketplacePage() {
         onEdit={handleOpenEdit}
         onDelete={handleDeleteItem}
         onMarkAsSold={handleMarkAsSold}
-        onSelectItem={(item) => setSelectedItem(item)}
+        onSelectItem={handleSelectItem}
       />
 
       {/* Interactive Confirmation Dialog */}

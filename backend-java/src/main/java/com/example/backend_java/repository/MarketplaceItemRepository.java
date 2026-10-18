@@ -20,4 +20,9 @@ public interface MarketplaceItemRepository extends JpaRepository<MarketplaceItem
 
     // Lấy theo buyer
     List<MarketplaceItem> findByBuyerIdOrderByIdDesc(Long buyerId);
+
+    // Tăng lượt xem an toàn theo thời gian thực mà không làm thay đổi updatedAt
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.data.jpa.repository.Query("UPDATE MarketplaceItem m SET m.viewsCount = COALESCE(m.viewsCount, 0) + 1 WHERE m.id = :id")
+    void incrementViewsCount(@org.springframework.data.repository.query.Param("id") Long id);
 }
