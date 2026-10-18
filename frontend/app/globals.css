@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   /* LIGHT MODE — Clean social media style: Sky Blue + White */
   --background: #FFFFFF;

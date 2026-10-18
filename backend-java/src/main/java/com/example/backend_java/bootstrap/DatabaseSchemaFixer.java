@@ -49,7 +49,12 @@ public class DatabaseSchemaFixer implements CommandLineRunner {
 
             // Ensure nickname column in conversation_members
             jdbcTemplate.execute("ALTER TABLE conversation_members ADD COLUMN IF NOT EXISTS nickname VARCHAR(100);");
+            log.info("Successfully verified and updated message table schema columns");
+        } catch (Exception e) {
+            log.warn("Error checking message table schema columns: {}", e.getMessage());
+        }
 
+        try {
             // Ensure marketplace_items and seller_reviews tables exist
             jdbcTemplate.execute("""
                 CREATE TABLE IF NOT EXISTS marketplace_items (
@@ -82,9 +87,9 @@ public class DatabaseSchemaFixer implements CommandLineRunner {
                 );
             """);
 
-            log.info("Successfully verified and updated message table schema columns and marketplace tables");
+            log.info("Successfully verified and created marketplace_items and seller_reviews tables");
         } catch (Exception e) {
-            log.warn("Error checking table schemas: {}", e.getMessage());
+            log.warn("Error checking marketplace tables: {}", e.getMessage());
         }
     }
 }

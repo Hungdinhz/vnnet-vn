@@ -142,21 +142,21 @@ export default function CreateItemModal({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2.5 sm:p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
       <div className="fixed inset-0" onClick={onClose} aria-hidden="true" />
 
-      <div className="relative z-10 w-full max-w-2xl bg-card border border-border/80 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      <div className="relative z-10 w-full max-w-2xl bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border/60">
+        <div className="flex items-center justify-between px-5 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50/75 dark:bg-slate-900/90">
           <div className="flex items-center gap-2">
             <span className="text-xl">🛍️</span>
-            <h3 className="text-base sm:text-lg font-bold text-foreground">
+            <h3 className="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">
               {editingItem ? 'Chỉnh sửa tin đăng' : 'Đăng bán sản phẩm mới'}
             </h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full text-secondary hover:text-foreground hover:bg-card-border transition-colors"
+            className="p-1.5 rounded-full text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -167,17 +167,17 @@ export default function CreateItemModal({
           {/* Photos Upload Section */}
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold uppercase tracking-wider text-muted">
+              <label className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 Hình ảnh sản phẩm ({imageUrls.length}/5)
               </label>
-              <span className="text-[11px] text-secondary">Tối đa 5 ảnh, định dạng JPG, PNG, WEBP</span>
+              <span className="text-[11px] text-slate-500 dark:text-slate-400">Tối đa 5 ảnh, JPG, PNG, WEBP</span>
             </div>
 
             <div className="grid grid-cols-3 sm:grid-cols-5 gap-2.5">
               {imageUrls.map((url, idx) => (
                 <div
                   key={idx}
-                  className="relative aspect-square rounded-xl overflow-hidden border border-border group bg-zinc-900"
+                  className="relative aspect-square rounded-xl overflow-hidden border border-slate-300 dark:border-slate-700 group bg-slate-100 dark:bg-slate-800"
                 >
                   <img src={url} alt={`preview-${idx}`} className="w-full h-full object-cover" />
                   <button
@@ -200,7 +200,7 @@ export default function CreateItemModal({
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingImage}
-                  className="aspect-square rounded-xl border-2 border-dashed border-border hover:border-sky-500/60 hover:bg-sky-500/5 transition-all flex flex-col items-center justify-center text-secondary hover:text-sky-400 gap-1"
+                  className="aspect-square rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-sky-500 hover:bg-sky-500/5 transition-all flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 hover:text-sky-400 gap-1"
                 >
                   {uploadingImage ? (
                     <Spinner size="sm" />
@@ -226,7 +226,7 @@ export default function CreateItemModal({
 
           {/* Title */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-secondary">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               Tiêu đề sản phẩm <span className="text-rose-500">*</span>
             </label>
             <input
@@ -235,7 +235,7 @@ export default function CreateItemModal({
               onChange={(e) => setTitle(e.target.value)}
               placeholder="VD: iPhone 13 Pro Max 128GB Quốc Tế còn bảo hành..."
               maxLength={200}
-              className="w-full px-3.5 py-2.5 rounded-xl input-anime text-sm"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
               required
             />
           </div>
@@ -243,13 +243,13 @@ export default function CreateItemModal({
           {/* Category & Price */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-secondary">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Danh mục <span className="text-rose-500">*</span>
               </label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value as MarketplaceCategory)}
-                className="w-full px-3.5 py-2.5 rounded-xl input-anime text-sm bg-card"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
               >
                 {categories.map((catKey) => (
                   <option key={catKey} value={catKey}>
@@ -260,7 +260,7 @@ export default function CreateItemModal({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-secondary">
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
                 Giá bán (VNĐ) <span className="text-rose-500">*</span>
               </label>
               <input
@@ -270,7 +270,7 @@ export default function CreateItemModal({
                 placeholder="0 = Miễn phí / Cho tặng"
                 min="0"
                 step="1000"
-                className="w-full px-3.5 py-2.5 rounded-xl input-anime text-sm"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
                 required
               />
             </div>
@@ -279,11 +279,11 @@ export default function CreateItemModal({
           {/* Condition & Location */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-secondary">Tình trạng</label>
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Tình trạng</label>
               <select
                 value={condition}
                 onChange={(e) => setCondition(e.target.value as ItemCondition)}
-                className="w-full px-3.5 py-2.5 rounded-xl input-anime text-sm bg-card"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
               >
                 {(Object.keys(CONDITION_LABELS) as ItemCondition[]).map((condKey) => (
                   <option key={condKey} value={condKey}>
@@ -294,20 +294,20 @@ export default function CreateItemModal({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-secondary">Khu vực / Tỉnh thành</label>
+              <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Khu vực / Tỉnh thành</label>
               <input
                 type="text"
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="VD: Hà Nội, TP.HCM, Đà Nẵng..."
-                className="w-full px-3.5 py-2.5 rounded-xl input-anime text-sm"
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm"
               />
             </div>
           </div>
 
           {/* Description */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-secondary">
+            <label className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               Mô tả chi tiết <span className="text-rose-500">*</span>
             </label>
             <textarea
@@ -315,18 +315,18 @@ export default function CreateItemModal({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Mô tả nguồn gốc, phụ kiện đi kèm, tình trạng pin, trầy xước, lý do bán..."
               rows={4}
-              className="w-full px-3.5 py-2.5 rounded-xl input-anime text-sm resize-none"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-sky-500 text-sm resize-none"
               required
             />
           </div>
 
           {/* Footer buttons */}
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-border/60">
+          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200 dark:border-slate-800">
             <button
               type="button"
               onClick={onClose}
               disabled={submitting}
-              className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-secondary hover:text-foreground hover:bg-card-border transition-colors"
+              className="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               Hủy
             </button>

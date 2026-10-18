@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { MapPin, Eye, Star, ShieldCheck } from 'lucide-react';
+import { MapPin, Eye } from 'lucide-react';
 import { MarketplaceItem, CONDITION_LABELS } from '@/types/marketplace';
 import Avatar from '@/components/ui/Avatar';
 
@@ -21,15 +21,65 @@ export function formatPrice(price: number): string {
 
 export function timeAgo(dateStr: string): string {
   try {
-    const diff = (Date.now() - new Date(dateStr).getTime()) / 1000;
-    if (diff < 60) return 'Vừa xong';
+    if (!dateStr) return '';
+    let clean = dateStr;
+    if (!clean.endsWith('Z') && !clean.includes('+') && !clean.includes('Z')) {
+      clean += 'Z';
+    }
+    const past = new Date(clean).getTime();
+    if (isNaN(past)) return dateStr;
+
+    const diff = Math.floor((Date.now() - past) / 1000);
+    if (diff < 45) return 'Vừa xong';
+    if (diff < 90) return '1 phút trước';
     if (diff < 3600) return `${Math.floor(diff / 60)} phút trước`;
+    if (diff < 7200) return '1 giờ trước';
     if (diff < 86400) return `${Math.floor(diff / 3600)} giờ trước`;
+    if (diff < 172800) return '1 ngày trước';
     if (diff < 2592000) return `${Math.floor(diff / 86400)} ngày trước`;
-    return new Date(dateStr).toLocaleDateString('vi-VN');
+    return new Date(clean).toLocaleDateString('vi-VN');
   } catch {
     return dateStr;
   }
+}
+
+export function formatFullDateTime(dateStr?: string): string {
+  if (!dateStr) return '';
+  try {
+    let clean = dateStr;
+    if (!clean.endsWith('Z') && !clean.includes('+') && !clean.includes('Z')) {
+      clean += 'Z';
+    }
+    const d = new Date(clean);
+    return d.toLocaleString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+  } catch {
+    return dateStr || '';
+  }
+}
+
+export function useLiveTimeAgo(dateStr?: string): string {
+  const [text, setText] = React.useState(() => (dateStr ? timeAgo(dateStr) : ''));
+
+  React.useEffect(() => {
+    if (!dateStr) return;
+    setText(timeAgo(dateStr));
+
+    // Cập nhật đều đặn mỗi 10 giây để hiển thị chính xác theo thời gian thực
+    const timer = setInterval(() => {
+      setText(timeAgo(dateStr));
+    }, 10000);
+
+    return () => clearInterval(timer);
+  }, [dateStr]);
+
+  return text;
 }
 
 export default function ItemCard({ item, onClick }: ItemCardProps) {
@@ -110,30 +160,15 @@ export default function ItemCard({ item, onClick }: ItemCardProps) {
           </div>
 
           {/* Seller Brief info */}
-          <div className="flex items-center justify-between pt-1">
-            <div className="flex items-center gap-1.5 truncate">
-              <Avatar
-                src={item.seller?.avatar_url}
-                name={item.seller?.full_name || item.seller?.username}
-                size="xs"
-              />
-              <span className="text-xs font-medium text-secondary truncate max-w-[100px] sm:max-w-[120px]">
-                {item.seller?.full_name || item.seller?.username}
-              </span>
-            </div>
-
-            {/* Seller Rating Badge */}
-            {item.seller?.rating_avg ? (
-              <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-400 text-[11px] font-bold border border-amber-500/20">
-                <Star className="w-3 h-3 fill-amber-400" />
-                <span>{item.seller.rating_avg.toFixed(1)}</span>
-              </div>
-            ) : (
-              <span className="text-[10px] text-muted flex items-center gap-0.5">
-                <ShieldCheck className="w-3 h-3 text-emerald-400" />
-                <span>Mới</span>
-              </span>
-            )}
+          <div className="flex items-center gap-1.5 pt-1 truncate">
+            <Avatar
+              src={item.seller?.avatar_url}
+              name={item.seller?.username || 'U'}
+              size="xs"
+            />
+            <span className="text-xs font-medium text-secondary truncate">
+              {item.seller?.username || 'Người bán'}
+            </span>
           </div>
         </div>
       </div>

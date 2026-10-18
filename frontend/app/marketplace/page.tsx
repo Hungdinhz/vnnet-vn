@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import MarketplaceHeader from '@/components/marketplace/MarketplaceHeader';
@@ -8,19 +9,21 @@ import CategoryFilter from '@/components/marketplace/CategoryFilter';
 import ItemGrid from '@/components/marketplace/ItemGrid';
 import ItemDetailModal from '@/components/marketplace/ItemDetailModal';
 import CreateItemModal from '@/components/marketplace/CreateItemModal';
-import SellerReviewModal from '@/components/marketplace/SellerReviewModal';
-import SellerProfileModal from '@/components/marketplace/SellerProfileModal';
 import MyItemsPanel from '@/components/marketplace/MyItemsPanel';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useMarketplace } from '@/hooks/useMarketplace';
 import { useAuth } from '@/hooks/useAuth';
 import { MarketplaceItem, MarketplaceCategory } from '@/types/marketplace';
 import toast from 'react-hot-toast';
 
 export default function MarketplacePage() {
+  const router = useRouter();
   const { currentUser } = useAuth();
   const {
     items,
+    setItems,
     myItems,
+    setMyItems,
     loading,
     loadingMyItems,
     hasMore,
@@ -33,8 +36,7 @@ export default function MarketplacePage() {
     updateItem,
     deleteItem,
     markAsSold,
-    submitReview,
-    getSellerProfile,
+    viewItem,
   } = useMarketplace();
 
   // Modals state
@@ -42,8 +44,30 @@ export default function MarketplacePage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MarketplaceItem | null>(null);
   const [isMyItemsOpen, setIsMyItemsOpen] = useState(false);
-  const [reviewTarget, setReviewTarget] = useState<{ sellerId: number; itemId: number } | null>(null);
-  const [viewingSellerId, setViewingSellerId] = useState<number | null>(null);
+  const activeDetailIdRef = useRef<number | null>(null);
+
+  const handleCloseDetail = () => {
+    activeDetailIdRef.current = null;
+    setSelectedItem(null);
+  };
+
+  // Interactive Confirmation Dialog State
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText: string;
+    cancelText?: string;
+    variant: 'danger' | 'success' | 'warning' | 'primary';
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: 'Xác nhận',
+    variant: 'primary',
+    onConfirm: () => {},
+  });
 
   // Fetch my items when user logs in
   useEffect(() => {
@@ -56,6 +80,7 @@ export default function MarketplacePage() {
   const handleOpenCreate = () => {
     if (!currentUser) {
       toast.error('Vui lòng đăng nhập để đăng bán sản phẩm');
+      router.push('/login');
       return;
     }
     setEditingItem(null);
@@ -63,6 +88,7 @@ export default function MarketplacePage() {
   };
 
   const handleOpenEdit = (item: MarketplaceItem) => {
+    setIsMyItemsOpen(false);
     setSelectedItem(null);
     setEditingItem(item);
     setIsCreateOpen(true);
@@ -71,6 +97,7 @@ export default function MarketplacePage() {
   const handleOpenMyItems = () => {
     if (!currentUser) {
       toast.error('Vui lòng đăng nhập để xem tin đăng của bạn');
+      router.push('/login');
       return;
     }
     setIsMyItemsOpen(true);
@@ -96,57 +123,74 @@ export default function MarketplacePage() {
     }
   };
 
-  const handleDeleteItem = async (id: number) => {
-    if (window.confirm('Bạn có chắc chắn muốn gỡ sản phẩm này khỏi Chợ?')) {
-      await deleteItem(id);
-      if (selectedItem?.id === id) {
-        setSelectedItem(null);
-      }
-    }
-  };
-
-  const handleMarkAsSold = async (item: MarketplaceItem) => {
-    const buyerUsername = window.prompt(
-      'Nhập username của người mua (để người mua có thể đánh giá bạn, hoặc nhấn OK để bỏ qua):',
-      ''
-    );
-    const updated = await markAsSold(item.id, {
-      buyer_username: buyerUsername ? buyerUsername.trim() : undefined,
+  const handleDeleteItem = (id: number) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Gỡ bài đăng khỏi Chợ?',
+      message: 'Bạn có chắc chắn muốn gỡ sản phẩm này không? Sau khi gỡ, người mua sẽ không thể tìm thấy tin đăng này trên Chợ nữa.',
+      confirmText: 'Xác nhận gỡ tin',
+      cancelText: 'Giữ lại',
+      variant: 'danger',
+      onConfirm: async () => {
+        await deleteItem(id);
+        if (selectedItem?.id === id) {
+          setSelectedItem(null);
+        }
+      },
     });
-    if (selectedItem?.id === item.id) {
-      setSelectedItem(updated);
+  };
+
+  const handleMarkAsSold = (item: MarketplaceItem) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Xác nhận đã bán sản phẩm?',
+      message: 'Chúc mừng bạn đã bán thành công! Sản phẩm sẽ được gắn nhãn "Đã bán" 🤝 và sẽ tự động biến mất khỏi trang Chợ sau 6 tiếng.',
+      confirmText: 'Xác nhận đã bán',
+      cancelText: 'Chưa bán',
+      variant: 'success',
+      onConfirm: async () => {
+        const updated = await markAsSold(item.id);
+        if (selectedItem?.id === item.id) {
+          setSelectedItem(updated);
+        }
+      },
+    });
+  };
+
+  const handleSelectItem = async (item: MarketplaceItem) => {
+    activeDetailIdRef.current = item.id;
+
+    // 1. Phản hồi tức thì trên giao diện: mở modal và tăng 1 lượt xem ngay lập tức
+    const optimisticViews = (item.views_count || 0) + 1;
+    const optimisticItem = { ...item, views_count: optimisticViews };
+    setSelectedItem(optimisticItem);
+
+    // Cập nhật lượt xem trên card trong danh sách tức thì
+    setItems((prev) =>
+      prev.map((i) => (i.id === item.id ? { ...i, views_count: optimisticViews } : i))
+    );
+    setMyItems((prev) =>
+      prev.map((i) => (i.id === item.id ? { ...i, views_count: optimisticViews } : i))
+    );
+
+    // 2. Gọi API để backend ghi nhận lượt xem vào Database theo thời gian thực
+    const fresh = await viewItem(item.id);
+    // Chỉ cập nhật nếu modal vẫn đang mở đúng sản phẩm này (không tự ý hiện lại khi đã đóng)
+    if (fresh && activeDetailIdRef.current === item.id) {
+      setSelectedItem(fresh);
     }
-  };
-
-  const handleOpenReview = (sellerId: number, itemId: number) => {
-    if (!currentUser) {
-      toast.error('Vui lòng đăng nhập để gửi đánh giá');
-      return;
-    }
-    setReviewTarget({ sellerId, itemId });
-  };
-
-  const handleSubmitReview = async (
-    sellerId: number,
-    data: { item_id?: number; rating: number; comment?: string }
-  ) => {
-    return await submitReview(sellerId, data);
-  };
-
-  const handleViewSellerProfile = (sellerId: number) => {
-    setViewingSellerId(sellerId);
   };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Navbar />
 
-      <div className="max-w-7xl mx-auto flex gap-4 px-2 md:px-4">
+      <div className="max-w-7xl mx-auto flex gap-4 px-2 sm:px-4 w-full min-w-0">
         {/* Left Sidebar */}
         <Sidebar />
 
         {/* Main Marketplace Content */}
-        <main className="flex-1 py-4 md:py-6 max-w-5xl mx-auto space-y-4">
+        <main className="flex-1 py-3 sm:py-5 md:py-6 max-w-5xl mx-auto space-y-3 sm:space-y-4 w-full min-w-0">
           {/* Header & Search */}
           <MarketplaceHeader
             filters={filters}
@@ -169,7 +213,7 @@ export default function MarketplacePage() {
             loading={loading}
             hasMore={hasMore}
             onLoadMore={loadMore}
-            onSelectItem={(item) => setSelectedItem(item)}
+            onSelectItem={handleSelectItem}
             onOpenCreate={handleOpenCreate}
           />
         </main>
@@ -178,13 +222,11 @@ export default function MarketplacePage() {
       {/* Item Detail Modal */}
       <ItemDetailModal
         item={selectedItem}
-        onClose={() => setSelectedItem(null)}
+        onClose={handleCloseDetail}
         currentUserId={currentUser?.id}
         onEdit={handleOpenEdit}
         onDelete={handleDeleteItem}
         onMarkAsSold={handleMarkAsSold}
-        onOpenReviewSeller={handleOpenReview}
-        onViewSellerProfile={handleViewSellerProfile}
       />
 
       {/* Create / Edit Item Modal */}
@@ -210,24 +252,19 @@ export default function MarketplacePage() {
         onEdit={handleOpenEdit}
         onDelete={handleDeleteItem}
         onMarkAsSold={handleMarkAsSold}
-        onSelectItem={(item) => setSelectedItem(item)}
+        onSelectItem={handleSelectItem}
       />
 
-      {/* Seller Review Modal (Buyer evaluating seller) */}
-      <SellerReviewModal
-        isOpen={Boolean(reviewTarget)}
-        onClose={() => setReviewTarget(null)}
-        sellerId={reviewTarget?.sellerId || null}
-        itemId={reviewTarget?.itemId || null}
-        onSubmit={handleSubmitReview}
-      />
-
-      {/* Seller Profile & Reviews Modal */}
-      <SellerProfileModal
-        isOpen={Boolean(viewingSellerId)}
-        onClose={() => setViewingSellerId(null)}
-        sellerId={viewingSellerId}
-        onFetchProfile={getSellerProfile}
+      {/* Interactive Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        onClose={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+        onConfirm={confirmDialog.onConfirm}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmText={confirmDialog.confirmText}
+        cancelText={confirmDialog.cancelText}
+        variant={confirmDialog.variant}
       />
     </div>
   );
