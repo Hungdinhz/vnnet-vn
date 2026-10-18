@@ -173,11 +173,8 @@ public class AuthService {
 
         User user = userRepository.findByEmail(email).orElse(null);
 
-        if ("login".equals(mode)) {
-            if (user == null) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Tài khoản chưa được đăng ký. Vui lòng đăng ký trước!");
-            }
+        // Nếu user đã tồn tại và đã xác thực -> Đăng nhập luôn
+        if (user != null && Boolean.TRUE.equals(user.getIsVerified())) {
             if (user.getGoogleId() == null) {
                 user.setGoogleId(googleId);
             }
@@ -187,7 +184,6 @@ public class AuthService {
             if (user.getAvatarUrl() == null || user.getAvatarUrl().isBlank()) {
                 user.setAvatarUrl(pictureUrl);
             }
-            user.setIsVerified(true);
             user = userRepository.save(user);
 
             String token = jwtTokenProvider.generateToken(user.getEmail());
@@ -201,41 +197,25 @@ public class AuthService {
                     .suggestedUsername(user.getUsername())
                     .build();
         } else {
-            if (user != null && Boolean.TRUE.equals(user.getIsVerified())) {
-                if (user.getGoogleId() == null) {
-                    user.setGoogleId(googleId);
-                    user = userRepository.save(user);
-                }
-                String token = jwtTokenProvider.generateToken(user.getEmail());
-                return GoogleAuthResponseDto.builder()
-                        .accessToken(token)
-                        .tokenType("bearer")
-                        .isNewUser(false)
-                        .email(user.getEmail())
-                        .fullName(user.getFullName())
-                        .avatarUrl(user.getAvatarUrl())
-                        .suggestedUsername(user.getUsername())
-                        .build();
-            } else {
-                String baseUsername = email.split("@")[0].replaceAll("[^a-zA-Z0-9_]", "");
-                if (baseUsername.isBlank()) baseUsername = "user";
-                String suggestedUsername = baseUsername;
-                int counter = 1;
-                while (userRepository.existsByUsername(suggestedUsername)) {
-                    suggestedUsername = baseUsername + counter;
-                    counter++;
-                }
-
-                return GoogleAuthResponseDto.builder()
-                        .accessToken(null)
-                        .tokenType(null)
-                        .isNewUser(true)
-                        .email(email)
-                        .fullName(name)
-                        .avatarUrl(pictureUrl)
-                        .suggestedUsername(suggestedUsername)
-                        .build();
+            // User chưa có tài khoản hoặc chưa xác thực -> Chuyển sang hoàn tất đăng ký
+            String baseUsername = email.split("@")[0].replaceAll("[^a-zA-Z0-9_]", "");
+            if (baseUsername.isBlank()) baseUsername = "user";
+            String suggestedUsername = baseUsername;
+            int counter = 1;
+            while (userRepository.existsByUsername(suggestedUsername)) {
+                suggestedUsername = baseUsername + counter;
+                counter++;
             }
+
+            return GoogleAuthResponseDto.builder()
+                    .accessToken(null)
+                    .tokenType(null)
+                    .isNewUser(true)
+                    .email(email)
+                    .fullName(name)
+                    .avatarUrl(pictureUrl)
+                    .suggestedUsername(suggestedUsername)
+                    .build();
         }
     }
 

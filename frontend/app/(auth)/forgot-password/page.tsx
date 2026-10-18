@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Eye, EyeOff } from 'lucide-react';
 import api from '@/lib/axios';
 import { checkPasswordRules, validatePassword } from '@/lib/passwordValidation';
 
@@ -37,6 +38,8 @@ export default function ForgotPasswordPage() {
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -191,28 +194,50 @@ export default function ForgotPasswordPage() {
             </div>
             <div>
               <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Mật khẩu mới</label>
-              <input
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
-                placeholder="Tối thiểu 8 ký tự, 1 chữ hoa, 1 ký tự đặc biệt..."
-                required
-                minLength={8}
-              />
+              <div className="relative">
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full pl-4 pr-11 py-2.5 input-anime rounded-xl text-sm"
+                  placeholder="Tối thiểu 8 ký tự, 1 chữ hoa, 1 ký tự đặc biệt..."
+                  required
+                  minLength={8}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted/60 hover:text-foreground transition-colors p-1 focus:outline-none"
+                  tabIndex={-1}
+                  aria-label={showNewPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                >
+                  {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
               <PasswordRequirementsIndicator password={newPassword} />
             </div>
             <div>
               <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Xác nhận mật khẩu mới</label>
-              <input
-                type="password"
-                value={confirmNewPassword}
-                onChange={(e) => setConfirmNewPassword(e.target.value)}
-                className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
-                placeholder="Nhập lại mật khẩu mới..."
-                required
-                minLength={6}
-              />
+              <div className="relative">
+                <input
+                  type={showConfirmNewPassword ? "text" : "password"}
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                  className="w-full pl-4 pr-11 py-2.5 input-anime rounded-xl text-sm"
+                  placeholder="Nhập lại mật khẩu mới..."
+                  required
+                  minLength={6}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted/60 hover:text-foreground transition-colors p-1 focus:outline-none"
+                  tabIndex={-1}
+                  aria-label={showConfirmNewPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                >
+                  {showConfirmNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
             </div>
             <button
               type="submit"

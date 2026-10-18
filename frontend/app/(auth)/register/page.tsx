@@ -1,9 +1,10 @@
 // app/(auth)/register/page.tsx
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { Eye, EyeOff } from 'lucide-react';
 import api from '@/lib/axios';
 import GoogleLoginButton, { GoogleUserInfo } from '@/components/GoogleLoginButton';
 import { checkPasswordRules, validatePassword } from '@/lib/passwordValidation';
@@ -37,6 +38,10 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showGooglePassword, setShowGooglePassword] = useState(false);
+  const [showGoogleConfirmPassword, setShowGoogleConfirmPassword] = useState(false);
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -100,6 +105,21 @@ export default function RegisterPage() {
     setGoogleConfirmPassword('');
     setGoogleStep('complete');
   };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('google_reg_info');
+      if (saved) {
+        try {
+          const info = JSON.parse(saved);
+          sessionStorage.removeItem('google_reg_info');
+          handleGoogleRegistrationNeeded(info);
+        } catch (e) {
+          sessionStorage.removeItem('google_reg_info');
+        }
+      }
+    }
+  }, []);
 
   // Submit form hoàn tất Google
   const handleGoogleComplete = async (e: React.FormEvent) => {
@@ -244,28 +264,50 @@ export default function RegisterPage() {
 
               <div>
                 <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Mật khẩu</label>
-                <input
-                  type="password"
-                  value={googlePassword}
-                  onChange={(e) => setGooglePassword(e.target.value)}
-                  className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
-                  placeholder="Tối thiểu 8 ký tự, 1 chữ hoa, 1 ký tự đặc biệt..."
-                  required
-                  minLength={8}
-                />
+                <div className="relative">
+                  <input
+                    type={showGooglePassword ? "text" : "password"}
+                    value={googlePassword}
+                    onChange={(e) => setGooglePassword(e.target.value)}
+                    className="w-full pl-4 pr-11 py-2.5 input-anime rounded-xl text-sm"
+                    placeholder="Tối thiểu 8 ký tự, 1 chữ hoa, 1 ký tự đặc biệt..."
+                    required
+                    minLength={8}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowGooglePassword(!showGooglePassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted/60 hover:text-foreground transition-colors p-1 focus:outline-none"
+                    tabIndex={-1}
+                    aria-label={showGooglePassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showGooglePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
                 <PasswordRequirementsIndicator password={googlePassword} />
               </div>
 
               <div>
                 <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Nhập lại mật khẩu</label>
-                <input
-                  type="password"
-                  value={googleConfirmPassword}
-                  onChange={(e) => setGoogleConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
-                  placeholder="Xác nhận mật khẩu..."
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showGoogleConfirmPassword ? "text" : "password"}
+                    value={googleConfirmPassword}
+                    onChange={(e) => setGoogleConfirmPassword(e.target.value)}
+                    className="w-full pl-4 pr-11 py-2.5 input-anime rounded-xl text-sm"
+                    placeholder="Xác nhận mật khẩu..."
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowGoogleConfirmPassword(!showGoogleConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted/60 hover:text-foreground transition-colors p-1 focus:outline-none"
+                    tabIndex={-1}
+                    aria-label={showGoogleConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showGoogleConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <button
@@ -315,28 +357,50 @@ export default function RegisterPage() {
 
               <div>
                 <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Mật khẩu</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
-                  placeholder="Tối thiểu 8 ký tự, 1 chữ hoa, 1 ký tự đặc biệt..."
-                  required
-                  minLength={8}
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-4 pr-11 py-2.5 input-anime rounded-xl text-sm"
+                    placeholder="Tối thiểu 8 ký tự, 1 chữ hoa, 1 ký tự đặc biệt..."
+                    required
+                    minLength={8}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted/60 hover:text-foreground transition-colors p-1 focus:outline-none"
+                    tabIndex={-1}
+                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
                 <PasswordRequirementsIndicator password={password} />
               </div>
 
               <div>
                 <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Nhập lại mật khẩu</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
-                  placeholder="Xác nhận mật khẩu..."
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full pl-4 pr-11 py-2.5 input-anime rounded-xl text-sm"
+                    placeholder="Xác nhận mật khẩu..."
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted/60 hover:text-foreground transition-colors p-1 focus:outline-none"
+                    tabIndex={-1}
+                    aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <button
