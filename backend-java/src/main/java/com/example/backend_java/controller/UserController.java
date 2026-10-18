@@ -1,12 +1,5 @@
 package com.example.backend_java.controller;
-import com.example.backend_java.dto.auth.ChangePasswordDto;
-import com.example.backend_java.dto.auth.ForgotPasswordDto;
-import com.example.backend_java.dto.auth.GoogleAuthResponseDto;
-import com.example.backend_java.dto.auth.GoogleLoginDto;
-import com.example.backend_java.dto.auth.GoogleRegisterDto;
-import com.example.backend_java.dto.auth.ResendOtpDto;
-import com.example.backend_java.dto.auth.ResetPasswordDto;
-import com.example.backend_java.dto.auth.VerifyOtpDto;
+import com.example.backend_java.dto.auth.*;
 import com.example.backend_java.dto.common.MessageDto;
 
 import com.example.backend_java.dto.user.ActivityDataDto;
@@ -87,6 +80,24 @@ public class UserController {
     @PostMapping("/resend-otp")
     public ResponseEntity<MessageDto> resendOtp(@Valid @RequestBody ResendOtpDto dto) {
         return ResponseEntity.ok(userService.resendOtp(dto));
+    }
+
+    // POST /users/guest/register - Đăng ký tài khoản khách (không cần OTP, trả token ngay)
+    @PostMapping("/guest/register")
+    public ResponseEntity<TokenDto> registerGuest(@Valid @RequestBody GuestRegisterDto dto) {
+        return ResponseEntity.ok(userService.registerGuest(dto));
+    }
+
+    // POST /users/guest/forgot-password - Kiểm tra email tài khoản khách (không gửi OTP)
+    @PostMapping("/guest/forgot-password")
+    public ResponseEntity<MessageDto> guestForgotPassword(@Valid @RequestBody ForgotPasswordDto dto) {
+        return ResponseEntity.ok(userService.guestForgotPasswordCheck(dto.getEmail()));
+    }
+
+    // POST /users/guest/reset-password - Đổi mật khẩu tài khoản khách trực tiếp
+    @PostMapping("/guest/reset-password")
+    public ResponseEntity<MessageDto> guestResetPassword(@Valid @RequestBody GuestResetPasswordDto dto) {
+        return ResponseEntity.ok(userService.guestResetPassword(dto));
     }
 
     // GET /users/me - Lấy thông tin user hiện tại (cần token)

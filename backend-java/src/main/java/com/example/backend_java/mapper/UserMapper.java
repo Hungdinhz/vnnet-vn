@@ -24,6 +24,7 @@ public class UserMapper {
                 .phone(user.getPhone())
                 .bio(user.getBio())
                 .isVerified(user.getIsVerified())
+                .isGuest(user.getIsGuest())
                 .build();
     }
 }

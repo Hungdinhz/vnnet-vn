@@ -109,16 +109,23 @@ export default function GoogleLoginButton({ mode = 'login', onError, onRegistrat
       const data = apiResponse.data;
       const token = data.access_token || data.token;
 
-      if (mode === 'register' && data.is_new_user && !token) {
-        // User MỚI ở mode register → cần hoàn tất form
+      if (data.is_new_user && !token) {
+        // User MỚI (chưa có tài khoản) -> tự động chuyển sang hoàn tất đăng ký
+        const regInfo: GoogleUserInfo = {
+          idToken: response.credential,
+          email: data.email,
+          fullName: data.full_name || '',
+          avatarUrl: data.avatar_url || '',
+          suggestedUsername: data.suggested_username || '',
+        };
+
         if (onRegistrationNeeded) {
-          onRegistrationNeeded({
-            idToken: response.credential,
-            email: data.email,
-            fullName: data.full_name || '',
-            avatarUrl: data.avatar_url || '',
-            suggestedUsername: data.suggested_username || '',
-          });
+          onRegistrationNeeded(regInfo);
+        } else {
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('google_reg_info', JSON.stringify(regInfo));
+          }
+          router.push('/register');
         }
       } else if (token) {
         // User đã có TK → đăng nhập luôn
@@ -128,13 +135,17 @@ export default function GoogleLoginButton({ mode = 'login', onError, onRegistrat
         if (onError) onError('Không nhận được token từ server.');
       }
     } catch (err: any) {
+      const status = err.response?.status;
+      if (status === 404 && mode === 'login') {
+        // Tự động chuyển sang trang đăng ký luôn, không cần thông báo tài khoản chưa đăng ký
+        router.push('/register');
+        return;
+      }
+
       if (onError) {
-        const status = err.response?.status;
         const errorMessage = err.response?.data?.message || err.response?.data?.detail;
 
-        if (status === 404 && mode === 'login') {
-          onError('Tài khoản chưa được đăng ký. Vui lòng đăng ký trước!');
-        } else if (typeof errorMessage === 'string') {
+        if (typeof errorMessage === 'string') {
           onError(errorMessage);
         } else if (Array.isArray(errorMessage)) {
           onError(errorMessage[0].msg || errorMessage[0]);

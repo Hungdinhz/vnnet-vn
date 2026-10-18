@@ -63,17 +63,6 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email này đã được đăng ký và kích hoạt tài khoản!");
         }
 
-        User existingUserByUsername = userRepository.findByUsername(username).orElse(null);
-        if (existingUserByUsername != null && Boolean.TRUE.equals(existingUserByUsername.getIsVerified())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên đăng nhập này đã được sử dụng!");
-        }
-
-        PendingRegistration pendingByUsername = pendingRegistrationRepository.findByUsername(username).orElse(null);
-        if (pendingByUsername != null && !pendingByUsername.getEmail().equalsIgnoreCase(email)
-                && pendingByUsername.getExpiresAt().isAfter(LocalDateTime.now())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên đăng nhập này đang được một tài khoản khác đăng ký. Vui lòng chọn tên khác!");
-        }
-
         String hashedPassword = passwordEncoder.encode(dto.getPassword());
 
         int otpNum = 100000 + secureRandom.nextInt(900000);
@@ -112,7 +101,6 @@ public class AuthService {
         String identifier = usernameOrEmail.trim();
 
         User user = userRepository.findByEmail(identifier.toLowerCase())
-                .or(() -> userRepository.findByUsername(identifier))
                 .orElse(null);
 
         if (user == null) {
@@ -173,11 +161,8 @@ public class AuthService {
 
         User user = userRepository.findByEmail(email).orElse(null);
 
-        if ("login".equals(mode)) {
-            if (user == null) {
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Tài khoản chưa được đăng ký. Vui lòng đăng ký trước!");
-            }
+        // Nếu user đã tồn tại và đã xác thực -> Đăng nhập luôn
+        if (user != null && Boolean.TRUE.equals(user.getIsVerified())) {
             if (user.getGoogleId() == null) {
                 user.setGoogleId(googleId);
             }
@@ -187,7 +172,6 @@ public class AuthService {
             if (user.getAvatarUrl() == null || user.getAvatarUrl().isBlank()) {
                 user.setAvatarUrl(pictureUrl);
             }
-            user.setIsVerified(true);
             user = userRepository.save(user);
 
             String token = jwtTokenProvider.generateToken(user.getEmail());
@@ -201,41 +185,25 @@ public class AuthService {
                     .suggestedUsername(user.getUsername())
                     .build();
         } else {
-            if (user != null && Boolean.TRUE.equals(user.getIsVerified())) {
-                if (user.getGoogleId() == null) {
-                    user.setGoogleId(googleId);
-                    user = userRepository.save(user);
-                }
-                String token = jwtTokenProvider.generateToken(user.getEmail());
-                return GoogleAuthResponseDto.builder()
-                        .accessToken(token)
-                        .tokenType("bearer")
-                        .isNewUser(false)
-                        .email(user.getEmail())
-                        .fullName(user.getFullName())
-                        .avatarUrl(user.getAvatarUrl())
-                        .suggestedUsername(user.getUsername())
-                        .build();
-            } else {
-                String baseUsername = email.split("@")[0].replaceAll("[^a-zA-Z0-9_]", "");
-                if (baseUsername.isBlank()) baseUsername = "user";
-                String suggestedUsername = baseUsername;
-                int counter = 1;
-                while (userRepository.existsByUsername(suggestedUsername)) {
-                    suggestedUsername = baseUsername + counter;
-                    counter++;
-                }
-
-                return GoogleAuthResponseDto.builder()
-                        .accessToken(null)
-                        .tokenType(null)
-                        .isNewUser(true)
-                        .email(email)
-                        .fullName(name)
-                        .avatarUrl(pictureUrl)
-                        .suggestedUsername(suggestedUsername)
-                        .build();
+            // User chưa có tài khoản hoặc chưa xác thực -> Chuyển sang hoàn tất đăng ký
+            String baseUsername = email.split("@")[0].replaceAll("[^a-zA-Z0-9_]", "");
+            if (baseUsername.isBlank()) baseUsername = "user";
+            String suggestedUsername = baseUsername;
+            int counter = 1;
+            while (userRepository.existsByUsername(suggestedUsername)) {
+                suggestedUsername = baseUsername + counter;
+                counter++;
             }
+
+            return GoogleAuthResponseDto.builder()
+                    .accessToken(null)
+                    .tokenType(null)
+                    .isNewUser(true)
+                    .email(email)
+                    .fullName(name)
+                    .avatarUrl(pictureUrl)
+                    .suggestedUsername(suggestedUsername)
+                    .build();
         }
     }
 
@@ -252,10 +220,6 @@ public class AuthService {
         }
 
         String username = dto.getUsername().trim();
-        User existingUsername = userRepository.findByUsername(username).orElse(null);
-        if (existingUsername != null && Boolean.TRUE.equals(existingUsername.getIsVerified())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên đăng nhập này đã được sử dụng!");
-        }
 
         String fullName = dto.getFullName() != null && !dto.getFullName().trim().isEmpty()
                 ? dto.getFullName().trim()
@@ -338,11 +302,6 @@ public class AuthService {
             pendingRegistrationRepository.delete(pending);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email này đã được sử dụng bởi một tài khoản khác!");
         }
-        if (userRepository.existsByUsername(pending.getUsername())) {
-            pendingRegistrationRepository.delete(pending);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên đăng nhập này đã được sử dụng bởi một tài khoản khác!");
-        }
-
         User user = User.builder()
                 .email(pending.getEmail())
                 .username(pending.getUsername())
@@ -400,5 +359,73 @@ public class AuthService {
         }
 
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Loại xác thực không hợp lệ");
+    }
+
+    // Đăng ký tài khoản khách (Kích hoạt ngay không cần OTP)
+    public TokenDto registerGuest(GuestRegisterDto dto) {
+        String email = dto.getEmail().trim().toLowerCase();
+        String username = dto.getUsername().trim();
+
+        PasswordValidationUtil.validate(dto.getPassword());
+
+        if (!EmailValidationUtil.isValidSyntax(email)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Địa chỉ email không đúng định dạng (Ví dụ: user@example.com)!");
+        }
+
+        if (userRepository.existsByEmail(email)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email này đã được sử dụng!");
+        }
+
+        User guestUser = User.builder()
+                .username(username)
+                .email(email)
+                .fullName(username)
+                .hashedPassword(passwordEncoder.encode(dto.getPassword()))
+                .isVerified(true)
+                .isGuest(true)
+                .build();
+
+        guestUser = userRepository.save(guestUser);
+
+        String token = jwtTokenProvider.generateToken(guestUser.getEmail());
+        return TokenDto.builder()
+                .accessToken(token)
+                .tokenType("bearer")
+                .build();
+    }
+
+    // Kiểm tra email tài khoản khách cho bước quên mật khẩu (không gửi OTP)
+    public MessageDto guestForgotPasswordCheck(String email) {
+        String normalizedEmail = email.trim().toLowerCase();
+        if (!EmailValidationUtil.isValidSyntax(normalizedEmail)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Địa chỉ email không đúng định dạng (Ví dụ: user@example.com)!");
+        }
+
+        User user = userRepository.findByEmail(normalizedEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng với email này"));
+
+        if (!Boolean.TRUE.equals(user.getIsGuest())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email này thuộc tài khoản thông thường. Vui lòng sử dụng chức năng khôi phục có xác thực mã OTP!");
+        }
+
+        return new MessageDto("Xác nhận tài khoản khách hợp lệ");
+    }
+
+    // Đặt lại mật khẩu tài khoản khách trực tiếp (không cần OTP)
+    public MessageDto guestResetPassword(GuestResetPasswordDto dto) {
+        String email = dto.getEmail().trim().toLowerCase();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng với email này"));
+
+        if (!Boolean.TRUE.equals(user.getIsGuest())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tài khoản này không phải là tài khoản khách!");
+        }
+
+        PasswordValidationUtil.validate(dto.getNewPassword());
+
+        user.setHashedPassword(passwordEncoder.encode(dto.getNewPassword()));
+        userRepository.save(user);
+
+        return new MessageDto("Đặt lại mật khẩu tài khoản khách thành công");
     }
 }

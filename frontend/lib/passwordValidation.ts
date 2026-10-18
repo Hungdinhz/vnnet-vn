@@ -39,3 +39,20 @@ export function validatePassword(password: string): { isValid: boolean; message?
 
   return { isValid: true };
 }
+
+/**
+ * Kiểm tra định dạng email hợp lệ (phải có phần @ và tên miền có đuôi .xx hợp lệ)
+ */
+export function validateEmail(email: string): { isValid: boolean; message?: string } {
+  if (!email || !email.trim()) {
+    return { isValid: false, message: 'Vui lòng nhập địa chỉ email!' };
+  }
+
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  if (!emailRegex.test(email.trim())) {
+    return { isValid: false, message: 'Địa chỉ email không đúng định dạng (Ví dụ: user@example.com)!' };
+  }
+
+  return { isValid: true };
+}
+

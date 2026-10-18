@@ -67,6 +67,18 @@ public class UserService {
         return authService.resendOtp(dto);
     }
 
+    public TokenDto registerGuest(GuestRegisterDto dto) {
+        return authService.registerGuest(dto);
+    }
+
+    public MessageDto guestForgotPasswordCheck(String email) {
+        return authService.guestForgotPasswordCheck(email);
+    }
+
+    public MessageDto guestResetPassword(GuestResetPasswordDto dto) {
+        return authService.guestResetPassword(dto);
+    }
+
     // Profile & User management methods
     public UserResponseDto getCurrentUser(User user) {
         return userMapper.toResponseDto(user);
@@ -89,10 +101,7 @@ public class UserService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         if (dto.getUsername() != null && !dto.getUsername().trim().isEmpty()) {
-            if (!user.getUsername().equals(dto.getUsername()) && userRepository.existsByUsername(dto.getUsername())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username này đã được sử dụng!");
-            }
-            user.setUsername(dto.getUsername());
+            user.setUsername(dto.getUsername().trim());
         }
         if (dto.getAvatarUrl() != null) {
             user.setAvatarUrl(dto.getAvatarUrl());

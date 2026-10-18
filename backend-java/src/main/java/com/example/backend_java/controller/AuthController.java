@@ -67,4 +67,22 @@ public class AuthController {
     public ResponseEntity<MessageDto> resendOtp(@Valid @RequestBody ResendOtpDto dto) {
         return ResponseEntity.ok(authService.resendOtp(dto));
     }
+
+    // POST /auth/guest/register - Đăng ký tài khoản khách (không cần OTP, trả token ngay)
+    @PostMapping("/guest/register")
+    public ResponseEntity<TokenDto> registerGuest(@Valid @RequestBody GuestRegisterDto dto) {
+        return ResponseEntity.ok(authService.registerGuest(dto));
+    }
+
+    // POST /auth/guest/forgot-password - Kiểm tra email tài khoản khách (không gửi OTP)
+    @PostMapping("/guest/forgot-password")
+    public ResponseEntity<MessageDto> guestForgotPassword(@Valid @RequestBody ForgotPasswordDto dto) {
+        return ResponseEntity.ok(authService.guestForgotPasswordCheck(dto.getEmail()));
+    }
+
+    // POST /auth/guest/reset-password - Đổi mật khẩu tài khoản khách trực tiếp
+    @PostMapping("/guest/reset-password")
+    public ResponseEntity<MessageDto> guestResetPassword(@Valid @RequestBody GuestResetPasswordDto dto) {
+        return ResponseEntity.ok(authService.guestResetPassword(dto));
+    }
 }

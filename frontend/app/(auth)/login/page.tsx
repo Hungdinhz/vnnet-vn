@@ -1,20 +1,31 @@
 // app/(auth)/login/page.tsx
 "use client"; 
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { Eye, EyeOff, UserCheck, ArrowLeft } from 'lucide-react';
 import api from '@/lib/axios'; 
 import { setAuthToken } from '@/lib/auth';
 import GoogleLoginButton from '@/components/GoogleLoginButton';
+import GuestLoginButton from '@/components/GuestLoginButton';
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   
-  const [username, setUsername] = useState('');
+  const [isGuestMode, setIsGuestMode] = useState(false);
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('mode') === 'guest') {
+      setIsGuestMode(true);
+    }
+  }, [searchParams]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +34,8 @@ export default function LoginPage() {
 
     try {
       const formData = new URLSearchParams();
-      formData.append('username', username);
+      formData.append('username', email.trim());
+      formData.append('email', email.trim());
       formData.append('password', password);
 
       const response = await api.post('/users/login', formData, {
@@ -42,8 +54,8 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       if (err.response?.status === 403) {
-        // Handle unverified account
-        router.push(`/verify-email?email=${encodeURIComponent(username)}`);
+        // Tài khoản chưa xác minh email (chỉ xảy ra với tài khoản thường)
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
         return;
       }
 
@@ -56,12 +68,20 @@ export default function LoginPage() {
       } else {
         setError('Có lỗi xảy ra từ máy chủ. Vui lòng thử lại.');
       }
+    } finally {
       setIsLoading(false);
     }
   };
 
+  const switchMode = (guest: boolean) => {
+    setIsGuestMode(guest);
+    setError('');
+    setEmail('');
+    setPassword('');
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden py-10">
       {/* Animated background blobs */}
       <div className="absolute top-1/4 -left-20 w-72 h-72 bg-indigo-600/15 rounded-full blur-[100px] animate-float"></div>
       <div className="absolute bottom-1/4 -right-20 w-72 h-72 bg-indigo-500/15 rounded-full blur-[100px] animate-float" style={{ animationDelay: '1.5s' }}></div>
@@ -69,7 +89,7 @@ export default function LoginPage() {
 
       <div className="glass-card p-6 sm:p-8 rounded-2xl shadow-2xl w-full max-w-md relative z-10 animate-slide-up mx-3 xs:mx-4 sm:mx-0">
         {/* Logo */}
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-indigo-600 shadow-lg shadow-indigo-500/30 mb-4">
             <span className="text-white text-2xl font-black">VN</span>
           </div>
@@ -77,7 +97,26 @@ export default function LoginPage() {
           <p className="text-muted/50 text-sm mt-1">Mạng xã hội thế hệ mới ✨</p>
         </div>
         
-        <h3 className="text-lg font-semibold text-center text-secondary mb-6">Đăng nhập vào tài khoản</h3>
+        <h3 className="text-lg font-semibold text-center text-secondary mb-4">
+          {isGuestMode ? 'Đăng nhập tài khoản khách' : 'Đăng nhập vào tài khoản'}
+        </h3>
+
+        {/* Guest Mode indicator */}
+        {isGuestMode && (
+          <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium mb-4 animate-fade-in">
+            <div className="flex items-center gap-2">
+              <UserCheck className="w-4 h-4 shrink-0 text-indigo-400" />
+              <span>Chế độ Tài khoản khách</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => switchMode(false)}
+              className="text-xs text-indigo-300 hover:text-white underline cursor-pointer"
+            >
+              Đổi
+            </button>
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-500/10 text-red-400 p-3 rounded-lg mb-4 text-sm text-center border border-red-500/20">
@@ -85,29 +124,43 @@ export default function LoginPage() {
           </div>
         )}
 
+        {/* ========== FORM ĐĂNG NHẬP (DÙNG CHO CẢ THƯỜNG & KHÁCH) ========== */}
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Tên đăng nhập (hoặc Email)</label>
+            <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">
+              {isGuestMode ? 'Tài khoản khách (nhập email)' : 'Tài khoản (nhập email)'}
+            </label>
             <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
-              placeholder="Nhập tên đăng nhập..."
+              placeholder={isGuestMode ? 'Nhập email tài khoản khách...' : 'Nhập email...'}
               required
             />
           </div>
 
           <div>
             <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Mật khẩu</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
-              placeholder="Nhập mật khẩu..."
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full pl-4 pr-11 py-2.5 input-anime rounded-xl text-sm"
+                placeholder="Nhập mật khẩu..."
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted/60 hover:text-foreground transition-colors p-1 focus:outline-none"
+                tabIndex={-1}
+                aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
 
           <button
@@ -115,36 +168,79 @@ export default function LoginPage() {
             disabled={isLoading}
             className="w-full py-2.5 px-4 rounded-xl text-sm font-bold transition-all btn-anime mt-2"
           >
-            {isLoading ? 'Đang xử lý...' : '✨ Đăng nhập'}
+            {isLoading ? 'Đang xử lý...' : isGuestMode ? '✨ Đăng nhập tài khoản khách' : '✨ Đăng nhập'}
           </button>
         </form>
 
-        {/* Divider */}
-        <div className="relative my-6 flex items-center justify-center">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200 dark:border-slate-700/60"></div>
-          </div>
-          <div className="relative px-3 py-0.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-full border border-slate-200/80 dark:border-slate-700/50 shadow-xs">
-            <span className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-medium">hoặc</span>
-          </div>
-        </div>
+        {/* Các nút phương thức đăng nhập khác (Chỉ hiện khi ở chế độ thường) */}
+        {!isGuestMode ? (
+          <>
+            {/* Divider */}
+            <div className="relative my-6 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-slate-200 dark:border-slate-700/60"></div>
+              </div>
+              <div className="relative px-3 py-0.5 bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-full border border-slate-200/80 dark:border-slate-700/50 shadow-xs">
+                <span className="text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 font-medium">hoặc</span>
+              </div>
+            </div>
 
-        <div className="w-full flex justify-center">
-          <GoogleLoginButton onError={(msg) => setError(msg)} />
-        </div>
+            {/* Hai nút đăng nhập: Google & Khách (Responsive song song trên Desktop, xếp chồng trên Mobile) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+              <GoogleLoginButton onError={(msg) => setError(msg)} />
+              <GuestLoginButton onClick={() => switchMode(true)} />
+            </div>
 
-        <div className="mt-6 flex flex-col items-center gap-2.5 text-sm">
-          <Link href="/forgot-password" className="text-muted/60 hover:text-indigo-400 transition-colors text-xs sm:text-sm">
-            Quên mật khẩu?
-          </Link>
-          <div className="text-muted/50 text-xs sm:text-sm text-center">
-            Chưa có tài khoản?{' '}
-            <Link href="/register" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
-              Đăng ký ngay
+            <div className="mt-6 flex flex-col items-center gap-2.5 text-sm">
+              <Link href="/forgot-password" className="text-muted/60 hover:text-indigo-400 transition-colors text-xs sm:text-sm">
+                Quên mật khẩu?
+              </Link>
+              <div className="text-muted/50 text-xs sm:text-sm text-center">
+                Chưa có tài khoản?{' '}
+                <Link href="/register" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+                  Đăng ký ngay
+                </Link>
+              </div>
+            </div>
+          </>
+        ) : (
+          /* Footer khi ở chế độ khách */
+          <div className="mt-6 flex flex-col items-center gap-2.5 text-sm">
+            <Link 
+              href="/forgot-password?mode=guest" 
+              className="text-muted/60 hover:text-indigo-400 transition-colors text-xs sm:text-sm"
+            >
+              Quên mật khẩu tài khoản khách?
             </Link>
+            <div className="text-muted/50 text-xs sm:text-sm text-center">
+              Chưa có tài khoản khách?{' '}
+              <Link href="/register?mode=guest" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+                Đăng ký tài khoản khách ngay
+              </Link>
+            </div>
+            <button
+              type="button"
+              onClick={() => switchMode(false)}
+              className="mt-2 text-xs text-muted/60 hover:text-foreground flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Quay lại đăng nhập thường</span>
+            </button>
           </div>
-        </div>
+        )}
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin"></div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   );
 }

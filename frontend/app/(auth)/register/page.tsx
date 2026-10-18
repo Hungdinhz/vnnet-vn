@@ -1,12 +1,15 @@
 // app/(auth)/register/page.tsx
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { Eye, EyeOff, UserCheck, ArrowLeft } from 'lucide-react';
 import api from '@/lib/axios';
+import { setAuthToken } from '@/lib/auth';
 import GoogleLoginButton, { GoogleUserInfo } from '@/components/GoogleLoginButton';
-import { checkPasswordRules, validatePassword } from '@/lib/passwordValidation';
+import GuestLoginButton from '@/components/GuestLoginButton';
+import { checkPasswordRules, validatePassword, validateEmail } from '@/lib/passwordValidation';
 
 function PasswordRequirementsIndicator({ password }: { password: string }) {
   if (!password) return null;
@@ -30,19 +33,24 @@ function PasswordRequirementsIndicator({ password }: { password: string }) {
   );
 }
 
-export default function RegisterPage() {
+function RegisterContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   
+  // Chế độ đăng ký: 'normal' (thường có OTP) hoặc 'guest' (tài khoản khách không OTP)
+  const [registerMode, setRegisterMode] = useState<'normal' | 'guest'>('normal');
+
+  // Form fields
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  // State cho form hoàn tất Google
+  // State Google
+  const [showGooglePassword, setShowGooglePassword] = useState(false);
+  const [showGoogleConfirmPassword, setShowGoogleConfirmPassword] = useState(false);
   const [googleStep, setGoogleStep] = useState<'idle' | 'complete'>('idle');
   const [googleInfo, setGoogleInfo] = useState<GoogleUserInfo | null>(null);
   const [googleFullName, setGoogleFullName] = useState('');
@@ -50,12 +58,43 @@ export default function RegisterPage() {
   const [googlePassword, setGooglePassword] = useState('');
   const [googleConfirmPassword, setGoogleConfirmPassword] = useState('');
 
-  const handleRegister = async (e: React.FormEvent) => {
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get('mode') === 'guest') {
+      setRegisterMode('guest');
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = sessionStorage.getItem('google_reg_info');
+      if (saved) {
+        try {
+          const info = JSON.parse(saved);
+          sessionStorage.removeItem('google_reg_info');
+          handleGoogleRegistrationNeeded(info);
+        } catch (e) {
+          sessionStorage.removeItem('google_reg_info');
+        }
+      }
+    }
+  }, []);
+
+  // Xử lý đăng ký tài khoản thường (có OTP)
+  const handleRegisterNormal = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setSuccess('');
 
-    // Kiểm tra độ mạnh mật khẩu
+    const emailCheck = validateEmail(email);
+    if (!emailCheck.isValid) {
+      setError(emailCheck.message!);
+      return;
+    }
+
     const passwordCheck = validatePassword(password);
     if (!passwordCheck.isValid) {
       setError(passwordCheck.message!);
@@ -89,7 +128,59 @@ export default function RegisterPage() {
     }
   };
 
-  // Khi Google xác thực xong và user MỚI → hiện form hoàn tất
+  // Xử lý đăng ký tài khoản khách (KHÔNG CẦN OTP, ĐĂNG NHẬP LUÔN)
+  const handleRegisterGuest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setSuccess('');
+
+    const emailCheck = validateEmail(email);
+    if (!emailCheck.isValid) {
+      setError(emailCheck.message!);
+      return;
+    }
+
+    const passwordCheck = validatePassword(password);
+    if (!passwordCheck.isValid) {
+      setError(passwordCheck.message!);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('Mật khẩu nhập lại không khớp!');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await api.post('/users/guest/register', {
+        username: username.trim(),
+        email: email.trim(),
+        password: password
+      });
+
+      const token = response.data.access_token || response.data.token;
+      
+      setSuccess('🎉 Đăng ký tài khoản khách thành công! Đang chuyển hướng vào hệ thống...');
+      
+      if (token) {
+        setAuthToken(token);
+      }
+
+      setTimeout(() => {
+        router.push('/');
+      }, 1500);
+
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.detail || err.response?.data?.message;
+      setError(typeof errorMsg === 'string' ? errorMsg : 'Đăng ký tài khoản khách thất bại. Vui lòng thử lại.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Google Register flow
   const handleGoogleRegistrationNeeded = (info: GoogleUserInfo) => {
     setError('');
     setSuccess('');
@@ -101,14 +192,12 @@ export default function RegisterPage() {
     setGoogleStep('complete');
   };
 
-  // Submit form hoàn tất Google
   const handleGoogleComplete = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     if (!googleInfo) return;
 
-    // Kiểm tra độ mạnh mật khẩu
     const passwordCheck = validatePassword(googlePassword);
     if (!passwordCheck.isValid) {
       setError(passwordCheck.message!);
@@ -147,10 +236,15 @@ export default function RegisterPage() {
     }
   };
 
-  // Quay lại form đăng ký chính
   const handleBackToRegister = () => {
     setGoogleStep('idle');
     setGoogleInfo(null);
+    setError('');
+    setSuccess('');
+  };
+
+  const switchMode = (mode: 'normal' | 'guest') => {
+    setRegisterMode(mode);
     setError('');
     setSuccess('');
   };
@@ -170,9 +264,30 @@ export default function RegisterPage() {
           </div>
           <h2 className="text-3xl font-bold gradient-text">VnNet</h2>
           <p className="text-muted/50 text-sm mt-1">
-            {googleStep === 'complete' ? 'Hoàn tất tài khoản 🎉' : 'Tạo tài khoản mới ✨'}
+            {googleStep === 'complete' 
+              ? 'Hoàn tất tài khoản 🎉' 
+              : registerMode === 'guest' 
+                ? 'Đăng ký tài khoản khách ✨' 
+                : 'Tạo tài khoản mới ✨'}
           </p>
         </div>
+
+        {/* Badge chế độ tài khoản khách */}
+        {registerMode === 'guest' && googleStep !== 'complete' && (
+          <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium mb-4 animate-fade-in">
+            <div className="flex items-center gap-2">
+              <UserCheck className="w-4 h-4 shrink-0 text-indigo-400" />
+              <span>Chế độ Tài khoản khách (Không cần OTP)</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => switchMode('normal')}
+              className="text-xs text-indigo-300 hover:text-white underline cursor-pointer"
+            >
+              Đổi
+            </button>
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-500/10 text-red-400 p-3 rounded-lg mb-4 text-sm text-center border border-red-500/20">
@@ -189,7 +304,6 @@ export default function RegisterPage() {
         {/* ========== FORM HOÀN TẤT GOOGLE ========== */}
         {googleStep === 'complete' && googleInfo ? (
           <>
-            {/* Badge tài khoản Google */}
             <div className="flex items-center gap-3 p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 mb-5">
               {googleInfo.avatarUrl ? (
                 <img
@@ -244,28 +358,50 @@ export default function RegisterPage() {
 
               <div>
                 <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Mật khẩu</label>
-                <input
-                  type="password"
-                  value={googlePassword}
-                  onChange={(e) => setGooglePassword(e.target.value)}
-                  className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
-                  placeholder="Tối thiểu 8 ký tự, 1 chữ hoa, 1 ký tự đặc biệt..."
-                  required
-                  minLength={8}
-                />
+                <div className="relative">
+                  <input
+                    type={showGooglePassword ? "text" : "password"}
+                    value={googlePassword}
+                    onChange={(e) => setGooglePassword(e.target.value)}
+                    className="w-full pl-4 pr-11 py-2.5 input-anime rounded-xl text-sm"
+                    placeholder="Tối thiểu 8 ký tự, 1 chữ hoa, 1 ký tự đặc biệt..."
+                    required
+                    minLength={8}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowGooglePassword(!showGooglePassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted/60 hover:text-foreground transition-colors p-1 focus:outline-none"
+                    tabIndex={-1}
+                    aria-label={showGooglePassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showGooglePassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
                 <PasswordRequirementsIndicator password={googlePassword} />
               </div>
 
               <div>
                 <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Nhập lại mật khẩu</label>
-                <input
-                  type="password"
-                  value={googleConfirmPassword}
-                  onChange={(e) => setGoogleConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
-                  placeholder="Xác nhận mật khẩu..."
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showGoogleConfirmPassword ? "text" : "password"}
+                    value={googleConfirmPassword}
+                    onChange={(e) => setGoogleConfirmPassword(e.target.value)}
+                    className="w-full pl-4 pr-11 py-2.5 input-anime rounded-xl text-sm"
+                    placeholder="Xác nhận mật khẩu..."
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowGoogleConfirmPassword(!showGoogleConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted/60 hover:text-foreground transition-colors p-1 focus:outline-none"
+                    tabIndex={-1}
+                    aria-label={showGoogleConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showGoogleConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <button
@@ -285,10 +421,112 @@ export default function RegisterPage() {
               ← Quay lại đăng ký
             </button>
           </>
-        ) : (
+        ) : registerMode === 'guest' ? (
+          /* ========== FORM ĐĂNG KÝ TÀI KHOẢN KHÁCH (KHÔNG CẦN OTP) ========== */
           <>
-            {/* ========== FORM ĐĂNG KÝ THƯỜNG ========== */}
-            <form onSubmit={handleRegister} className="space-y-4">
+            <form onSubmit={handleRegisterGuest} className="space-y-4">
+              <div>
+                <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Tên người dùng</label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
+                  placeholder="VD: user123 hoặc guest"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Email tài khoản khách</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
+                  placeholder="VD: guest@example.com (không trùng lặp)"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Mật khẩu</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-4 pr-11 py-2.5 input-anime rounded-xl text-sm"
+                    placeholder="Tối thiểu 8 ký tự, 1 chữ hoa, 1 ký tự đặc biệt..."
+                    required
+                    minLength={8}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted/60 hover:text-foreground transition-colors p-1 focus:outline-none"
+                    tabIndex={-1}
+                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <PasswordRequirementsIndicator password={password} />
+              </div>
+
+              <div>
+                <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Nhập lại mật khẩu</label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full pl-4 pr-11 py-2.5 input-anime rounded-xl text-sm"
+                    placeholder="Xác nhận mật khẩu..."
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted/60 hover:text-foreground transition-colors p-1 focus:outline-none"
+                    tabIndex={-1}
+                    aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading || success !== ''}
+                className="w-full py-2.5 px-4 rounded-xl text-sm font-bold transition-all btn-anime mt-2"
+              >
+                {isLoading ? 'Đang tạo tài khoản...' : '✨ Đăng ký ngay (Không cần OTP)'}
+              </button>
+            </form>
+
+            <div className="mt-6 flex flex-col items-center gap-2.5 text-sm">
+              <div className="text-muted/50 text-xs sm:text-sm text-center">
+                Đã có tài khoản khách?{' '}
+                <Link href="/login?mode=guest" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+                  Đăng nhập tài khoản khách
+                </Link>
+              </div>
+              <button
+                type="button"
+                onClick={() => switchMode('normal')}
+                className="mt-1 text-xs text-muted/60 hover:text-foreground flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Quay lại đăng ký thường</span>
+              </button>
+            </div>
+          </>
+        ) : (
+          /* ========== FORM ĐĂNG KÝ THƯỜNG (CÓ OTP) ========== */
+          <>
+            <form onSubmit={handleRegisterNormal} className="space-y-4">
               <div>
                 <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Tên đăng nhập</label>
                 <input
@@ -315,28 +553,50 @@ export default function RegisterPage() {
 
               <div>
                 <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Mật khẩu</label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
-                  placeholder="Tối thiểu 8 ký tự, 1 chữ hoa, 1 ký tự đặc biệt..."
-                  required
-                  minLength={8}
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-4 pr-11 py-2.5 input-anime rounded-xl text-sm"
+                    placeholder="Tối thiểu 8 ký tự, 1 chữ hoa, 1 ký tự đặc biệt..."
+                    required
+                    minLength={8}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted/60 hover:text-foreground transition-colors p-1 focus:outline-none"
+                    tabIndex={-1}
+                    aria-label={showPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
                 <PasswordRequirementsIndicator password={password} />
               </div>
 
               <div>
                 <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Nhập lại mật khẩu</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 input-anime rounded-xl text-sm"
-                  placeholder="Xác nhận mật khẩu..."
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="w-full pl-4 pr-11 py-2.5 input-anime rounded-xl text-sm"
+                    placeholder="Xác nhận mật khẩu..."
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted/60 hover:text-foreground transition-colors p-1 focus:outline-none"
+                    tabIndex={-1}
+                    aria-label={showConfirmPassword ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <button
@@ -358,12 +618,15 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Nút Google */}
-            <div className="w-full flex justify-center">
+            {/* Hai nút đăng ký: Google & Khách (Responsive song song trên Desktop, xếp chồng trên Mobile) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
               <GoogleLoginButton
                 mode="register"
                 onError={(msg) => setError(msg)}
                 onRegistrationNeeded={handleGoogleRegistrationNeeded}
+              />
+              <GuestLoginButton
+                onClick={() => switchMode('guest')}
               />
             </div>
 
@@ -377,5 +640,17 @@ export default function RegisterPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 rounded-full border-2 border-indigo-500 border-t-transparent animate-spin"></div>
+      </div>
+    }>
+      <RegisterContent />
+    </Suspense>
   );
 }
