@@ -55,6 +55,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/users/verify-email").permitAll()
                 .requestMatchers(HttpMethod.POST, "/users/verify-otp").permitAll()
                 .requestMatchers(HttpMethod.POST, "/users/resend-otp").permitAll()
+                .requestMatchers(HttpMethod.POST, "/users/guest/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/users/").permitAll()
                 .requestMatchers(HttpMethod.GET, "/users").permitAll()
                 .requestMatchers(HttpMethod.GET, "/users/{id}").permitAll()

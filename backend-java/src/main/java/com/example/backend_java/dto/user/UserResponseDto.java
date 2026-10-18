@@ -32,4 +32,7 @@ public class UserResponseDto {
 
     @JsonProperty("is_verified")
     private Boolean isVerified;
+
+    @JsonProperty("is_guest")
+    private Boolean isGuest;
 }

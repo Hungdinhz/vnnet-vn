@@ -18,7 +18,7 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 50, unique = true, nullable = false)
+    @Column(length = 50, nullable = false)
     private String username;
 
     @Column(length = 100, unique = true, nullable = false)
@@ -61,6 +61,11 @@ public class User {
     @Column(name = "is_verified", nullable = false)
     @Builder.Default
     private Boolean isVerified = false;
+
+    @ColumnDefault("false")
+    @Column(name = "is_guest", nullable = false)
+    @Builder.Default
+    private Boolean isGuest = false;
 
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default

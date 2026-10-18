@@ -11,7 +11,7 @@ public class UserCreateDto {
     private String username;
 
     @NotBlank(message = "Email không được để trống")
-    @Email(message = "Email không đúng định dạng")
+    @Email(regexp = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$", message = "Địa chỉ email không đúng định dạng (Ví dụ: user@example.com)")
     private String email;
 
     @NotBlank(message = "Password không được để trống")
