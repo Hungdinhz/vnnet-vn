@@ -3,9 +3,11 @@ package com.example.backend_java.service;
 import com.example.backend_java.dto.post.PostResponseDto;
 import com.example.backend_java.dto.social.*;
 import com.example.backend_java.entity.Group;
+import com.example.backend_java.entity.GroupJoinRequest;
 import com.example.backend_java.entity.GroupMember;
 import com.example.backend_java.entity.Post;
 import com.example.backend_java.entity.User;
+import com.example.backend_java.repository.GroupJoinRequestRepository;
 import com.example.backend_java.repository.GroupMemberRepository;
 import com.example.backend_java.repository.GroupRepository;
 import com.example.backend_java.repository.PostRepository;
@@ -15,7 +17,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,37 +28,59 @@ public class GroupService {
 
     private final GroupRepository groupRepository;
     private final GroupMemberRepository groupMemberRepository;
+    private final GroupJoinRequestRepository groupJoinRequestRepository;
     private final PostRepository postRepository;
     private final PostService postService;
     private final UserRepository userRepository;
 
-    public static final String DEFAULT_GROUP_COVER = "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=1200";
-
-    public GroupService(GroupRepository groupRepository, GroupMemberRepository groupMemberRepository, 
-                        PostRepository postRepository, PostService postService,
+    public GroupService(GroupRepository groupRepository,
+                        GroupMemberRepository groupMemberRepository,
+                        GroupJoinRequestRepository groupJoinRequestRepository,
+                        PostRepository postRepository,
+                        PostService postService,
                         UserRepository userRepository) {
         this.groupRepository = groupRepository;
         this.groupMemberRepository = groupMemberRepository;
+        this.groupJoinRequestRepository = groupJoinRequestRepository;
         this.postRepository = postRepository;
         this.postService = postService;
         this.userRepository = userRepository;
     }
 
+    private String cleanCoverUrl(String url) {
+        if (url == null || url.isBlank()
+                || url.contains("photo-1518605368461-1e1e111d4187")
+                || url.contains("photo-1522071820081-009f0129c71c")) {
+            return null;
+        }
+        return url.trim();
+    }
+
+    private void verifyAdminOrCreator(Long groupId, User currentUser, Group group) {
+        if (currentUser.getId().equals(group.getCreatorId())) {
+            return;
+        }
+        GroupMember member = groupMemberRepository.findByGroupIdAndUserId(groupId, currentUser.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền quản lý nhóm này"));
+        if (!"ADMIN".equals(member.getRole())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ Quản trị viên hoặc Trưởng nhóm mới có quyền này");
+        }
+    }
+
     @Transactional
     public SocialGroupDto createGroup(CreateSocialGroupDto request, User currentUser) {
-        String cover = request.getCoverUrl();
-        if (cover == null || cover.isBlank() || cover.contains("photo-1518605368461-1e1e111d4187")) {
-            cover = DEFAULT_GROUP_COVER;
-        }
+        String cover = cleanCoverUrl(request.getCoverUrl());
 
         Group group = Group.builder()
                 .name(request.getName())
                 .description(request.getDescription())
                 .coverUrl(cover)
+                .requiresApproval(request.getRequiresApproval() != null && request.getRequiresApproval())
+                .isPrivate(request.getIsPrivate() != null && request.getIsPrivate())
                 .creator(currentUser)
                 .creatorId(currentUser.getId())
                 .build();
-        
+
         group = groupRepository.save(group);
 
         // Add creator as ADMIN
@@ -93,20 +120,116 @@ public class GroupService {
     }
 
     @Transactional
-    public void joinGroup(Long groupId, User currentUser) {
-        if (!groupRepository.existsById(groupId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại");
-        }
+    public Map<String, Object> joinGroup(Long groupId, User currentUser) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại"));
+
         if (groupMemberRepository.existsByGroupIdAndUserId(groupId, currentUser.getId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bạn đã ở trong nhóm này");
         }
-        
-        GroupMember member = GroupMember.builder()
-                .groupId(groupId)
-                .userId(currentUser.getId())
-                .role("MEMBER")
-                .build();
-        groupMemberRepository.save(member);
+
+        boolean requiresApproval = Boolean.TRUE.equals(group.getRequiresApproval());
+        boolean isCreator = currentUser.getId().equals(group.getCreatorId());
+
+        if (!requiresApproval || isCreator) {
+            GroupMember member = GroupMember.builder()
+                    .groupId(groupId)
+                    .userId(currentUser.getId())
+                    .role(isCreator ? "ADMIN" : "MEMBER")
+                    .build();
+            groupMemberRepository.save(member);
+            groupJoinRequestRepository.deleteByGroupIdAndUserId(groupId, currentUser.getId());
+            return Map.of("status", "JOINED", "message", "Tham gia nhóm thành công");
+        } else {
+            Optional<GroupJoinRequest> existingOpt = groupJoinRequestRepository.findByGroupIdAndUserId(groupId, currentUser.getId());
+            if (existingOpt.isPresent()) {
+                GroupJoinRequest existing = existingOpt.get();
+                if ("PENDING".equals(existing.getStatus())) {
+                    return Map.of("status", "PENDING", "message", "Bạn đã gửi yêu cầu tham gia, vui lòng chờ phê duyệt");
+                }
+                existing.setStatus("PENDING");
+                groupJoinRequestRepository.save(existing);
+            } else {
+                GroupJoinRequest req = GroupJoinRequest.builder()
+                        .groupId(groupId)
+                        .userId(currentUser.getId())
+                        .status("PENDING")
+                        .build();
+                groupJoinRequestRepository.save(req);
+            }
+            return Map.of("status", "PENDING", "message", "Đã gửi yêu cầu tham gia nhóm, vui lòng chờ trưởng nhóm phê duyệt");
+        }
+    }
+
+    @Transactional
+    public void cancelJoinRequest(Long groupId, User currentUser) {
+        groupJoinRequestRepository.deleteByGroupIdAndUserId(groupId, currentUser.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public List<GroupJoinRequestDto> getJoinRequests(Long groupId, User currentUser) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại"));
+
+        verifyAdminOrCreator(groupId, currentUser, group);
+
+        List<GroupJoinRequest> requests = groupJoinRequestRepository.findByGroupIdAndStatusOrderByCreatedAtDesc(groupId, "PENDING");
+        return requests.stream().map(r -> {
+            User u = r.getUser() != null ? r.getUser() : userRepository.findById(r.getUserId()).orElse(null);
+            return GroupJoinRequestDto.builder()
+                    .id(r.getId())
+                    .groupId(groupId)
+                    .userId(r.getUserId())
+                    .username(u != null ? u.getUsername() : "Thành viên")
+                    .avatarUrl(u != null ? u.getAvatarUrl() : null)
+                    .bio(u != null ? u.getBio() : null)
+                    .status(r.getStatus())
+                    .createdAt(r.getCreatedAt())
+                    .build();
+        }).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void approveJoinRequest(Long groupId, Long requestId, User currentUser) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại"));
+
+        verifyAdminOrCreator(groupId, currentUser, group);
+
+        GroupJoinRequest req = groupJoinRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Yêu cầu không tồn tại"));
+
+        if (!req.getGroupId().equals(groupId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Yêu cầu không thuộc nhóm này");
+        }
+
+        if (!groupMemberRepository.existsByGroupIdAndUserId(groupId, req.getUserId())) {
+            GroupMember member = GroupMember.builder()
+                    .groupId(groupId)
+                    .userId(req.getUserId())
+                    .role("MEMBER")
+                    .build();
+            groupMemberRepository.save(member);
+        }
+
+        groupJoinRequestRepository.delete(req);
+    }
+
+    @Transactional
+    public void rejectJoinRequest(Long groupId, Long requestId, User currentUser) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại"));
+
+        verifyAdminOrCreator(groupId, currentUser, group);
+
+        GroupJoinRequest req = groupJoinRequestRepository.findById(requestId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Yêu cầu không tồn tại"));
+
+        if (!req.getGroupId().equals(groupId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Yêu cầu không thuộc nhóm này");
+        }
+
+        groupJoinRequestRepository.delete(req);
     }
 
     @Transactional
@@ -115,14 +238,24 @@ public class GroupService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bạn chưa tham gia nhóm này");
         }
         groupMemberRepository.deleteByGroupIdAndUserId(groupId, currentUser.getId());
+        groupJoinRequestRepository.deleteByGroupIdAndUserId(groupId, currentUser.getId());
     }
 
     @Transactional(readOnly = true)
     public List<PostResponseDto> getGroupPosts(Long groupId, Long currentUserId) {
-        if (!groupRepository.existsById(groupId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại");
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại"));
+
+        if (Boolean.TRUE.equals(group.getIsPrivate())) {
+            boolean isMemberOrCreator = currentUserId != null && (
+                    currentUserId.equals(group.getCreatorId()) ||
+                    groupMemberRepository.existsByGroupIdAndUserId(groupId, currentUserId)
+            );
+            if (!isMemberOrCreator) {
+                return Collections.emptyList();
+            }
         }
-        
+
         List<Post> posts = postRepository.findByGroupIdOrderByIdDesc(groupId);
         return posts.stream()
                 .map(p -> postService.toResponseDto(p, currentUserId))
@@ -134,7 +267,7 @@ public class GroupService {
         if (!groupRepository.existsById(groupId)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại");
         }
-        
+
         List<GroupMember> members = groupMemberRepository.findByGroupId(groupId);
         return members.stream().map(m -> {
             User u = m.getUser() != null ? m.getUser() : userRepository.findById(m.getUserId()).orElse(null);
@@ -195,21 +328,22 @@ public class GroupService {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại"));
 
-        GroupMember currentMember = groupMemberRepository.findByGroupIdAndUserId(groupId, currentUser.getId())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không thuộc nhóm này"));
-
-        if (!"ADMIN".equals(currentMember.getRole()) && !currentUser.getId().equals(group.getCreatorId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ Quản trị viên mới có quyền chỉnh sửa nhóm");
-        }
+        verifyAdminOrCreator(groupId, currentUser, group);
 
         if (request.getName() != null && !request.getName().isBlank()) {
-            group.setName(request.getName());
+            group.setName(request.getName().trim());
         }
         if (request.getDescription() != null) {
-            group.setDescription(request.getDescription());
+            group.setDescription(request.getDescription().trim());
         }
-        if (request.getCoverUrl() != null && !request.getCoverUrl().isBlank()) {
-            group.setCoverUrl(request.getCoverUrl());
+        if (request.getCoverUrl() != null) {
+            group.setCoverUrl(cleanCoverUrl(request.getCoverUrl()));
+        }
+        if (request.getRequiresApproval() != null) {
+            group.setRequiresApproval(request.getRequiresApproval());
+        }
+        if (request.getIsPrivate() != null) {
+            group.setIsPrivate(request.getIsPrivate());
         }
 
         group = groupRepository.save(group);
@@ -225,9 +359,10 @@ public class GroupService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ Trưởng nhóm mới có quyền xóa nhóm");
         }
 
-        // Delete group members
+        // Delete group members and join requests
         List<GroupMember> members = groupMemberRepository.findByGroupId(groupId);
         groupMemberRepository.deleteAll(members);
+        groupJoinRequestRepository.deleteByGroupId(groupId);
 
         // Disassociate or delete posts
         List<Post> posts = postRepository.findByGroupIdOrderByIdDesc(groupId);
@@ -244,7 +379,7 @@ public class GroupService {
         List<GroupMember> members = groupMemberRepository.findByGroupId(group.getId());
         boolean isJoined = false;
         String userRole = null;
-        
+
         for (GroupMember m : members) {
             if (currentUserId != null && m.getUserId().equals(currentUserId)) {
                 isJoined = true;
@@ -259,13 +394,22 @@ public class GroupService {
                 userRole = "ADMIN";
             }
         }
-        
+
         // Count posts in group
         int postCount = postRepository.findByGroupIdOrderByIdDesc(group.getId()).size();
 
-        String coverUrl = group.getCoverUrl();
-        if (coverUrl == null || coverUrl.isBlank() || coverUrl.contains("photo-1518605368461-1e1e111d4187")) {
-            coverUrl = DEFAULT_GROUP_COVER;
+        String coverUrl = cleanCoverUrl(group.getCoverUrl());
+
+        String joinRequestStatus = null;
+        if (currentUserId != null && !isJoined) {
+            joinRequestStatus = groupJoinRequestRepository.findByGroupIdAndUserId(group.getId(), currentUserId)
+                    .map(GroupJoinRequest::getStatus)
+                    .orElse(null);
+        }
+
+        int pendingRequestCount = 0;
+        if (isJoined && ("ADMIN".equals(userRole) || (currentUserId != null && currentUserId.equals(group.getCreatorId())))) {
+            pendingRequestCount = groupJoinRequestRepository.countByGroupIdAndStatus(group.getId(), "PENDING");
         }
 
         return SocialGroupDto.builder()
@@ -279,6 +423,10 @@ public class GroupService {
                 .postCount(postCount)
                 .isJoined(isJoined)
                 .userRole(userRole)
+                .requiresApproval(Boolean.TRUE.equals(group.getRequiresApproval()))
+                .isPrivate(Boolean.TRUE.equals(group.getIsPrivate()))
+                .joinRequestStatus(joinRequestStatus)
+                .pendingRequestCount(pendingRequestCount)
                 .build();
     }
 }

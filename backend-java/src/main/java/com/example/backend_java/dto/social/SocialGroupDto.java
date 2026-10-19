@@ -39,6 +39,20 @@ public class SocialGroupDto {
     @JsonProperty("user_role")
     private String userRole;
 
+    @JsonProperty("requires_approval")
+    @com.fasterxml.jackson.annotation.JsonAlias({"requiresApproval", "requires_approval"})
+    private Boolean requiresApproval;
+
+    @JsonProperty("is_private")
+    @com.fasterxml.jackson.annotation.JsonAlias({"isPrivate", "is_private"})
+    private Boolean isPrivate;
+
+    @JsonProperty("join_request_status")
+    private String joinRequestStatus;
+
+    @JsonProperty("pending_request_count")
+    private Integer pendingRequestCount;
+
     // Compatibility getters for both camelCase and standard boolean
     @JsonProperty("isJoined")
     public boolean getIsJoinedCamel() {
@@ -78,5 +92,25 @@ public class SocialGroupDto {
     @JsonProperty("userRole")
     public String getUserRoleCamel() {
         return this.userRole;
+    }
+
+    @JsonProperty("requiresApproval")
+    public Boolean getRequiresApprovalCamel() {
+        return this.requiresApproval;
+    }
+
+    @JsonProperty("joinRequestStatus")
+    public String getJoinRequestStatusCamel() {
+        return this.joinRequestStatus;
+    }
+
+    @JsonProperty("pendingRequestCount")
+    public Integer getPendingRequestCountCamel() {
+        return this.pendingRequestCount;
+    }
+
+    @JsonProperty("isPrivate")
+    public Boolean getIsPrivateCamel() {
+        return this.isPrivate;
     }
 }

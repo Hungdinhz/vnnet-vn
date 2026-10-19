@@ -19,6 +19,9 @@ public class FriendshipResponseDto {
     @JsonProperty("friend_id")
     private Long friendId;
 
+    @JsonProperty("friend_user_id")
+    private Long friendUserId;
+
     private String status;
 
     @JsonProperty("friend_username")

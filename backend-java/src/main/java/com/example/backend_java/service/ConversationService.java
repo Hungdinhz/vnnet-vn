@@ -25,6 +25,7 @@ public class ConversationService {
     private final OnlineStatusService onlineStatusService;
     private final ConversationMapper conversationMapper;
     private final SimpMessagingTemplate messagingTemplate;
+    private final com.example.backend_java.repository.UserBlockRepository userBlockRepository;
 
     public ConversationService(ConversationRepository conversationRepository,
                                ConversationMemberRepository memberRepository,
@@ -32,7 +33,8 @@ public class ConversationService {
                                UserRepository userRepository,
                                OnlineStatusService onlineStatusService,
                                ConversationMapper conversationMapper,
-                               @Lazy SimpMessagingTemplate messagingTemplate) {
+                               @Lazy SimpMessagingTemplate messagingTemplate,
+                               com.example.backend_java.repository.UserBlockRepository userBlockRepository) {
         this.conversationRepository = conversationRepository;
         this.memberRepository = memberRepository;
         this.messageRepository = messageRepository;
@@ -40,6 +42,7 @@ public class ConversationService {
         this.onlineStatusService = onlineStatusService;
         this.conversationMapper = conversationMapper;
         this.messagingTemplate = messagingTemplate;
+        this.userBlockRepository = userBlockRepository;
     }
 
     @Transactional
@@ -59,6 +62,9 @@ public class ConversationService {
 
                 if (partnerOpt.isPresent()) {
                     Long partnerId = partnerOpt.get().getUser().getId();
+                    if (userBlockRepository.isBlockedEither(currentUser.getId(), partnerId)) {
+                        continue;
+                    }
                     if (uniqueDirectByPartner.containsKey(partnerId)) {
                         // Merge duplicate: reassign any messages to the kept conversation
                         Conversation kept = uniqueDirectByPartner.get(partnerId);
@@ -87,6 +93,17 @@ public class ConversationService {
         }
 
         return finalConversations.stream()
+                .filter(conv -> {
+                    Optional<ConversationMember> memberOpt = memberRepository.findByConversationIdAndUserId(conv.getId(), currentUser.getId());
+                    if (memberOpt.isEmpty()) {
+                        return false;
+                    }
+                    ConversationMember member = memberOpt.get();
+                    if (member.getClearedAt() != null) {
+                        return messageRepository.existsNewMessageAfter(conv.getId(), member.getClearedAt());
+                    }
+                    return true;
+                })
                 .map(conv -> mapToResponseDto(conv, currentUser))
                 .collect(Collectors.toList());
     }
@@ -108,6 +125,10 @@ public class ConversationService {
     public ConversationResponseDto getOrCreateDirectConversation(User currentUser, Long targetUserId) {
         if (currentUser.getId().equals(targetUserId)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không thể tạo cuộc trò chuyện với chính mình.");
+        }
+
+        if (userBlockRepository.isBlockedEither(currentUser.getId(), targetUserId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không thể tạo cuộc trò chuyện với người dùng này do đã bị chặn.");
         }
 
         User targetUser = userRepository.findById(targetUserId)
@@ -256,9 +277,79 @@ public class ConversationService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ quản trị viên mới có quyền xóa thành viên.");
         }
 
+        ConversationMember targetMember = memberRepository.findByConversationIdAndUserId(conversationId, targetUserId)
+                .orElse(null);
+        if (targetMember == null) {
+            return;
+        }
+
+        String targetName = targetMember.getUser().getUsername();
+        if (targetMember.getNickname() != null && !targetMember.getNickname().trim().isEmpty()) {
+            targetName = targetMember.getNickname().trim();
+        }
+
+        String actorName = currentUser.getUsername();
+        if (actor.getNickname() != null && !actor.getNickname().trim().isEmpty()) {
+            actorName = actor.getNickname().trim();
+        }
+
+        boolean isSelfLeave = currentUser.getId().equals(targetUserId);
+        String systemText = isSelfLeave
+                ? (targetName + " đã rời khỏi nhóm")
+                : (actorName + " đã xóa " + targetName + " khỏi nhóm");
+
+        // Xóa thành viên khỏi nhóm
         memberRepository.deleteByConversationIdAndUserId(conversationId, targetUserId);
         conv.setUpdatedAt(LocalDateTime.now());
-        conversationRepository.save(conv);
+        conv = conversationRepository.save(conv);
+
+        // Tạo tin nhắn SYSTEM lưu vào cuộc hội thoại
+        ChatMessage systemMessage = ChatMessage.builder()
+                .conversation(conv)
+                .sender(currentUser)
+                .content(systemText)
+                .messageType(MessageType.SYSTEM)
+                .isDeleted(false)
+                .isRead(true)
+                .createdAt(LocalDateTime.now())
+                .build();
+        ChatMessage savedMsg = messageRepository.save(systemMessage);
+
+        ChatMessageResponseDto msgDto = ChatMessageResponseDto.builder()
+                .id(savedMsg.getId())
+                .conversationId(conv.getId())
+                .senderId(currentUser.getId())
+                .senderUsername(currentUser.getUsername())
+                .senderNickname(actorName)
+                .senderAvatarUrl(currentUser.getAvatarUrl())
+                .content(systemText)
+                .messageType(MessageType.SYSTEM)
+                .isDeleted(false)
+                .createdAt(savedMsg.getCreatedAt())
+                .isRead(true)
+                .build();
+
+        try {
+            if (messagingTemplate != null) {
+                // Phát tin nhắn SYSTEM vào topic của cuộc trò chuyện
+                messagingTemplate.convertAndSend("/topic/conversation." + conv.getId(), msgDto);
+
+                // Cập nhật thông tin hội thoại (danh sách thành viên, số lượng)
+                messagingTemplate.convertAndSend("/topic/conversation." + conv.getId() + ".info", mapToResponseDto(conv, currentUser));
+
+                // Cập nhật danh sách hội thoại cho các thành viên còn lại
+                List<ConversationMember> remainingMembers = memberRepository.findByConversationId(conv.getId());
+                for (ConversationMember m : remainingMembers) {
+                    messagingTemplate.convertAndSendToUser(
+                            m.getUser().getEmail(),
+                            "/queue/conversations",
+                            mapToResponseDto(conv, m.getUser())
+                    );
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error broadcasting member leave/remove system message: " + e.getMessage());
+        }
     }
 
     @Transactional
@@ -448,5 +539,13 @@ public class ConversationService {
 
     public ConversationResponseDto mapToResponseDto(Conversation conv, User currentUser) {
         return conversationMapper.toResponseDto(conv, currentUser);
+    }
+
+    @Transactional
+    public void deleteConversationForUser(Long conversationId, User currentUser) {
+        ConversationMember member = memberRepository.findByConversationIdAndUserId(conversationId, currentUser.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy cuộc trò chuyện."));
+        member.setClearedAt(LocalDateTime.now());
+        memberRepository.save(member);
     }
 }

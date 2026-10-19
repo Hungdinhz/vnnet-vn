@@ -10,13 +10,18 @@ import toast from 'react-hot-toast';
 import api from '@/lib/axios';
 import { checkPasswordRules, validatePassword } from '@/lib/passwordValidation';
 
-type SettingsTab = 'profile' | 'media' | 'security' | 'appearance' | 'privacy';
+type SettingsTab = 'profile' | 'media' | 'security' | 'appearance' | 'privacy' | 'blocking';
 
 export default function SettingsPage() {
   const router = useRouter();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<SettingsTab>('profile');
+
+  // Blocked Users States
+  const [blockedUsers, setBlockedUsers] = useState<any[]>([]);
+  const [isLoadingBlocked, setIsLoadingBlocked] = useState(false);
+  const [unblockingId, setUnblockingId] = useState<number | null>(null);
 
   // Profile Form States
   const [username, setUsername] = useState('');
@@ -28,6 +33,7 @@ export default function SettingsPage() {
   const [phone, setPhone] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [coverUrl, setCoverUrl] = useState('');
+  const [isPrivateProfile, setIsPrivateProfile] = useState(false);
 
   // Password States
   const [currentPassword, setCurrentPassword] = useState('');
@@ -71,6 +77,7 @@ export default function SettingsPage() {
         setPhone(res.data.phone || '');
         setAvatarUrl(res.data.avatar_url || '');
         setCoverUrl(res.data.cover_url || '');
+        setIsPrivateProfile(Boolean(res.data.is_private ?? res.data.isPrivate ?? false));
       } catch (err) {
         toast.error("Không thể tải thông tin người dùng");
         router.push('/login');
@@ -80,6 +87,36 @@ export default function SettingsPage() {
     };
     fetchMe();
   }, [router]);
+
+  useEffect(() => {
+    if (activeTab === 'blocking') {
+      const fetchBlockedUsers = async () => {
+        setIsLoadingBlocked(true);
+        try {
+          const res = await api.get('/users/blocked');
+          setBlockedUsers(res.data || []);
+        } catch (err) {
+          console.error('Lỗi tải danh sách chặn:', err);
+        } finally {
+          setIsLoadingBlocked(false);
+        }
+      };
+      fetchBlockedUsers();
+    }
+  }, [activeTab]);
+
+  const handleUnblock = async (targetUserId: number, targetUsername: string) => {
+    setUnblockingId(targetUserId);
+    try {
+      await api.delete(`/users/${targetUserId}/block`);
+      toast.success(`Đã gỡ chặn ${targetUsername}`);
+      setBlockedUsers((prev) => prev.filter((u) => u.id !== targetUserId));
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Không thể gỡ chặn.');
+    } finally {
+      setUnblockingId(null);
+    }
+  };
 
   const handleUpload = async (file: File, type: 'avatar' | 'cover') => {
     if (type === 'avatar') setIsUploadingAvatar(true);
@@ -118,7 +155,9 @@ export default function SettingsPage() {
         website: website.trim(),
         phone: phone.trim(),
         avatar_url: avatarUrl,
-        cover_url: coverUrl
+        cover_url: coverUrl,
+        is_private: isPrivateProfile,
+        isPrivate: isPrivateProfile
       });
       setCurrentUser(res.data);
       toast.success("✨ Cập nhật thông tin thành công!");
@@ -176,6 +215,7 @@ export default function SettingsPage() {
     { id: 'security', label: 'Bảo mật & Mật khẩu', icon: '🔐', desc: 'Đổi mật khẩu & trạng thái tài khoản' },
     { id: 'appearance', label: 'Giao diện & Trải nghiệm', icon: '🎨', desc: 'Chế độ tối/sáng & tùy chỉnh hệ thống' },
     { id: 'privacy', label: 'Quyền riêng tư & Thông báo', icon: '🛡️', desc: 'Quyền hiển thị & quản lý thông báo' },
+    { id: 'blocking', label: 'Danh sách chặn', icon: '🚫', desc: 'Quản lý tài khoản mà bạn đã chặn' },
   ];
 
   return (
@@ -660,6 +700,70 @@ export default function SettingsPage() {
                         <p className="text-xs text-muted/60">Kiểm soát ai có thể tương tác và nhận các thông báo quan trọng</p>
                       </div>
 
+                      {/* Profile Privacy Mode */}
+                      <div className="p-4 rounded-xl bg-black/5 dark:bg-white/5 border border-indigo-500/10 space-y-3">
+                        <div>
+                          <label className="block text-xs font-bold text-accent-purple uppercase tracking-wider mb-1">
+                            Chế độ hiển thị trang cá nhân
+                          </label>
+                          <p className="text-xs text-muted/70">
+                            Cấu hình ai có thể xem ảnh, bài viết và thông tin chi tiết trên trang cá nhân của bạn.
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                          <div
+                            onClick={async () => {
+                              try {
+                                await api.put('/users/me', { is_private: false, isPrivate: false });
+                                setIsPrivateProfile(false);
+                                toast.success("🔓 Đã mở trang cá nhân (Công khai)!");
+                              } catch {
+                                toast.error("Không thể lưu cài đặt");
+                              }
+                            }}
+                            className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
+                              !isPrivateProfile
+                                ? 'bg-indigo-500/10 border-indigo-500 text-foreground shadow-sm'
+                                : 'bg-black/5 dark:bg-white/[0.02] border-indigo-500/10 text-muted hover:border-indigo-500/30'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 font-bold text-sm mb-1">
+                              <span>🌍</span>
+                              <span>Mở trang cá nhân (Công khai)</span>
+                            </div>
+                            <p className="text-xs text-muted/70 leading-relaxed">
+                              Tất cả mọi người đều có thể xem trang cá nhân, ảnh và các bài viết của bạn.
+                            </p>
+                          </div>
+
+                          <div
+                            onClick={async () => {
+                              try {
+                                await api.put('/users/me', { is_private: true, isPrivate: true });
+                                setIsPrivateProfile(true);
+                                toast.success("🔒 Đã khóa trang cá nhân (Chỉ bạn bè xem)!");
+                              } catch {
+                                toast.error("Không thể lưu cài đặt");
+                              }
+                            }}
+                            className={`p-3.5 rounded-xl border cursor-pointer transition-all ${
+                              isPrivateProfile
+                                ? 'bg-indigo-500/10 border-indigo-500 text-foreground shadow-sm'
+                                : 'bg-black/5 dark:bg-white/[0.02] border-indigo-500/10 text-muted hover:border-indigo-500/30'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 font-bold text-sm mb-1">
+                              <span>🔒</span>
+                              <span>Khóa trang cá nhân (Chỉ bạn bè)</span>
+                            </div>
+                            <p className="text-xs text-muted/70 leading-relaxed">
+                              Chỉ những người đã kết bạn mới có thể xem ảnh, bài viết và thông tin chi tiết của bạn.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
                       <div className="space-y-4">
                         <label className="block text-xs font-bold text-accent-purple uppercase tracking-wider">Cấu hình nhận thông báo</label>
                         
@@ -686,6 +790,64 @@ export default function SettingsPage() {
                           </div>
                         ))}
                       </div>
+                    </div>
+                  )}
+
+                  {/* TAB 6: BLOCKED USERS */}
+                  {activeTab === 'blocking' && (
+                    <div className="space-y-6 animate-fade-in">
+                      <div className="border-b border-indigo-500/10 pb-3">
+                        <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                          <span>🚫</span> Danh sách người dùng bị chặn
+                        </h2>
+                        <p className="text-xs text-muted/60">
+                          Những người dùng trong danh sách này sẽ không thể liên hệ với bạn và toàn bộ nội dung của hai bên đều được ẩn.
+                        </p>
+                      </div>
+
+                      {isLoadingBlocked ? (
+                        <div className="py-12 flex justify-center items-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                        </div>
+                      ) : blockedUsers.length === 0 ? (
+                        <div className="text-center py-12 px-4 rounded-xl border border-dashed border-indigo-500/20 bg-black/[0.02] dark:bg-white/[0.02]">
+                          <div className="w-12 h-12 mx-auto mb-2 text-3xl">🕊️</div>
+                          <p className="text-sm font-semibold text-foreground">Bạn chưa chặn người dùng nào</p>
+                          <p className="text-xs text-muted/60 mt-1">Khi bạn chặn một ai đó, họ sẽ xuất hiện tại đây và bạn có thể gỡ chặn bất cứ lúc nào.</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {blockedUsers.map((u) => (
+                            <div
+                              key={u.id}
+                              className="flex items-center justify-between p-3.5 rounded-xl bg-black/5 dark:bg-white/5 border border-indigo-500/10 hover:border-indigo-500/20 transition-colors"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-full overflow-hidden bg-indigo-500/20 flex-shrink-0 flex items-center justify-center font-bold text-sm text-foreground">
+                                  {u.avatar_url ? (
+                                    <img src={u.avatar_url} alt={u.username} className="w-full h-full object-cover" />
+                                  ) : (
+                                    getInitials(u.full_name || u.username)
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="text-sm font-bold text-foreground">{u.full_name || u.username}</div>
+                                  <div className="text-xs text-muted/60">@{u.username}</div>
+                                </div>
+                              </div>
+
+                              <button
+                                type="button"
+                                disabled={unblockingId === u.id}
+                                onClick={() => handleUnblock(u.id, u.username)}
+                                className="px-4 py-1.5 rounded-lg text-xs font-bold bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 transition-colors cursor-pointer disabled:opacity-50"
+                              >
+                                {unblockingId === u.id ? 'Đang gỡ...' : 'Bỏ chặn'}
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 

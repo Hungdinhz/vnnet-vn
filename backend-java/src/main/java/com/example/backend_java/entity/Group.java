@@ -29,6 +29,14 @@ public class Group {
     @Column(name = "creator_id")
     private Long creatorId;
 
+    @Column(name = "requires_approval")
+    @Builder.Default
+    private Boolean requiresApproval = false;
+
+    @Column(name = "is_private")
+    @Builder.Default
+    private Boolean isPrivate = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "creator_id", insertable = false, updatable = false)
     private User creator;

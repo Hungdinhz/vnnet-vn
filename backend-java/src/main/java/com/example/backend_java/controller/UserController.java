@@ -131,10 +131,16 @@ public class UserController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
-    // GET /users/{user_id} - Lấy user theo ID
-    @GetMapping("/{userId}")
-    public ResponseEntity<UserResponseDto> getUserById(@PathVariable Long userId) {
-        return ResponseEntity.ok(userService.getUserById(userId));
+    // GET /users/{identifier} - Lấy user theo ID hoặc username
+    @GetMapping("/{identifier}")
+    public ResponseEntity<UserResponseDto> getUserByIdOrUsername(
+            @PathVariable String identifier,
+            Authentication authentication) {
+        Long currentUserId = null;
+        if (authentication != null && authentication.getPrincipal() instanceof User) {
+            currentUserId = ((User) authentication.getPrincipal()).getId();
+        }
+        return ResponseEntity.ok(userService.getUserByIdOrUsername(identifier, currentUserId));
     }
 
     // GET /users/{userId}/activity - Lấy tần suất hoạt động 30 ngày

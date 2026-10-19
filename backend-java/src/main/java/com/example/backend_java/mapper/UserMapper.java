@@ -25,6 +25,7 @@ public class UserMapper {
                 .bio(user.getBio())
                 .isVerified(user.getIsVerified())
                 .isGuest(user.getIsGuest())
+                .isPrivate(user.getIsPrivate() != null && user.getIsPrivate())
                 .build();
     }
 }

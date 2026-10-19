@@ -16,6 +16,7 @@ public class PostCreateDto {
     private String content;
 
     @JsonProperty("image_url")
+    @com.fasterxml.jackson.annotation.JsonAlias({"imageUrl", "image_url"})
     private String imageUrl;
 
     @JsonProperty("shared_post_id")

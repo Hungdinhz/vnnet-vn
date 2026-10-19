@@ -6,6 +6,7 @@ interface ConversationItemProps {
   isSelected: boolean;
   onClick: () => void;
   currentUser: any;
+  onDelete?: (convId: number) => void;
 }
 
 export default function ConversationItem({
@@ -13,6 +14,7 @@ export default function ConversationItem({
   isSelected,
   onClick,
   currentUser,
+  onDelete,
 }: ConversationItemProps) {
   const [imgError, setImgError] = useState(false);
   const isGroup = conversation.type === 'GROUP';
@@ -45,9 +47,17 @@ export default function ConversationItem({
   };
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 transition-all text-left relative ${
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      className={`group/conv w-full flex items-center gap-3 px-4 py-3 transition-all text-left relative cursor-pointer select-none ${
         isSelected
           ? 'bg-sky-50 dark:bg-sky-600/20 border-l-4 border-sky-500'
           : 'hover:bg-slate-50 dark:hover:bg-white/5 border-l-4 border-transparent'
@@ -117,7 +127,10 @@ export default function ConversationItem({
                 msg.includes('đã đổi tên') ||
                 msg.includes('đã đặt biệt danh') ||
                 msg.includes('đã gỡ biệt danh') ||
+                msg.includes('đã rời khỏi nhóm') ||
                 msg.includes('đã rời nhóm') ||
+                msg.includes('đã rời') ||
+                msg.includes('đã xóa') ||
                 msg.includes('đã thêm');
 
               if (isSystem) {
@@ -139,14 +152,29 @@ export default function ConversationItem({
             })()}
           </p>
 
-          {/* Unread badge */}
-          {conversation.unreadCount > 0 && (
-            <span className="flex-shrink-0 min-w-[20px] h-5 px-1.5 bg-sky-500 text-white rounded-full text-[10px] font-extrabold flex items-center justify-center shadow-md">
-              {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
-            </span>
-          )}
+          {/* Unread badge & Actions */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {conversation.unreadCount > 0 && (
+              <span className="min-w-[20px] h-5 px-1.5 bg-sky-500 text-white rounded-full text-[10px] font-extrabold flex items-center justify-center shadow-md">
+                {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
+              </span>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(conversation.id);
+                }}
+                className="opacity-0 group-hover/conv:opacity-100 p-1 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-500/10 transition-all text-xs"
+                title="Xóa cuộc trò chuyện (ở phía bạn)"
+              >
+                🗑️
+              </button>
+            )}
+          </div>
         </div>
       </div>
-    </button>
+    </div>
   );
 }

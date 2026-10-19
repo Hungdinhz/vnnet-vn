@@ -9,6 +9,7 @@ interface ConversationListProps {
   currentUser: any;
   onOpenCreateGroup: () => void;
   onOpenSettings: () => void;
+  onDeleteConversation?: (convId: number) => void;
 }
 
 type TabType = 'ALL' | 'DIRECT' | 'GROUP' | 'UNREAD';
@@ -20,6 +21,7 @@ export default function ConversationList({
   currentUser,
   onOpenCreateGroup,
   onOpenSettings,
+  onDeleteConversation,
 }: ConversationListProps) {
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState<TabType>('ALL');
@@ -176,6 +178,7 @@ export default function ConversationList({
               isSelected={selectedId === conv.id}
               onClick={() => onSelect(conv)}
               currentUser={currentUser}
+              onDelete={onDeleteConversation}
             />
           ))
         )}

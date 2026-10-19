@@ -17,7 +17,14 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 
     Page<ChatMessage> findByConversationIdOrderByCreatedAtDesc(Long conversationId, Pageable pageable);
 
+    Page<ChatMessage> findByConversationIdAndCreatedAtAfterOrderByCreatedAtDesc(Long conversationId, LocalDateTime afterDate, Pageable pageable);
+
     Optional<ChatMessage> findTop1ByConversationIdOrderByCreatedAtDesc(Long conversationId);
+
+    Optional<ChatMessage> findTop1ByConversationIdAndCreatedAtAfterOrderByCreatedAtDesc(Long conversationId, LocalDateTime afterDate);
+
+    @Query("SELECT COUNT(m) > 0 FROM ChatMessage m WHERE m.conversation.id = :conversationId AND m.createdAt > :afterDate")
+    boolean existsNewMessageAfter(@Param("conversationId") Long conversationId, @Param("afterDate") LocalDateTime afterDate);
 
     @Query("SELECT COUNT(m) FROM ChatMessage m WHERE m.conversation.id = :conversationId AND m.createdAt > :lastReadAt AND m.sender.id != :userId")
     Long countUnreadInConversation(@Param("conversationId") Long conversationId, 

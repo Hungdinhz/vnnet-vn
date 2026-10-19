@@ -131,4 +131,13 @@ public class ConversationController {
         User currentUser = (User) authentication.getPrincipal();
         return ResponseEntity.ok(conversationService.setMemberNickname(id, targetUserId, request.getNickname(), currentUser));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteConversation(
+            @PathVariable Long id,
+            Authentication authentication) {
+        User currentUser = (User) authentication.getPrincipal();
+        conversationService.deleteConversationForUser(id, currentUser);
+        return ResponseEntity.noContent().build();
+    }
 }

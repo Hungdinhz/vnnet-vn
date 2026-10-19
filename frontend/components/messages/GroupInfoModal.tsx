@@ -9,6 +9,7 @@ interface GroupInfoModalProps {
   onClose: () => void;
   onUpdateConversation: (conv: Conversation) => void;
   onLeaveSuccess: () => void;
+  onDeleteConversation?: (convId: number) => void;
 }
 
 interface FriendItem {
@@ -24,6 +25,7 @@ export default function GroupInfoModal({
   onClose,
   onUpdateConversation,
   onLeaveSuccess,
+  onDeleteConversation,
 }: GroupInfoModalProps) {
   const [friends, setFriends] = useState<FriendItem[]>([]);
   const [showAddMembers, setShowAddMembers] = useState(false);
@@ -41,7 +43,7 @@ export default function GroupInfoModal({
 
   // In-modal confirmation state (NO window.confirm!)
   const [confirmAction, setConfirmAction] = useState<{
-    type: 'REMOVE' | 'LEAVE';
+    type: 'REMOVE' | 'LEAVE' | 'CLEAR_CHAT';
     userId?: number;
     username?: string;
   } | null>(null);
@@ -60,7 +62,7 @@ export default function GroupInfoModal({
           const raw = res.data || [];
           const normalized: FriendItem[] = raw
             .map((f: any) => ({
-              id: f.friend_id ?? f.friendId ?? f.friend?.id ?? f.user_id ?? f.id,
+              id: f.friend_user_id ?? f.friend_id ?? f.friendId ?? f.friend?.id ?? f.user_id ?? f.id,
               username: f.friend_username ?? f.friendUsername ?? f.username ?? f.friend?.username ?? 'Bạn bè',
               avatarUrl: f.friend_avatar_url ?? f.friendAvatarUrl ?? f.avatarUrl ?? f.friend?.avatarUrl ?? null,
             }))
@@ -155,6 +157,19 @@ export default function GroupInfoModal({
         console.error('Lỗi rời nhóm:', err);
         setErrorMessage('Không thể rời nhóm!');
       }
+    } else if (confirmAction.type === 'CLEAR_CHAT') {
+      try {
+        if (onDeleteConversation) {
+          onDeleteConversation(conversation.id);
+        } else {
+          await api.delete(`/conversations/${conversation.id}`);
+        }
+        setConfirmAction(null);
+        onClose();
+      } catch (err) {
+        console.error('Lỗi xóa cuộc trò chuyện:', err);
+        setErrorMessage('Không thể xóa cuộc trò chuyện!');
+      }
     }
   };
 
@@ -190,12 +205,16 @@ export default function GroupInfoModal({
                 <span>
                   {confirmAction.type === 'LEAVE'
                     ? 'Xác nhận rời khỏi nhóm?'
+                    : confirmAction.type === 'CLEAR_CHAT'
+                    ? 'Xác nhận xóa cuộc trò chuyện ở phía bạn?'
                     : `Xác nhận xóa ${confirmAction.username || 'thành viên'}?`}
                 </span>
               </div>
               <p className="text-slate-600 dark:text-slate-300">
                 {confirmAction.type === 'LEAVE'
                   ? 'Bạn sẽ không thể xem hoặc nhận tin nhắn mới từ nhóm này nữa.'
+                  : confirmAction.type === 'CLEAR_CHAT'
+                  ? 'Toàn bộ tin nhắn trước đây sẽ bị xóa ở phía bạn (các thành viên khác vẫn giữ tin nhắn). Sau này nếu có tin nhắn mới, nhóm sẽ tự động xuất hiện lại.'
                   : 'Thành viên này sẽ bị xóa khỏi nhóm và không thể tiếp tục trò chuyện.'}
               </p>
               <div className="flex gap-2 justify-end pt-1">
@@ -431,11 +450,17 @@ export default function GroupInfoModal({
             </div>
           </div>
 
-          {/* Leave group button */}
-          <div className="pt-2 border-t border-slate-200/80 dark:border-slate-700">
+          {/* Action buttons */}
+          <div className="pt-2 border-t border-slate-200/80 dark:border-slate-700 space-y-2">
+            <button
+              onClick={() => setConfirmAction({ type: 'CLEAR_CHAT' })}
+              className="w-full py-2.5 rounded-xl border border-red-400/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 text-xs font-bold transition-colors flex items-center justify-center gap-2"
+            >
+              <span>🗑️</span> Xóa cuộc trò chuyện (ở phía bạn)
+            </button>
             <button
               onClick={() => setConfirmAction({ type: 'LEAVE' })}
-              className="w-full py-2.5 rounded-xl border border-red-400/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 text-xs font-bold transition-colors flex items-center justify-center gap-2"
+              className="w-full py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 text-xs font-bold transition-colors flex items-center justify-center gap-2"
             >
               <span>🚪</span> Rời khỏi nhóm
             </button>

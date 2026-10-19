@@ -133,7 +133,7 @@ export default function PostComments({
                   })
                   .slice(0, 5)
                   .map(friend => {
-                    const fid = friend.friend_id || friend.id;
+                    const fid = friend.friend_user_id || friend.friend_id || friend.id;
                     const fname = friend.friend_username || friend.username;
                     const favatar = friend.friend_avatar_url || friend.avatar_url;
                     return (

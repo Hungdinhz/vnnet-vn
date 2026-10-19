@@ -36,6 +36,7 @@ public class ChatMessageService {
     private final ConversationService conversationService;
     private final NotificationService notificationService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final com.example.backend_java.repository.UserBlockRepository userBlockRepository;
 
     public ChatMessageService(ChatMessageRepository messageRepository,
                               ConversationRepository conversationRepository,
@@ -43,7 +44,8 @@ public class ChatMessageService {
                               UserRepository userRepository,
                               ConversationService conversationService,
                               NotificationService notificationService,
-                              @Lazy SimpMessagingTemplate messagingTemplate) {
+                              @Lazy SimpMessagingTemplate messagingTemplate,
+                              com.example.backend_java.repository.UserBlockRepository userBlockRepository) {
         this.messageRepository = messageRepository;
         this.conversationRepository = conversationRepository;
         this.memberRepository = memberRepository;
@@ -51,6 +53,7 @@ public class ChatMessageService {
         this.conversationService = conversationService;
         this.notificationService = notificationService;
         this.messagingTemplate = messagingTemplate;
+        this.userBlockRepository = userBlockRepository;
     }
 
     @Transactional
@@ -85,6 +88,10 @@ public class ChatMessageService {
                     .map(ConversationMember::getUser)
                     .findFirst()
                     .orElse(null);
+
+            if (receiver != null && userBlockRepository.isBlockedEither(sender.getId(), receiver.getId())) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không thể gửi tin nhắn cho người dùng này do đã bị chặn.");
+            }
         }
 
         ChatMessage message = ChatMessage.builder()
@@ -170,7 +177,12 @@ public class ChatMessageService {
         member.setLastReadAt(LocalDateTime.now());
         memberRepository.save(member);
 
-        Page<ChatMessage> page = messageRepository.findByConversationIdOrderByCreatedAtDesc(conversationId, pageable);
+        Page<ChatMessage> page;
+        if (member.getClearedAt() != null) {
+            page = messageRepository.findByConversationIdAndCreatedAtAfterOrderByCreatedAtDesc(conversationId, member.getClearedAt(), pageable);
+        } else {
+            page = messageRepository.findByConversationIdOrderByCreatedAtDesc(conversationId, pageable);
+        }
         List<ChatMessage> list = page.getContent();
         // Reverse so frontend gets chronological order
         List<ChatMessageResponseDto> dtos = list.stream().map(this::mapToResponseDto).collect(Collectors.toList());

@@ -27,7 +27,11 @@ export default function ProfilePage() {
   const [isSavingBio, setIsSavingBio] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
-  const [activityData, setActivityData] = useState<any[]>([]);
+  const [isUpdatingPrivacy, setIsUpdatingPrivacy] = useState(false);
+  const [isBlockedByMe, setIsBlockedByMe] = useState(false);
+  const [isBlockedByThem, setIsBlockedByThem] = useState(false);
+  const [showBlockConfirm, setShowBlockConfirm] = useState(false);
+  const [isProcessingBlockAction, setIsProcessingBlockAction] = useState(false);
   const [postFilter, setPostFilter] = useState<'all' | 'media' | 'popular' | 'latest'>('all');
 
   const filteredPosts = posts.filter(post => {
@@ -39,18 +43,10 @@ export default function ProfilePage() {
     return 0;
   });
 
-  const fetchProfile = async () => {
+  const fetchUserPosts = async (targetUserId?: any) => {
+    const fetchTarget = targetUserId || profileData?.id || id;
     try {
-      const r = await api.get(`/users/${id}`);
-      setProfileData(r.data);
-      setNewBio(r.data.bio || '');
-    } catch (e) { console.error(e); }
-    finally { setIsLoading(false); }
-  };
-
-  const fetchUserPosts = async () => {
-    try {
-      const r = await api.get(`/posts/user/${id}`);
+      const r = await api.get(`/posts/user/${fetchTarget}`);
       setPosts(r.data || []);
     } catch (e) { console.error(e); }
     finally { setIsLoadingPosts(false); }
@@ -74,8 +70,11 @@ export default function ProfilePage() {
       const fRes = await api.get('/friends/list');
       const friendships = fRes.data || [];
       const matched = friendships.find((f: any) =>
-        (f.user_id === myId && f.friend_id === targetId) ||
-        (f.friend_id === myId && f.user_id === targetId)
+        f.friend_user_id === targetId ||
+        f.friend_id === targetId ||
+        (f.user_id === myId && (f.friend_id === targetId || f.friend_user_id === targetId)) ||
+        (f.friend_id === myId && f.user_id === targetId) ||
+        f.user_id === targetId
       );
       if (matched) {
         setFriendshipStatus('accepted');
@@ -91,26 +90,44 @@ export default function ProfilePage() {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) { router.push('/login'); return; }
-    const fetchSelf = async () => {
+
+    const initProfile = async () => {
+      let myId: number | null = null;
       try { 
         const r = await api.get('/users/me'); 
-        const myId = r.data.id;
+        myId = r.data.id;
         setCurrentUserId(myId); 
-        const targetId = Number(id);
-        if (targetId && targetId !== myId) {
-          await fetchFriendshipStatus(targetId, myId);
-        }
       } catch (e) { console.error(e); }
-    };
-    fetchSelf(); fetchProfile(); fetchUserPosts(); fetchActivity();
-  }, [id, router]);
 
-  const fetchActivity = async () => {
-    try {
-      const r = await api.get(`/users/${id}/activity`);
-      setActivityData(r.data || []);
-    } catch (e) { console.error('Activity error:', e); }
-  };
+      try {
+        const r = await api.get(`/users/${id}`);
+        const user = r.data;
+        setProfileData(user);
+        setNewBio(user.bio || '');
+
+        const blockedByMe = Boolean(user.is_blocked_by_me);
+        const blockedByThem = Boolean(user.is_blocked_by_them);
+        setIsBlockedByMe(blockedByMe);
+        setIsBlockedByThem(blockedByThem);
+
+        const targetUserId = user?.id || id;
+        if (!blockedByMe && !blockedByThem) {
+          fetchUserPosts(targetUserId);
+          if (myId && user?.id && user.id !== myId) {
+            await fetchFriendshipStatus(user.id, myId);
+          }
+        } else {
+          setIsLoadingPosts(false);
+        }
+      } catch (e) {
+        console.error('Lỗi tải thông tin trang cá nhân:', e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    initProfile();
+  }, [id, router]);
 
   const handleAddFriend = async () => {
     setIsProcessingFriendAction(true);
@@ -216,7 +233,74 @@ export default function ProfilePage() {
     finally { if (type === 'avatar') setIsUploadingAvatar(false); else setIsUploadingCover(false); }
   };
 
+  const handleBlockUser = async () => {
+    if (!profileData?.id) return;
+    setIsProcessingBlockAction(true);
+    try {
+      await api.post(`/users/${profileData.id}/block`);
+      toast.success(`Đã chặn ${profileData.username}`);
+      setIsBlockedByMe(true);
+      setShowBlockConfirm(false);
+      setFriendshipStatus('none');
+      setPosts([]);
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || 'Không thể chặn người dùng.');
+    } finally {
+      setIsProcessingBlockAction(false);
+    }
+  };
+
+  const handleUnblockUser = async () => {
+    if (!profileData?.id) return;
+    setIsProcessingBlockAction(true);
+    try {
+      await api.delete(`/users/${profileData.id}/block`);
+      toast.success(`Đã gỡ chặn ${profileData.username}`);
+      setIsBlockedByMe(false);
+      fetchUserPosts(profileData.id);
+      if (currentUserId) {
+        fetchFriendshipStatus(profileData.id, currentUserId);
+      }
+    } catch (e: any) {
+      toast.error(e.response?.data?.detail || 'Không thể gỡ chặn.');
+    } finally {
+      setIsProcessingBlockAction(false);
+    }
+  };
+
   const isOwnProfile = currentUserId !== null && Number(id) === currentUserId;
+  const isProfilePrivate = Boolean(profileData?.is_private ?? profileData?.isPrivate ?? false);
+  const isFriend = friendshipStatus === 'accepted';
+  const isBlocked = isBlockedByMe || isBlockedByThem;
+  const canViewContent = isOwnProfile || (!isBlocked && (isFriend || !isProfilePrivate));
+
+  const handleTogglePrivacy = async () => {
+    if (isUpdatingPrivacy) return;
+    const nextVal = !isProfilePrivate;
+    setIsUpdatingPrivacy(true);
+    try {
+      const res = await api.put('/users/me', {
+        is_private: nextVal,
+        isPrivate: nextVal,
+      });
+      setProfileData((prev: any) => ({
+        ...prev,
+        ...res.data,
+        is_private: nextVal,
+        isPrivate: nextVal,
+      }));
+      if (nextVal) {
+        toast.success('🔒 Đã khóa trang cá nhân! Chỉ bạn bè mới có thể xem ảnh và bài viết.');
+      } else {
+        toast.success('🔓 Đã mở trang cá nhân! Mọi người đều có thể xem bài viết.');
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || 'Không thể cập nhật quyền riêng tư');
+    } finally {
+      setIsUpdatingPrivacy(false);
+    }
+  };
+
   const getInitials = (n: string) => n ? n.charAt(0).toUpperCase() : 'U';
 
   return (
@@ -273,66 +357,148 @@ export default function ProfilePage() {
                         )}
                       </div>
                       <div className="md:mb-3">
-                        <h1 className="text-2xl sm:text-3xl font-extrabold gradient-text tracking-tight">{profileData.username}</h1>
+                        <div className="flex items-center gap-2 flex-wrap justify-center md:justify-start">
+                          <h1 className="text-2xl sm:text-3xl font-extrabold gradient-text tracking-tight">{profileData.username}</h1>
+                          {isProfilePrivate ? (
+                            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1 shadow-sm">
+                              🔒 Đã khóa trang cá nhân
+                            </span>
+                          ) : (
+                            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1 shadow-sm">
+                              🌍 Trang cá nhân công khai
+                            </span>
+                          )}
+                        </div>
                         <p className="text-xs sm:text-sm font-semibold text-indigo-400/50 mt-0.5">{profileData.email}</p>
                       </div>
                     </div>
                     <div className="md:mb-4">
                       {isOwnProfile ? (
-                        <button onClick={() => setIsEditingBio(!isEditingBio)} className="w-full md:w-auto px-6 py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-secondary font-bold rounded-lg transition-colors text-sm flex items-center justify-center gap-1.5 border border-indigo-500/20">
-                          ✏️ {isEditingBio ? "Đóng" : "Chỉnh sửa tiểu sử"}
-                        </button>
-                      ) : friendshipStatus === 'accepted' ? (
-                        <div className="flex flex-col md:flex-row items-center gap-2">
-                          {showUnfriendConfirm ? (
-                            <>
-                              <button onClick={handleUnfriend} disabled={isProcessingFriendAction} className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-bold rounded-lg text-sm border border-red-500/30 transition-colors">✓ Xác nhận hủy kết bạn</button>
-                              <button onClick={() => setShowUnfriendConfirm(false)} className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-sm border border-indigo-500/10 transition-colors">Không</button>
-                            </>
-                          ) : (
-                            <>
-                              <button onClick={() => setShowUnfriendConfirm(true)} className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-lg text-sm border border-red-500/20 shadow-sm transition-colors cursor-pointer">❌ Hủy kết bạn</button>
-                              <button onClick={() => router.push(`/messages?userId=${id}`)} className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-2.5 btn-anime rounded-lg text-sm shadow-md">💬 Nhắn tin</button>
-                            </>
-                          )}
-                        </div>
-                      ) : friendshipStatus === 'pending_sent' ? (
-                        <div className="flex flex-col md:flex-row items-center gap-2">
+                        <div className="flex flex-col sm:flex-row items-center gap-2">
                           <button
-                            onClick={handleCancelRequest}
-                            disabled={isProcessingFriendAction}
-                            className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-black/5 dark:bg-white/5 hover:bg-red-500/10 hover:text-red-400 text-secondary font-bold rounded-lg text-sm border border-indigo-500/20 transition-all cursor-pointer"
-                            title="Nhấp để hủy lời mời đã gửi"
+                            onClick={handleTogglePrivacy}
+                            disabled={isUpdatingPrivacy}
+                            className={`w-full sm:w-auto px-4 py-2 rounded-lg font-bold transition-all text-xs flex items-center justify-center gap-1.5 border shadow-sm cursor-pointer ${
+                              isProfilePrivate
+                                ? 'bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 border-amber-500/30'
+                                : 'bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border-emerald-500/30'
+                            }`}
+                            title="Nhấp để chuyển đổi giữa Khóa (chỉ bạn bè) và Mở (công khai)"
                           >
-                            <span>⏳</span>
-                            <span>Đã gửi lời mời (Hủy)</span>
+                            <span>{isProfilePrivate ? '🔓' : '🔒'}</span>
+                            <span>
+                              {isUpdatingPrivacy
+                                ? 'Đang lưu...'
+                                : isProfilePrivate
+                                ? 'Mở trang cá nhân'
+                                : 'Khóa trang cá nhân'}
+                            </span>
+                          </button>
+                          <button 
+                            onClick={() => setIsEditingBio(!isEditingBio)} 
+                            className="w-full sm:w-auto px-4 py-2 bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-secondary font-bold rounded-lg transition-colors text-xs flex items-center justify-center gap-1.5 border border-indigo-500/20"
+                          >
+                            ✏️ {isEditingBio ? "Đóng" : "Chỉnh sửa tiểu sử"}
                           </button>
                         </div>
-                      ) : friendshipStatus === 'pending_received' ? (
+                      ) : isBlockedByMe ? (
                         <div className="flex flex-col md:flex-row items-center gap-2">
                           <button
-                            onClick={handleAcceptRequest}
-                            disabled={isProcessingFriendAction}
-                            className="w-full md:w-auto flex items-center justify-center gap-2 px-5 py-2.5 btn-anime rounded-lg text-sm shadow-md font-bold cursor-pointer"
+                            onClick={handleUnblockUser}
+                            disabled={isProcessingBlockAction}
+                            className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 font-bold rounded-lg text-sm border border-emerald-500/30 transition-colors cursor-pointer"
                           >
-                            ✓ Chấp nhận
+                            <span>🔓</span>
+                            <span>{isProcessingBlockAction ? 'Đang xử lý...' : 'Gỡ chặn người dùng'}</span>
                           </button>
-                          <button
-                            onClick={handleRejectRequest}
-                            disabled={isProcessingFriendAction}
-                            className="w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-black/5 dark:bg-white/5 hover:bg-red-500/10 text-muted hover:text-red-400 rounded-lg text-sm font-semibold border border-indigo-500/10 transition-colors cursor-pointer"
-                          >
-                            Từ chối
-                          </button>
+                        </div>
+                      ) : isBlockedByThem ? (
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold px-4 py-2 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20">
+                            🚫 Không khả dụng
+                          </span>
                         </div>
                       ) : (
-                        <button
-                          onClick={handleAddFriend}
-                          disabled={isProcessingFriendAction}
-                          className="w-full md:w-auto flex items-center justify-center gap-2 px-6 py-2.5 btn-anime rounded-lg text-sm shadow-md font-bold cursor-pointer"
-                        >
-                          👋 Thêm bạn bè
-                        </button>
+                        <div className="flex flex-col sm:flex-row items-center gap-2">
+                          {friendshipStatus === 'accepted' ? (
+                            <>
+                              {showUnfriendConfirm ? (
+                                <>
+                                  <button onClick={handleUnfriend} disabled={isProcessingFriendAction} className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 font-bold rounded-lg text-sm border border-red-500/30 transition-colors">✓ Xác nhận hủy kết bạn</button>
+                                  <button onClick={() => setShowUnfriendConfirm(false)} className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-black/5 dark:bg-white/5 text-muted/50 font-bold rounded-lg text-sm border border-indigo-500/10 transition-colors">Không</button>
+                                </>
+                              ) : (
+                                <>
+                                  <button onClick={() => setShowUnfriendConfirm(true)} className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-bold rounded-lg text-sm border border-red-500/20 shadow-sm transition-colors cursor-pointer">❌ Hủy kết bạn</button>
+                                  <button onClick={() => router.push(`/messages?userId=${id}`)} className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 btn-anime rounded-lg text-sm shadow-md">💬 Nhắn tin</button>
+                                </>
+                              )}
+                            </>
+                          ) : friendshipStatus === 'pending_sent' ? (
+                            <button
+                              onClick={handleCancelRequest}
+                              disabled={isProcessingFriendAction}
+                              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 bg-black/5 dark:bg-white/5 hover:bg-red-500/10 hover:text-red-400 text-secondary font-bold rounded-lg text-sm border border-indigo-500/20 transition-all cursor-pointer"
+                              title="Nhấp để hủy lời mời đã gửi"
+                            >
+                              <span>⏳</span>
+                              <span>Đã gửi lời mời (Hủy)</span>
+                            </button>
+                          ) : friendshipStatus === 'pending_received' ? (
+                            <>
+                              <button
+                                onClick={handleAcceptRequest}
+                                disabled={isProcessingFriendAction}
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-2.5 btn-anime rounded-lg text-sm shadow-md font-bold cursor-pointer"
+                              >
+                                ✓ Chấp nhận
+                              </button>
+                              <button
+                                onClick={handleRejectRequest}
+                                disabled={isProcessingFriendAction}
+                                className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-black/5 dark:bg-white/5 hover:bg-red-500/10 text-muted hover:text-red-400 rounded-lg text-sm font-semibold border border-indigo-500/10 transition-colors cursor-pointer"
+                              >
+                                Từ chối
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              onClick={handleAddFriend}
+                              disabled={isProcessingFriendAction}
+                              className="w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 btn-anime rounded-lg text-sm shadow-md font-bold cursor-pointer"
+                            >
+                              👋 Thêm bạn bè
+                            </button>
+                          )}
+
+                          {/* Block User Option */}
+                          {showBlockConfirm ? (
+                            <div className="flex items-center gap-1.5 p-1 rounded-lg bg-red-500/10 border border-red-500/20 w-full sm:w-auto justify-center">
+                              <button
+                                onClick={handleBlockUser}
+                                disabled={isProcessingBlockAction}
+                                className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-md text-xs shadow-sm cursor-pointer"
+                              >
+                                {isProcessingBlockAction ? 'Đang chặn...' : 'Xác nhận chặn'}
+                              </button>
+                              <button
+                                onClick={() => setShowBlockConfirm(false)}
+                                className="px-2.5 py-1.5 text-muted hover:text-foreground text-xs font-semibold cursor-pointer"
+                              >
+                                Hủy
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setShowBlockConfirm(true)}
+                              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 font-semibold rounded-lg text-xs border border-red-500/20 transition-colors cursor-pointer"
+                              title="Chặn người dùng này"
+                            >
+                              <span>🚫</span>
+                              <span>Chặn</span>
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -356,130 +522,166 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              {/* Two columns */}
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
-                <div className="md:col-span-4 space-y-4">
-                  <div className="glass-card rounded-xl p-4">
-                    <h3 className="font-bold text-foreground text-[17px] mb-3">Giới thiệu</h3>
-                    <div className="space-y-3.5 text-[14px]">
-                      <div className="flex items-center gap-2.5 text-secondary/60"><span>📧</span><span>{profileData.email}</span></div>
-                      <div className="flex items-center gap-2.5 text-secondary/60"><span>🎂</span><span>Tham gia tháng 6, 2026</span></div>
-                      <div className="flex items-center gap-2.5 text-secondary/60"><span>✨</span><span>Tài khoản chính thức</span></div>
-                    </div>
+              {/* Content area: Blocked card OR Locked profile card OR Two columns */}
+              {isBlockedByThem ? (
+                <div className="glass-card rounded-2xl p-8 sm:p-12 text-center max-w-xl mx-auto border border-slate-500/25 my-6 shadow-xl animate-slide-up">
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-slate-500/15 border border-slate-500/30 flex items-center justify-center text-4xl shadow-inner">
+                    ⚠️
                   </div>
-                  <div className="glass-card rounded-xl p-4">
-                    <div className="flex justify-between items-center mb-3">
-                      <h3 className="font-bold text-foreground text-[17px]">Ảnh</h3>
-                      <button className="text-xs text-accent-primary hover:underline font-semibold">Xem tất cả</button>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {posts.filter(p => p.image_url).slice(0, 6).map((post, idx) => (
-                        <div key={post.id || idx} className="aspect-square bg-white/[0.03] rounded-lg overflow-hidden border border-indigo-500/10">
-                          <img src={post.image_url} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform" />
-                        </div>
-                      ))}
-                      {posts.filter(p => p.image_url).length === 0 && <div className="col-span-full py-6 text-center text-xs text-indigo-400/30">Không có ảnh.</div>}
-                    </div>
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-foreground mb-2">
+                    Trang cá nhân không khả dụng
+                  </h2>
+                  <p className="text-sm text-secondary/70 leading-relaxed max-w-md mx-auto">
+                    Rất tiếc, bạn không thể xem trang cá nhân hoặc liên hệ với người dùng này.
+                  </p>
+                </div>
+              ) : isBlockedByMe ? (
+                <div className="glass-card rounded-2xl p-8 sm:p-12 text-center max-w-xl mx-auto border border-red-500/25 my-6 shadow-xl animate-slide-up">
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center text-4xl shadow-inner">
+                    🚫
                   </div>
-
-                  {/* Activity Chart */}
-                  <div className="glass-card rounded-xl p-4">
-                    <h3 className="font-bold text-foreground text-[17px] mb-3 flex items-center gap-2">📊 Tần suất hoạt động</h3>
-                    {activityData.length === 0 ? (
-                      <div className="py-6 text-center text-xs text-muted/30">Đang tải dữ liệu...</div>
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-foreground mb-2">
+                    Bạn đã chặn người dùng này
+                  </h2>
+                  <p className="text-sm text-secondary/70 leading-relaxed max-w-md mx-auto mb-6">
+                    Bạn sẽ không nhìn thấy bài viết, bình luận, tin nhắn hoặc bất kỳ hoạt động nào của {profileData.username}. Để xem lại nội dung, bạn có thể gỡ chặn bất kỳ lúc nào.
+                  </p>
+                  <button
+                    onClick={handleUnblockUser}
+                    disabled={isProcessingBlockAction}
+                    className="px-6 py-2.5 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 font-bold rounded-xl text-sm border border-emerald-500/30 shadow-lg transition-colors cursor-pointer"
+                  >
+                    {isProcessingBlockAction ? 'Đang xử lý...' : '🔓 Gỡ chặn người dùng'}
+                  </button>
+                </div>
+              ) : !canViewContent ? (
+                <div className="glass-card rounded-2xl p-8 sm:p-12 text-center max-w-xl mx-auto border border-amber-500/25 my-6 shadow-xl animate-slide-up">
+                  <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-4xl shadow-inner">
+                    🔒
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-extrabold text-foreground mb-2">
+                    Trang cá nhân đã khóa
+                  </h2>
+                  <p className="text-sm text-secondary/70 leading-relaxed max-w-md mx-auto mb-6">
+                    {profileData.username} đã kích hoạt tính năng khóa trang cá nhân. Chỉ những người trong danh sách bạn bè mới có thể xem ảnh, bài viết và các thông tin chi tiết trên trang cá nhân này.
+                  </p>
+                  
+                  <div className="flex justify-center">
+                    {friendshipStatus === 'pending_sent' ? (
+                      <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-amber-500/15 border border-amber-500/30 text-amber-400 rounded-xl text-sm font-bold shadow-sm">
+                        <span>⏳</span>
+                        <span>Đã gửi lời mời kết bạn (Chờ {profileData.username} đồng ý)</span>
+                      </div>
+                    ) : friendshipStatus === 'pending_received' ? (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={handleAcceptRequest}
+                          disabled={isProcessingFriendAction}
+                          className="px-5 py-2.5 btn-anime rounded-xl text-sm font-bold shadow-md cursor-pointer"
+                        >
+                          ✓ Chấp nhận kết bạn
+                        </button>
+                        <button
+                          onClick={handleRejectRequest}
+                          disabled={isProcessingFriendAction}
+                          className="px-4 py-2.5 bg-black/5 dark:bg-white/5 hover:bg-red-500/10 text-muted hover:text-red-400 rounded-xl text-sm font-semibold border border-indigo-500/10 transition-colors cursor-pointer"
+                        >
+                          Từ chối
+                        </button>
+                      </div>
                     ) : (
-                      <>
-                        <div className="flex items-end gap-[2px] h-24 mb-2">
-                          {activityData.map((d: any, i: number) => {
-                            const total = (d.posts || 0) + (d.comments || 0) + (d.likes || 0);
-                            const maxVal = Math.max(...activityData.map((x: any) => (x.posts || 0) + (x.comments || 0) + (x.likes || 0)), 1);
-                            const pct = (total / maxVal) * 100;
-                            const dayOfWeek = new Date(d.date).getDay();
-                            return (
-                              <div key={i} className="flex-1 flex flex-col items-center justify-end h-full group relative">
-                                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/80 text-[9px] text-secondary px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                                  {d.date.slice(5)} • {total} HĐ
-                                </div>
-                                <div 
-                                  className={`w-full rounded-t-sm transition-all duration-200 group-hover:brightness-125 ${
-                                    total === 0 ? 'bg-black/5 dark:bg-white/5' :
-                                    pct > 60 ? 'bg-gradient-to-t from-indigo-500 to-indigo-500' :
-                                    pct > 30 ? 'bg-gradient-to-t from-indigo-500/80 to-indigo-400/60' :
-                                    'bg-indigo-500/40'
-                                  }`}
-                                  style={{ height: total === 0 ? '2px' : `${Math.max(pct, 8)}%` }}
-                                ></div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                        <div className="flex justify-between text-[10px] text-muted/30">
-                          <span>30 ngày trước</span>
-                          <span>Hôm nay</span>
-                        </div>
-                        <div className="flex items-center gap-4 mt-3 text-[11px] text-muted/50">
-                          <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span> Bài viết: {activityData.reduce((s: number, d: any) => s + (d.posts || 0), 0)}</div>
-                          <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span> Bình luận: {activityData.reduce((s: number, d: any) => s + (d.comments || 0), 0)}</div>
-                          <div className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span> Lượt thích: {activityData.reduce((s: number, d: any) => s + (d.likes || 0), 0)}</div>
-                        </div>
-                      </>
+                      <button
+                        onClick={handleAddFriend}
+                        disabled={isProcessingFriendAction}
+                        className="px-6 py-2.5 btn-anime rounded-xl text-sm font-bold shadow-lg flex items-center gap-2 cursor-pointer"
+                      >
+                        <span>👋</span>
+                        <span>Kết bạn để xem trang cá nhân</span>
+                      </button>
                     )}
                   </div>
                 </div>
-
-                <div className="md:col-span-8 space-y-4">
-                  <div className="glass-card p-3 sm:p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-foreground text-[16px] sm:text-[17px]">Bài viết</h3>
-                      <span className="text-xs text-muted/60 bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-full font-semibold">
-                        {filteredPosts.length}
-                      </span>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-start">
+                  <div className="md:col-span-4 space-y-4">
+                    <div className="glass-card rounded-xl p-4">
+                      <h3 className="font-bold text-foreground text-[17px] mb-3">Giới thiệu</h3>
+                      <div className="space-y-3.5 text-[14px]">
+                        <div className="flex items-center gap-2.5 text-secondary/60"><span>📧</span><span>{profileData.email}</span></div>
+                        <div className="flex items-center gap-2.5 text-secondary/60"><span>🎂</span><span>Tham gia tháng 6, 2026</span></div>
+                        <div className="flex items-center gap-2.5 text-secondary/60"><span>✨</span><span>Tài khoản chính thức</span></div>
+                      </div>
                     </div>
-
-                    {/* Filter Tabs */}
-                    <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide py-0.5">
-                      {[
-                        { key: 'all', label: 'Tất cả' },
-                        { key: 'latest', label: 'Mới nhất' },
-                        { key: 'media', label: 'Có ảnh' },
-                        { key: 'popular', label: 'Nhiều tim' },
-                      ].map((item) => (
-                        <button
-                          key={item.key}
-                          onClick={() => setPostFilter(item.key as any)}
-                          className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
-                            postFilter === item.key
-                              ? 'bg-accent-primary text-white shadow-sm'
-                              : 'bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-secondary'
-                          }`}
-                        >
-                          {item.label}
-                        </button>
-                      ))}
+                    <div className="glass-card rounded-xl p-4">
+                      <div className="flex justify-between items-center mb-3">
+                        <h3 className="font-bold text-foreground text-[17px]">Ảnh</h3>
+                        <button className="text-xs text-accent-primary hover:underline font-semibold">Xem tất cả</button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        {posts.filter(p => p.image_url).slice(0, 6).map((post, idx) => (
+                          <div key={post.id || idx} className="aspect-square bg-white/[0.03] rounded-lg overflow-hidden border border-indigo-500/10">
+                            <img src={post.image_url} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform" />
+                          </div>
+                        ))}
+                        {posts.filter(p => p.image_url).length === 0 && <div className="col-span-full py-6 text-center text-xs text-indigo-400/30">Không có ảnh.</div>}
+                      </div>
                     </div>
                   </div>
 
-                  {isLoadingPosts ? (
-                    <div className="flex justify-center py-12 glass-card rounded-xl"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-500"></div></div>
-                  ) : filteredPosts.length === 0 ? (
-                    <div className="text-center glass-card p-10 sm:p-12 rounded-xl">
-                      <div className="text-3xl mb-2">📝</div>
-                      <p className="font-semibold text-foreground">
-                        {postFilter === 'all' ? 'Chưa có bài viết nào.' : 'Không có bài viết phù hợp bộ lọc.'}
-                      </p>
-                      <p className="text-sm text-muted/40 mt-1">
-                        {postFilter === 'all' ? 'Người dùng chưa chia sẻ gì.' : 'Hãy thử chọn bộ lọc "Tất cả".'}
-                      </p>
+                  <div className="md:col-span-8 space-y-4">
+                    <div className="glass-card p-3 sm:p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-foreground text-[16px] sm:text-[17px]">Bài viết</h3>
+                        <span className="text-xs text-muted/60 bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-full font-semibold">
+                          {filteredPosts.length}
+                        </span>
+                      </div>
+
+                      {/* Filter Tabs */}
+                      <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide py-0.5">
+                        {[
+                          { key: 'all', label: 'Tất cả' },
+                          { key: 'latest', label: 'Mới nhất' },
+                          { key: 'media', label: 'Có ảnh' },
+                          { key: 'popular', label: 'Nhiều tim' },
+                        ].map((item) => (
+                          <button
+                            key={item.key}
+                            onClick={() => setPostFilter(item.key as any)}
+                            className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                              postFilter === item.key
+                                ? 'bg-accent-primary text-white shadow-sm'
+                                : 'bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-secondary'
+                            }`}
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {filteredPosts.map((post, idx) => (
-                        <PostCard key={post.id || idx} post={post} onPostDeleted={fetchUserPosts} onPostUpdated={fetchUserPosts} />
-                      ))}
-                    </div>
-                  )}
+
+                    {isLoadingPosts ? (
+                      <div className="flex justify-center py-12 glass-card rounded-xl"><div className="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-500"></div></div>
+                    ) : filteredPosts.length === 0 ? (
+                      <div className="text-center glass-card p-10 sm:p-12 rounded-xl">
+                        <div className="text-3xl mb-2">📝</div>
+                        <p className="font-semibold text-foreground">
+                          {postFilter === 'all' ? 'Chưa có bài viết nào.' : 'Không có bài viết phù hợp bộ lọc.'}
+                        </p>
+                        <p className="text-sm text-muted/40 mt-1">
+                          {postFilter === 'all' ? 'Người dùng chưa chia sẻ gì.' : 'Hãy thử chọn bộ lọc "Tất cả".'}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {filteredPosts.map((post, idx) => (
+                          <PostCard key={post.id || idx} post={post} onPostDeleted={fetchUserPosts} onPostUpdated={fetchUserPosts} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </main>

@@ -35,13 +35,14 @@ export default function FriendsSidebar({ friendsList }: FriendsSidebarProps) {
           }`}
         >
           {friendsList.map((friend, idx) => {
-            const friendId = friend.friend_id || friend.id;
+            const friendId = friend.friend_user_id || friend.friend_id || friend.id;
             const friendName = friend.friend_username || friend.username;
             const friendAvatar = friend.friend_avatar_url || friend.avatar_url;
+            const profileTarget = friendName || friendId;
             return (
               <Link
                 key={friendId || idx}
-                href={`/profile/${friendId}`}
+                href={`/profile/${profileTarget}`}
                 className="flex items-center justify-between hover:bg-indigo-500/10 p-2 -mx-1.5 rounded-xl transition-all group"
               >
                 <div className="flex items-center gap-2.5 min-w-0">
@@ -54,10 +55,6 @@ export default function FriendsSidebar({ friendsList }: FriendsSidebarProps) {
                   <div className="min-w-0 flex-1">
                     <div className="font-bold text-xs text-foreground group-hover:text-accent-primary transition-colors truncate">
                       {friendName}
-                    </div>
-                    <div className="text-[9px] text-emerald-400/80 flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                      Bạn bè
                     </div>
                   </div>
                 </div>

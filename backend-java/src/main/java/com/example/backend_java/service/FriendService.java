@@ -20,10 +20,14 @@ public class FriendService {
 
     private final FriendshipRepository friendshipRepository;
     private final UserRepository userRepository;
+    private final com.example.backend_java.repository.UserBlockRepository userBlockRepository;
 
-    public FriendService(FriendshipRepository friendshipRepository, UserRepository userRepository) {
+    public FriendService(FriendshipRepository friendshipRepository,
+                         UserRepository userRepository,
+                         com.example.backend_java.repository.UserBlockRepository userBlockRepository) {
         this.friendshipRepository = friendshipRepository;
         this.userRepository = userRepository;
+        this.userBlockRepository = userBlockRepository;
     }
 
     // Gửi lời mời kết bạn - tương đương crud_friend.send_friend_request
@@ -31,6 +35,11 @@ public class FriendService {
         // Không thể kết bạn với chính mình
         if (userId.equals(friendId)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Bạn không thể kết bạn với chính mình");
+        }
+
+        // Kiểm tra chặn
+        if (userBlockRepository.isBlockedEither(userId, friendId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không thể gửi lời mời kết bạn do người dùng đã bị chặn.");
         }
 
         // Kiểm tra đã có lời mời hoặc đã là bạn
@@ -45,7 +54,7 @@ public class FriendService {
                 .build();
 
         friendship = friendshipRepository.save(friendship);
-        return toResponseDto(friendship);
+        return toResponseDto(friendship, userId);
     }
 
     // Chấp nhận lời mời - tương đương crud_friend.accept_friend_request
@@ -58,32 +67,44 @@ public class FriendService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không có quyền chấp nhận lời mời này");
         }
 
+        if (userBlockRepository.isBlockedEither(friendship.getUserId(), currentUserId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không thể chấp nhận lời mời do người dùng đã bị chặn.");
+        }
+
         friendship.setStatus("accepted");
         friendship = friendshipRepository.save(friendship);
-        return toResponseDto(friendship);
+        return toResponseDto(friendship, currentUserId);
     }
 
     // Lấy danh sách bạn bè - tương đương crud_friend.get_friends_list
     public List<FriendshipResponseDto> getFriendsList(Long userId) {
+        java.util.Set<Long> blockedIds = userBlockRepository.findAllBlockedRelatedUserIds(userId);
         return friendshipRepository.findAcceptedFriendships(userId).stream()
+                .filter(f -> {
+                    Long otherId = f.getUserId().equals(userId) ? f.getFriendId() : f.getUserId();
+                    return !blockedIds.contains(otherId);
+                })
                 .map(f -> toResponseDto(f, userId))
                 .collect(Collectors.toList());
     }
 
     // Lấy lời mời đang chờ - tương đương crud_friend.get_pending_requests
     public List<FriendRequestResponseDto> getPendingRequests(Long userId) {
+        java.util.Set<Long> blockedIds = userBlockRepository.findAllBlockedRelatedUserIds(userId);
         List<Friendship> pendingRequests = friendshipRepository.findByFriendIdAndStatus(userId, "pending");
 
-        return pendingRequests.stream().map(f -> {
-            User sender = userRepository.findById(f.getUserId()).orElse(null);
+        return pendingRequests.stream()
+                .filter(f -> !blockedIds.contains(f.getUserId()))
+                .map(f -> {
+                    User sender = userRepository.findById(f.getUserId()).orElse(null);
 
-            return FriendRequestResponseDto.builder()
-                    .id(f.getId())
-                    .userId(f.getUserId())
-                    .friendId(f.getFriendId())
-                    .status(f.getStatus())
-                    .senderUsername(sender != null ? sender.getUsername() : "Unknown")
-                    .senderAvatarUrl(sender != null ? sender.getAvatarUrl() : null)
+                    return FriendRequestResponseDto.builder()
+                            .id(f.getId())
+                            .userId(f.getUserId())
+                            .friendId(f.getFriendId())
+                            .status(f.getStatus())
+                            .senderUsername(sender != null ? sender.getUsername() : "Unknown")
+                            .senderAvatarUrl(sender != null ? sender.getAvatarUrl() : null)
                     .build();
         }).collect(Collectors.toList());
     }
@@ -161,6 +182,9 @@ public class FriendService {
         // Thêm chính mình vào danh sách loại trừ
         excludedUserIds.add(userId);
 
+        // Thêm người dùng bị chặn / đã chặn mình vào danh sách loại trừ
+        excludedUserIds.addAll(userBlockRepository.findAllBlockedRelatedUserIds(userId));
+
         return userRepository.findAll().stream()
                 .filter(u -> !excludedUserIds.contains(u.getId()))
                 .map(u -> UserResponseDto.builder()
@@ -233,7 +257,8 @@ public class FriendService {
         return FriendshipResponseDto.builder()
                 .id(friendship.getId())
                 .userId(friendship.getUserId())
-                .friendId(friendship.getFriendId())
+                .friendId(friendUserId)
+                .friendUserId(friendUserId)
                 .status(friendship.getStatus())
                 .friendUsername(friendUser != null ? friendUser.getUsername() : "Unknown")
                 .friendAvatarUrl(friendUser != null ? friendUser.getAvatarUrl() : null)

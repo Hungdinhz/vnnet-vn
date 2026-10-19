@@ -115,7 +115,7 @@ function FriendsContent() {
       // Build friendship map: friendUserId -> friendshipId
       const fMap: Record<number, number> = {};
       const friendIds = friendships.map((f: any) => {
-        const friendUserId = f.user_id === me.id ? f.friend_id : f.user_id;
+        const friendUserId = f.friend_user_id || (f.user_id === me.id ? f.friend_id : f.user_id);
         fMap[friendUserId] = f.id;
         return friendUserId;
       });
