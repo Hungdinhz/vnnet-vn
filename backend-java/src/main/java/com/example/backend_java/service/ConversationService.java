@@ -215,12 +215,58 @@ public class ConversationService {
         memberRepository.saveAll(members);
         savedConv.setMembers(members);
 
+        List<String> otherNames = members.stream()
+                .filter(m -> !m.getUser().getId().equals(currentUser.getId()))
+                .map(m -> m.getUser().getUsername())
+                .collect(Collectors.toList());
+
+        if (!otherNames.isEmpty()) {
+            String systemText = currentUser.getUsername() + " đã thêm " + String.join(", ", otherNames) + " vào nhóm";
+            ChatMessage systemMessage = ChatMessage.builder()
+                    .conversation(savedConv)
+                    .sender(currentUser)
+                    .content(systemText)
+                    .messageType(MessageType.SYSTEM)
+                    .isDeleted(false)
+                    .isRead(true)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            ChatMessage savedMsg = messageRepository.save(systemMessage);
+
+            ChatMessageResponseDto msgDto = ChatMessageResponseDto.builder()
+                    .id(savedMsg.getId())
+                    .conversationId(savedConv.getId())
+                    .senderId(currentUser.getId())
+                    .senderUsername(currentUser.getUsername())
+                    .senderNickname(currentUser.getUsername())
+                    .senderAvatarUrl(currentUser.getAvatarUrl())
+                    .content(systemText)
+                    .messageType(MessageType.SYSTEM)
+                    .isDeleted(false)
+                    .createdAt(savedMsg.getCreatedAt())
+                    .isRead(true)
+                    .build();
+
+            try {
+                if (messagingTemplate != null) {
+                    messagingTemplate.convertAndSend("/topic/conversation." + savedConv.getId(), msgDto);
+                    for (ConversationMember m : members) {
+                        messagingTemplate.convertAndSendToUser(
+                                m.getUser().getEmail(),
+                                "/queue/conversations",
+                                mapToResponseDto(savedConv, m.getUser())
+                        );
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+
         return mapToResponseDto(savedConv, currentUser);
     }
 
     @Transactional
     public ConversationResponseDto addMembers(Long conversationId, AddMembersDto request, User currentUser) {
-        Conversation conv = conversationRepository.findById(conversationId)
+        final Conversation conv = conversationRepository.findById(conversationId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy nhóm."));
 
         if (conv.getType() != ConversationType.GROUP) {
@@ -252,13 +298,75 @@ public class ConversationService {
             }
         }
 
+        Conversation resultConv = conv;
         if (!newMembers.isEmpty()) {
             memberRepository.saveAll(newMembers);
             conv.setUpdatedAt(LocalDateTime.now());
-            conversationRepository.save(conv);
+            resultConv = conversationRepository.save(conv);
+
+            // Tìm tên người thực hiện thêm (ưu tiên nickname)
+            ConversationMember actorMember = currentMembers.stream()
+                    .filter(m -> m.getUser().getId().equals(currentUser.getId()))
+                    .findFirst().orElse(null);
+            String actorName = currentUser.getUsername();
+            if (actorMember != null && actorMember.getNickname() != null && !actorMember.getNickname().trim().isEmpty()) {
+                actorName = actorMember.getNickname().trim();
+            }
+
+            // Tên của các thành viên được thêm
+            String addedNames = newMembers.stream()
+                    .map(m -> m.getUser().getUsername())
+                    .collect(Collectors.joining(", "));
+
+            String systemText = actorName + " đã thêm " + addedNames + " vào nhóm";
+
+            ChatMessage systemMessage = ChatMessage.builder()
+                    .conversation(resultConv)
+                    .sender(currentUser)
+                    .content(systemText)
+                    .messageType(MessageType.SYSTEM)
+                    .isDeleted(false)
+                    .isRead(true)
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            ChatMessage savedMsg = messageRepository.save(systemMessage);
+
+            ChatMessageResponseDto msgDto = ChatMessageResponseDto.builder()
+                    .id(savedMsg.getId())
+                    .conversationId(resultConv.getId())
+                    .senderId(currentUser.getId())
+                    .senderUsername(currentUser.getUsername())
+                    .senderNickname(actorName)
+                    .senderAvatarUrl(currentUser.getAvatarUrl())
+                    .content(systemText)
+                    .messageType(MessageType.SYSTEM)
+                    .isDeleted(false)
+                    .createdAt(savedMsg.getCreatedAt())
+                    .isRead(true)
+                    .build();
+
+            try {
+                if (messagingTemplate != null) {
+                    // 1. Phát tin nhắn SYSTEM vào topic của cuộc trò chuyện
+                    messagingTemplate.convertAndSend("/topic/conversation." + resultConv.getId(), msgDto);
+
+                    // 2. Cập nhật thông tin hội thoại (danh sách thành viên, số lượng)
+                    messagingTemplate.convertAndSend("/topic/conversation." + resultConv.getId() + ".info", mapToResponseDto(resultConv, currentUser));
+
+                    // 3. Cập nhật danh sách hội thoại cho tất cả thành viên (cả thành viên cũ và mới)
+                    List<ConversationMember> allMembers = memberRepository.findByConversationId(resultConv.getId());
+                    for (ConversationMember m : allMembers) {
+                        messagingTemplate.convertAndSendToUser(
+                                m.getUser().getEmail(),
+                                "/queue/conversations",
+                                mapToResponseDto(resultConv, m.getUser())
+                        );
+                    }
+                }
+            } catch (Exception ignored) {}
         }
 
-        return mapToResponseDto(conv, currentUser);
+        return mapToResponseDto(resultConv, currentUser);
     }
 
     @Transactional
