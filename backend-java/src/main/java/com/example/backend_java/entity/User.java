@@ -67,6 +67,11 @@ public class User {
     @Builder.Default
     private Boolean isGuest = false;
 
+    @ColumnDefault("false")
+    @Column(name = "is_private", nullable = false)
+    @Builder.Default
+    private Boolean isPrivate = false;
+
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Post> posts = new ArrayList<>();

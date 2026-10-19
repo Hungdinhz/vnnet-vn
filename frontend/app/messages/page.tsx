@@ -25,6 +25,7 @@ import ConfirmRecallModal from '@/components/messages/ConfirmRecallModal';
 import ChatSettingsModal, { ChatSettings, DEFAULT_CHAT_SETTINGS } from '@/components/messages/ChatSettingsModal';
 import InAppMessageToast, { InAppNotification } from '@/components/messages/InAppMessageToast';
 import DirectChatInfoModal from '@/components/messages/DirectChatInfoModal';
+import toast from 'react-hot-toast';
 
 function MessagesContent() {
   const router = useRouter();
@@ -582,6 +583,21 @@ function MessagesContent() {
     }
   };
 
+  const handleDeleteConversation = async (convId: number) => {
+    try {
+      await api.delete(`/conversations/${convId}`);
+      setConversations((prev) => prev.filter((c) => c.id !== convId));
+      if (activeConversationRef.current?.id === convId) {
+        setActiveConversation(null);
+        setMessages([]);
+      }
+      toast.success('Đã xóa cuộc trò chuyện ở phía bạn');
+    } catch (err) {
+      console.error('Lỗi xóa cuộc trò chuyện:', err);
+      toast.error('Không thể xóa cuộc trò chuyện');
+    }
+  };
+
   // Drag and drop event handlers
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
@@ -636,6 +652,7 @@ function MessagesContent() {
             currentUser={currentUser}
             onOpenCreateGroup={() => setIsCreateGroupOpen(true)}
             onOpenSettings={() => setIsSettingsOpen(true)}
+            onDeleteConversation={handleDeleteConversation}
           />
         </div>
 
@@ -794,6 +811,7 @@ function MessagesContent() {
             setActiveConversation(null);
           }
         }}
+        onDeleteConversation={handleDeleteConversation}
       />
 
       <DirectChatInfoModal
@@ -808,6 +826,7 @@ function MessagesContent() {
             prev.map((c) => (c.id === updated.id ? updated : c))
           );
         }}
+        onDeleteConversation={handleDeleteConversation}
       />
 
       <ChatSettingsModal

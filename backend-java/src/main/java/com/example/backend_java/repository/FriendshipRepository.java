@@ -28,4 +28,10 @@ public interface FriendshipRepository extends JpaRepository<Friendship, Long> {
 
     // Lấy lời mời đang chờ mà user hiện tại là người gửi
     List<Friendship> findByUserIdAndStatus(Long userId, String status);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query("DELETE FROM Friendship f WHERE (f.userId = :u1 AND f.friendId = :u2) OR (f.userId = :u2 AND f.friendId = :u1)")
+    void deleteFriendshipBetweenUsers(@Param("u1") Long u1, @Param("u2") Long u2);
 }
+

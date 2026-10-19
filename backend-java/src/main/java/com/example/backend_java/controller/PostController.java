@@ -52,8 +52,11 @@ public class PostController {
 
     // GET /posts/{post_id} - Chi tiết bài viết
     @GetMapping("/{postId}")
-    public ResponseEntity<PostResponseDto> getPost(@PathVariable Long postId) {
-        return ResponseEntity.ok(postService.getPostById(postId));
+    public ResponseEntity<PostResponseDto> getPost(
+            @PathVariable Long postId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Long currentUserId = postService.resolveCurrentUserId(authHeader);
+        return ResponseEntity.ok(postService.getPostById(postId, currentUserId));
     }
 
     // GET /posts/user/{userId} - Lấy danh sách bài viết của một user cụ thể

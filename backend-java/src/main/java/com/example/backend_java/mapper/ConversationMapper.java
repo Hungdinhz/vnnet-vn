@@ -69,10 +69,20 @@ public class ConversationMapper {
             }
         }
 
+        Optional<ConversationMember> currentMemberOpt = members.stream()
+                .filter(m -> m.getUser().getId().equals(currentUser.getId()))
+                .findFirst();
+        LocalDateTime clearedAt = currentMemberOpt.map(ConversationMember::getClearedAt).orElse(null);
+
         // Find last message
-        Optional<ChatMessage> latestMsg = messageRepository.findTop1ByConversationIdOrderByCreatedAtDesc(conv.getId());
+        Optional<ChatMessage> latestMsg;
+        if (clearedAt != null) {
+            latestMsg = messageRepository.findTop1ByConversationIdAndCreatedAtAfterOrderByCreatedAtDesc(conv.getId(), clearedAt);
+        } else {
+            latestMsg = messageRepository.findTop1ByConversationIdOrderByCreatedAtDesc(conv.getId());
+        }
         String lastMessage = null;
-        LocalDateTime lastMessageTime = conv.getUpdatedAt();
+        LocalDateTime lastMessageTime = latestMsg.isPresent() ? latestMsg.get().getCreatedAt() : conv.getUpdatedAt();
         String lastMessageSenderName = null;
 
         if (latestMsg.isPresent()) {
@@ -128,13 +138,13 @@ public class ConversationMapper {
 
         // Find unread count
         Long unreadCount = 0L;
-        Optional<ConversationMember> currentMemberOpt = members.stream()
-                .filter(m -> m.getUser().getId().equals(currentUser.getId()))
-                .findFirst();
         if (currentMemberOpt.isPresent()) {
             LocalDateTime lastReadAt = currentMemberOpt.get().getLastReadAt();
             if (lastReadAt == null) {
                 lastReadAt = LocalDateTime.of(1970, 1, 1, 0, 0);
+            }
+            if (clearedAt != null && clearedAt.isAfter(lastReadAt)) {
+                lastReadAt = clearedAt;
             }
             unreadCount = messageRepository.countUnreadInConversation(conv.getId(), currentUser.getId(), lastReadAt);
         }

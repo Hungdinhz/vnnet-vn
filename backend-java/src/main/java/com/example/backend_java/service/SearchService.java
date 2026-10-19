@@ -22,21 +22,31 @@ public class SearchService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final PostService postService;
+    private final com.example.backend_java.repository.UserBlockRepository userBlockRepository;
 
-    public SearchService(UserRepository userRepository, PostRepository postRepository, PostService postService) {
+    public SearchService(UserRepository userRepository,
+                         PostRepository postRepository,
+                         PostService postService,
+                         com.example.backend_java.repository.UserBlockRepository userBlockRepository) {
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.postService = postService;
+        this.userBlockRepository = userBlockRepository;
     }
 
     // Tìm kiếm tổng hợp (users + posts)
     public SearchResultDto searchAll(String query, int page, int size, Long currentUserId) {
         Pageable pageable = PageRequest.of(page, size);
 
+        java.util.Set<Long> blockedIds = currentUserId != null
+                ? userBlockRepository.findAllBlockedRelatedUserIds(currentUserId)
+                : java.util.Collections.emptySet();
+
         Page<User> usersPage = userRepository.searchByUsernameOrEmail(query, pageable);
         Page<Post> postsPage = postRepository.searchByTitleOrContent(query, pageable);
 
         List<UserResponseDto> userDtos = usersPage.getContent().stream()
+                .filter(u -> !blockedIds.contains(u.getId()))
                 .map(u -> UserResponseDto.builder()
                         .id(u.getId())
                         .username(u.getUsername())
@@ -48,23 +58,33 @@ public class SearchService {
                 .collect(Collectors.toList());
 
         List<PostResponseDto> postDtos = postsPage.getContent().stream()
+                .filter(p -> !blockedIds.contains(p.getOwnerId()))
                 .map(p -> postService.toResponseDto(p, currentUserId))
                 .collect(Collectors.toList());
 
         return SearchResultDto.builder()
                 .users(userDtos)
                 .posts(postDtos)
-                .totalUsers(usersPage.getTotalElements())
-                .totalPosts(postsPage.getTotalElements())
+                .totalUsers((long) userDtos.size())
+                .totalPosts((long) postDtos.size())
                 .build();
     }
 
     // Tìm kiếm chỉ users
     public PagedResponseDto<UserResponseDto> searchUsers(String query, int page, int size) {
+        return searchUsers(query, page, size, null);
+    }
+
+    public PagedResponseDto<UserResponseDto> searchUsers(String query, int page, int size, Long currentUserId) {
         Pageable pageable = PageRequest.of(page, size);
         Page<User> usersPage = userRepository.searchByUsernameOrEmail(query, pageable);
 
+        java.util.Set<Long> blockedIds = currentUserId != null
+                ? userBlockRepository.findAllBlockedRelatedUserIds(currentUserId)
+                : java.util.Collections.emptySet();
+
         List<UserResponseDto> userDtos = usersPage.getContent().stream()
+                .filter(u -> !blockedIds.contains(u.getId()))
                 .map(u -> UserResponseDto.builder()
                         .id(u.getId())
                         .username(u.getUsername())
@@ -79,7 +99,7 @@ public class SearchService {
                 .content(userDtos)
                 .page(page)
                 .size(size)
-                .totalElements(usersPage.getTotalElements())
+                .totalElements(userDtos.size())
                 .totalPages(usersPage.getTotalPages())
                 .hasNext(usersPage.hasNext())
                 .build();
@@ -90,7 +110,12 @@ public class SearchService {
         Pageable pageable = PageRequest.of(page, size);
         Page<Post> postsPage = postRepository.searchByTitleOrContent(query, pageable);
 
+        java.util.Set<Long> blockedIds = currentUserId != null
+                ? userBlockRepository.findAllBlockedRelatedUserIds(currentUserId)
+                : java.util.Collections.emptySet();
+
         List<PostResponseDto> postDtos = postsPage.getContent().stream()
+                .filter(p -> !blockedIds.contains(p.getOwnerId()))
                 .map(p -> postService.toResponseDto(p, currentUserId))
                 .collect(Collectors.toList());
 
@@ -98,9 +123,10 @@ public class SearchService {
                 .content(postDtos)
                 .page(page)
                 .size(size)
-                .totalElements(postsPage.getTotalElements())
+                .totalElements(postDtos.size())
                 .totalPages(postsPage.getTotalPages())
                 .hasNext(postsPage.hasNext())
                 .build();
     }
 }
+

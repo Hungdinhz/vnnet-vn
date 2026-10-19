@@ -23,7 +23,7 @@ export default function GroupCircleRow({ myGroups }: GroupCircleRowProps) {
       </div>
       <div className="flex gap-4 overflow-x-auto pb-1.5 scrollbar-thin">
         {myGroups.map((group) => {
-          const cover = getValidGroupCover(group.coverUrl || group.cover_url);
+          const cover = getValidGroupCover(group.coverUrl || group.cover_url, group.name);
           return (
             <Link
               key={group.id}
@@ -34,7 +34,7 @@ export default function GroupCircleRow({ myGroups }: GroupCircleRowProps) {
                 <img 
                   src={cover} 
                   alt={group.name} 
-                  onError={handleGroupImageError}
+                  onError={(e) => handleGroupImageError(e, group.name)}
                   className="w-full h-full object-cover" 
                 />
               </div>

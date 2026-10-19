@@ -1,7 +1,9 @@
 package com.example.backend_java.controller;
+import com.example.backend_java.dto.social.GroupJoinRequestDto;
 import com.example.backend_java.dto.social.SocialGroupMemberDto;
 import com.example.backend_java.dto.social.UpdateGroupRoleRequest;
 import com.example.backend_java.dto.social.UpdateSocialGroupDto;
+import java.util.Map;
 
 import com.example.backend_java.dto.social.CreateSocialGroupDto;
 import com.example.backend_java.dto.social.SocialGroupDto;
@@ -113,10 +115,43 @@ public class GroupController {
     }
 
     @PostMapping("/{id}/join")
-    public ResponseEntity<?> joinGroup(@PathVariable Long id,
-                                       @RequestHeader(value = "Authorization", required = false) String token) {
+    public ResponseEntity<Map<String, Object>> joinGroup(@PathVariable Long id,
+                                                         @RequestHeader(value = "Authorization", required = false) String token) {
         User user = getCurrentUser(token);
-        groupService.joinGroup(id, user);
+        Map<String, Object> result = groupService.joinGroup(id, user);
+        return ResponseEntity.ok(result);
+    }
+
+    @DeleteMapping("/{id}/join-request")
+    public ResponseEntity<?> cancelJoinRequest(@PathVariable Long id,
+                                               @RequestHeader(value = "Authorization", required = false) String token) {
+        User user = getCurrentUser(token);
+        groupService.cancelJoinRequest(id, user);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{id}/requests")
+    public ResponseEntity<List<GroupJoinRequestDto>> getJoinRequests(@PathVariable Long id,
+                                                                     @RequestHeader(value = "Authorization", required = false) String token) {
+        User user = getCurrentUser(token);
+        return ResponseEntity.ok(groupService.getJoinRequests(id, user));
+    }
+
+    @PostMapping("/{id}/requests/{requestId}/approve")
+    public ResponseEntity<?> approveJoinRequest(@PathVariable Long id,
+                                                @PathVariable Long requestId,
+                                                @RequestHeader(value = "Authorization", required = false) String token) {
+        User user = getCurrentUser(token);
+        groupService.approveJoinRequest(id, requestId, user);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/{id}/requests/{requestId}/reject")
+    public ResponseEntity<?> rejectJoinRequest(@PathVariable Long id,
+                                               @PathVariable Long requestId,
+                                               @RequestHeader(value = "Authorization", required = false) String token) {
+        User user = getCurrentUser(token);
+        groupService.rejectJoinRequest(id, requestId, user);
         return ResponseEntity.ok().build();
     }
 

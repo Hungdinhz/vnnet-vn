@@ -35,4 +35,19 @@ public class UserResponseDto {
 
     @JsonProperty("is_guest")
     private Boolean isGuest;
+
+    @JsonProperty("is_private")
+    @com.fasterxml.jackson.annotation.JsonAlias({"isPrivate", "is_private"})
+    private Boolean isPrivate;
+
+    @JsonProperty("isPrivate")
+    public Boolean getIsPrivateCamel() {
+        return this.isPrivate;
+    }
+
+    @JsonProperty("is_blocked_by_me")
+    private Boolean isBlockedByMe;
+
+    @JsonProperty("is_blocked_by_them")
+    private Boolean isBlockedByThem;
 }

@@ -332,14 +332,15 @@ export default function PostComposer({
                     {friendsList
                       .filter(f => {
                         const name = (f.friend_username || f.username || '').toLowerCase();
+                        const fid = f.friend_user_id || f.friend_id || f.id;
                         return (
                           name.includes(tagSearch.toLowerCase()) &&
-                          !taggedFriends.find(t => t.id === (f.friend_id || f.id))
+                          !taggedFriends.find(t => t.id === fid)
                         );
                       })
                       .slice(0, 10)
                       .map((friend) => {
-                        const friendId = friend.friend_id || friend.id;
+                        const friendId = friend.friend_user_id || friend.friend_id || friend.id;
                         const friendName = friend.friend_username || friend.username;
                         const friendAvatar = friend.friend_avatar_url || friend.avatar_url;
                         return (
@@ -362,9 +363,10 @@ export default function PostComposer({
                       })}
                     {friendsList.filter(f => {
                       const name = (f.friend_username || f.username || '').toLowerCase();
+                      const fid = f.friend_user_id || f.friend_id || f.id;
                       return (
                         name.includes(tagSearch.toLowerCase()) &&
-                        !taggedFriends.find(t => t.id === (f.friend_id || f.id))
+                        !taggedFriends.find(t => t.id === fid)
                       );
                     }).length === 0 && (
                       <p className="text-center text-xs text-muted/40 py-3">Không tìm thấy bạn bè</p>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Conversation } from '@/types/messages';
 import api from '@/lib/axios';
+import toast from 'react-hot-toast';
 
 interface DirectChatInfoModalProps {
   conversation: Conversation | null;
@@ -10,6 +11,7 @@ interface DirectChatInfoModalProps {
   onClose: () => void;
   onOpenSettings: () => void;
   onUpdateConversation?: (updated: Conversation) => void;
+  onDeleteConversation?: (convId: number) => void;
 }
 
 export default function DirectChatInfoModal({
@@ -19,6 +21,7 @@ export default function DirectChatInfoModal({
   onClose,
   onOpenSettings,
   onUpdateConversation,
+  onDeleteConversation,
 }: DirectChatInfoModalProps) {
   const router = useRouter();
 
@@ -30,6 +33,10 @@ export default function DirectChatInfoModal({
   const [isEditingNick, setIsEditingNick] = useState(false);
   const [nickInput, setNickInput] = useState(partner?.nickname || '');
   const [savingNick, setSavingNick] = useState(false);
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isConfirmingBlock, setIsConfirmingBlock] = useState(false);
+  const [isBlocking, setIsBlocking] = useState(false);
 
   useEffect(() => {
     if (partner) {
@@ -42,7 +49,10 @@ export default function DirectChatInfoModal({
 
   const handleViewProfile = () => {
     onClose();
-    if (partner?.username) {
+    const targetUserId = partner?.userId || (partner as any)?.id;
+    if (targetUserId) {
+      router.push(`/profile/${targetUserId}`);
+    } else if (partner?.username) {
       router.push(`/profile/${partner.username}`);
     }
   };
@@ -211,6 +221,126 @@ export default function DirectChatInfoModal({
                 </div>
               </div>
             </button>
+
+            {/* Delete Conversation Section */}
+            {!isConfirmingDelete ? (
+              <button
+                onClick={() => setIsConfirmingDelete(true)}
+                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-500/10 text-left transition-colors border border-red-500/20 text-red-600 dark:text-red-400"
+              >
+                <span className="text-lg">🗑️</span>
+                <div>
+                  <div className="text-xs font-bold">
+                    Xóa cuộc trò chuyện (ở phía bạn)
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Xóa toàn bộ tin nhắn phía bạn. Đối phương vẫn giữ cuộc trò chuyện.
+                  </div>
+                </div>
+              </button>
+            ) : (
+              <div className="p-3.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-500/40 rounded-xl space-y-2.5 animate-scale-up">
+                <div className="text-xs font-bold text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                  <span>⚠️</span> Xác nhận xóa cuộc trò chuyện?
+                </div>
+                <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                  Toàn bộ tin nhắn trước đây sẽ bị xóa ở phía bạn (đối phương vẫn còn). Nếu sau này bạn hoặc đối phương gửi tin nhắn mới, cuộc trò chuyện sẽ tự động xuất hiện lại.
+                </p>
+                <div className="flex gap-2 justify-end pt-1">
+                  <button
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={() => setIsConfirmingDelete(false)}
+                    className="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 text-xs font-medium"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isDeleting}
+                    onClick={async () => {
+                      if (!conversation) return;
+                      setIsDeleting(true);
+                      try {
+                        if (onDeleteConversation) {
+                          onDeleteConversation(conversation.id);
+                        } else {
+                          await api.delete(`/conversations/${conversation.id}`);
+                        }
+                        onClose();
+                      } catch (err) {
+                        console.error('Lỗi xóa cuộc trò chuyện:', err);
+                      } finally {
+                        setIsDeleting(false);
+                      }
+                    }}
+                    className="px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-sm disabled:opacity-50"
+                  >
+                    {isDeleting ? 'Đang xóa...' : 'Xóa phía tôi'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Block User Section */}
+            {!isConfirmingBlock ? (
+              <button
+                onClick={() => setIsConfirmingBlock(true)}
+                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-red-500/10 text-left transition-colors border border-red-500/20 text-red-600 dark:text-red-400"
+              >
+                <span className="text-lg">🚫</span>
+                <div>
+                  <div className="text-xs font-bold">
+                    Chặn người dùng này
+                  </div>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Không hiển thị bài viết, tin nhắn và thông tin của người này với bạn nữa.
+                  </div>
+                </div>
+              </button>
+            ) : (
+              <div className="p-3.5 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-500/40 rounded-xl space-y-2.5 animate-scale-up">
+                <div className="text-xs font-bold text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                  <span>🚫</span> Xác nhận chặn {partnerName}?
+                </div>
+                <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-relaxed">
+                  Khi chặn, đối phương sẽ không thể gửi tin nhắn cho bạn và toàn bộ nội dung của hai bên sẽ bị ẩn đối với nhau.
+                </p>
+                <div className="flex gap-2 justify-end pt-1">
+                  <button
+                    type="button"
+                    disabled={isBlocking}
+                    onClick={() => setIsConfirmingBlock(false)}
+                    className="px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 text-xs font-medium cursor-pointer"
+                  >
+                    Hủy
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isBlocking}
+                    onClick={async () => {
+                      if (!partner) return;
+                      setIsBlocking(true);
+                      try {
+                        await api.post(`/users/${partner.userId}/block`);
+                        toast.success(`Đã chặn ${partnerName}`);
+                        if (onDeleteConversation && conversation) {
+                          onDeleteConversation(conversation.id);
+                        }
+                        onClose();
+                      } catch (err: any) {
+                        toast.error(err.response?.data?.detail || 'Không thể chặn người dùng.');
+                      } finally {
+                        setIsBlocking(false);
+                      }
+                    }}
+                    className="px-3.5 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-sm disabled:opacity-50 cursor-pointer"
+                  >
+                    {isBlocking ? 'Đang chặn...' : 'Xác nhận chặn'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

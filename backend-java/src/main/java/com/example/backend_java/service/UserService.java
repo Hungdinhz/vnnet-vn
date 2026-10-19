@@ -23,15 +23,18 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthService authService;
     private final UserMapper userMapper;
+    private final com.example.backend_java.repository.UserBlockRepository userBlockRepository;
 
     public UserService(UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        AuthService authService,
-                       UserMapper userMapper) {
+                       UserMapper userMapper,
+                       com.example.backend_java.repository.UserBlockRepository userBlockRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authService = authService;
         this.userMapper = userMapper;
+        this.userBlockRepository = userBlockRepository;
     }
 
     // Delegations to AuthService for backward compatibility
@@ -96,6 +99,36 @@ public class UserService {
         return userMapper.toResponseDto(user);
     }
 
+    public UserResponseDto getUserByIdOrUsername(String identifier) {
+        return getUserByIdOrUsername(identifier, null);
+    }
+
+    public UserResponseDto getUserByIdOrUsername(String identifier, Long currentUserId) {
+        if (identifier == null || identifier.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User identifier is required");
+        }
+        User user = null;
+        try {
+            Long userId = Long.parseLong(identifier.trim());
+            user = userRepository.findById(userId).orElse(null);
+        } catch (NumberFormatException ignored) {}
+
+        if (user == null) {
+            user = userRepository.findByUsername(identifier.trim())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        }
+
+        UserResponseDto dto = userMapper.toResponseDto(user);
+        if (currentUserId != null && !currentUserId.equals(user.getId())) {
+            dto.setIsBlockedByMe(userBlockRepository.existsByBlockerIdAndBlockedId(currentUserId, user.getId()));
+            dto.setIsBlockedByThem(userBlockRepository.existsByBlockerIdAndBlockedId(user.getId(), currentUserId));
+        } else {
+            dto.setIsBlockedByMe(false);
+            dto.setIsBlockedByThem(false);
+        }
+        return dto;
+    }
+
     public UserResponseDto updateProfile(User currentUser, UserUpdateDto dto) {
         User user = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -126,6 +159,9 @@ public class UserService {
         }
         if (dto.getPhone() != null) {
             user.setPhone(dto.getPhone());
+        }
+        if (dto.getIsPrivate() != null) {
+            user.setIsPrivate(dto.getIsPrivate());
         }
 
         user = userRepository.save(user);

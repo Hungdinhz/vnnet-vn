@@ -91,5 +91,60 @@ public class DatabaseSchemaFixer implements CommandLineRunner {
         } catch (Exception e) {
             log.warn("Error checking marketplace tables: {}", e.getMessage());
         }
+
+        try {
+            jdbcTemplate.execute("ALTER TABLE app_groups ADD COLUMN IF NOT EXISTS requires_approval BOOLEAN DEFAULT FALSE;");
+            jdbcTemplate.execute("""
+                CREATE TABLE IF NOT EXISTS app_group_join_requests (
+                    id BIGSERIAL PRIMARY KEY,
+                    group_id BIGINT NOT NULL REFERENCES app_groups(id) ON DELETE CASCADE,
+                    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT uq_group_join_request UNIQUE (group_id, user_id)
+                );
+            """);
+            log.info("Successfully verified and created app_group_join_requests table and requires_approval column");
+        } catch (Exception e) {
+            log.warn("Error checking group join requests table: {}", e.getMessage());
+        }
+
+        try {
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS is_private BOOLEAN DEFAULT FALSE;");
+            log.info("Successfully verified and created is_private column on users table");
+        } catch (Exception e) {
+            log.warn("Error checking is_private column on users table: {}", e.getMessage());
+        }
+
+        try {
+            jdbcTemplate.execute("ALTER TABLE app_groups ADD COLUMN IF NOT EXISTS is_private BOOLEAN DEFAULT FALSE;");
+            log.info("Successfully verified and created is_private column on app_groups table");
+        } catch (Exception e) {
+            log.warn("Error checking is_private column on app_groups table: {}", e.getMessage());
+        }
+
+        try {
+            jdbcTemplate.execute("ALTER TABLE conversation_members ADD COLUMN IF NOT EXISTS cleared_at TIMESTAMP;");
+            log.info("Successfully verified and created cleared_at column on conversation_members table");
+        } catch (Exception e) {
+            log.warn("Error checking cleared_at column on conversation_members table: {}", e.getMessage());
+        }
+
+        try {
+            jdbcTemplate.execute("""
+                CREATE TABLE IF NOT EXISTS user_blocks (
+                    id BIGSERIAL PRIMARY KEY,
+                    blocker_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    blocked_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    CONSTRAINT uq_user_block UNIQUE (blocker_id, blocked_id)
+                );
+                CREATE INDEX IF NOT EXISTS idx_user_blocks_blocker ON user_blocks(blocker_id);
+                CREATE INDEX IF NOT EXISTS idx_user_blocks_blocked ON user_blocks(blocked_id);
+            """);
+            log.info("Successfully verified and created user_blocks table");
+        } catch (Exception e) {
+            log.warn("Error checking user_blocks table: {}", e.getMessage());
+        }
     }
 }

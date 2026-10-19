@@ -24,17 +24,28 @@ public class InteractionService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final com.example.backend_java.repository.CommentLikeRepository commentLikeRepository;
+    private final com.example.backend_java.repository.UserBlockRepository userBlockRepository;
 
-    public InteractionService(LikeRepository likeRepository, CommentRepository commentRepository, UserRepository userRepository, com.example.backend_java.repository.CommentLikeRepository commentLikeRepository) {
+    public InteractionService(LikeRepository likeRepository,
+                              CommentRepository commentRepository,
+                              UserRepository userRepository,
+                              com.example.backend_java.repository.CommentLikeRepository commentLikeRepository,
+                              com.example.backend_java.repository.UserBlockRepository userBlockRepository) {
         this.likeRepository = likeRepository;
         this.commentRepository = commentRepository;
         this.userRepository = userRepository;
         this.commentLikeRepository = commentLikeRepository;
+        this.userBlockRepository = userBlockRepository;
     }
 
     // Toggle Reaction (React / Đổi loại / Bỏ react) bài viết
     @Transactional
     public MessageDto toggleReaction(Long userId, Long postId, Post post, String reactionType) {
+        if (post != null && userBlockRepository.isBlockedEither(userId, post.getOwnerId())) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN, "Không thể tương tác với bài viết của người dùng này.");
+        }
+
         if (reactionType == null || reactionType.isBlank()) {
             reactionType = "like";
         }
@@ -91,6 +102,11 @@ public class InteractionService {
     // Thêm bình luận
     @Transactional
     public CommentResponseDto createComment(CommentCreateDto dto, Long userId, Long postId, Post post) {
+        if (post != null && userBlockRepository.isBlockedEither(userId, post.getOwnerId())) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN, "Không thể bình luận vào bài viết của người dùng này.");
+        }
+
         Comment comment = Comment.builder()
                 .content(dto.getContent())
                 .userId(userId)
@@ -124,7 +140,12 @@ public class InteractionService {
     // Lấy danh sách bình luận theo post
     @Transactional(readOnly = true)
     public List<CommentResponseDto> getCommentsByPost(Long postId, Long currentUserId) {
+        java.util.Set<Long> blockedIds = currentUserId != null
+                ? userBlockRepository.findAllBlockedRelatedUserIds(currentUserId)
+                : java.util.Collections.emptySet();
+
         return commentRepository.findByPostId(postId).stream()
+                .filter(comment -> !blockedIds.contains(comment.getUserId()))
                 .map(comment -> {
                     User user = userRepository.findById(comment.getUserId()).orElse(null);
                     String username = user != null ? user.getUsername() : "Unknown";

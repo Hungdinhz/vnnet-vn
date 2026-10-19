@@ -27,4 +27,8 @@ public class UserUpdateDto {
     private String phone;
 
     private String bio;
+ 
+    @JsonProperty("is_private")
+    @com.fasterxml.jackson.annotation.JsonAlias({"isPrivate", "is_private"})
+    private Boolean isPrivate;
 }

@@ -213,7 +213,7 @@ export default function PostCard({ post, onPostDeleted, onPostUpdated }: PostPro
   };
 
   const selectMentionFriend = (friend: any) => {
-    const friendId = friend.friend_id || friend.id;
+    const friendId = friend.friend_user_id || friend.friend_id || friend.id;
     const friendName = friend.friend_username || friend.username;
     const words = newComment.split(' ');
     words.pop();

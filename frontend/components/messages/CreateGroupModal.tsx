@@ -41,7 +41,7 @@ export default function CreateGroupModal({
         const rawList = res.data || [];
         const normalized: FriendItem[] = rawList
           .map((f: any) => ({
-            id: f.friend_id ?? f.friendId ?? f.friend?.id ?? f.user_id ?? f.id,
+            id: f.friend_user_id ?? f.friend_id ?? f.friendId ?? f.friend?.id ?? f.user_id ?? f.id,
             username: f.friend_username ?? f.friendUsername ?? f.username ?? f.friend?.username ?? 'Bạn bè',
             avatarUrl: f.friend_avatar_url ?? f.friendAvatarUrl ?? f.avatarUrl ?? f.friend?.avatarUrl ?? null,
           }))

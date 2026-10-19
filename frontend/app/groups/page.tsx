@@ -6,7 +6,7 @@ import Sidebar from '@/components/Sidebar';
 import api from '@/lib/axios';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
-import { getValidGroupCover, handleGroupImageError, DEFAULT_GROUP_COVER } from '@/lib/groupUtils';
+import { getValidGroupCover, handleGroupImageError, generateDefaultGroupCover } from '@/lib/groupUtils';
 
 export default function GroupsPage() {
   const [myGroups, setMyGroups] = useState<any[]>([]);
@@ -17,6 +17,8 @@ export default function GroupsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupDesc, setNewGroupDesc] = useState('');
+  const [newGroupRequiresApproval, setNewGroupRequiresApproval] = useState(false);
+  const [newGroupIsPrivate, setNewGroupIsPrivate] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
@@ -49,13 +51,19 @@ export default function GroupsPage() {
     setIsCreating(true);
     try {
       await api.post('/groups', {
-        name: newGroupName,
-        description: newGroupDesc
+        name: newGroupName.trim(),
+        description: newGroupDesc.trim(),
+        requiresApproval: newGroupRequiresApproval,
+        requires_approval: newGroupRequiresApproval,
+        isPrivate: newGroupIsPrivate,
+        is_private: newGroupIsPrivate
       });
       toast.success('🎉 Tạo nhóm thành công!');
       setShowCreateModal(false);
       setNewGroupName('');
       setNewGroupDesc('');
+      setNewGroupRequiresApproval(false);
+      setNewGroupIsPrivate(false);
       fetchGroups(); // Tải lại danh sách
     } catch (error) {
       toast.error('❌ Có lỗi xảy ra khi tạo nhóm');
@@ -66,11 +74,15 @@ export default function GroupsPage() {
 
   const handleJoinGroup = async (groupId: number) => {
     try {
-      await api.post(`/groups/${groupId}/join`);
-      toast.success('🎉 Đã tham gia nhóm!');
+      const res = await api.post(`/groups/${groupId}/join`);
+      if (res.data?.status === 'PENDING') {
+        toast.success('📨 Đã gửi yêu cầu tham gia! Vui lòng chờ trưởng nhóm phê duyệt.');
+      } else {
+        toast.success('🎉 Đã tham gia nhóm!');
+      }
       fetchGroups(); // Tải lại để cập nhật danh sách
-    } catch (error) {
-      toast.error('❌ Có lỗi xảy ra');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || '❌ Có lỗi xảy ra');
     }
   };
 
@@ -103,13 +115,33 @@ export default function GroupsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {myGroups.map(group => (
                   <Link key={group.id} href={`/groups/${group.id}`} className="glass-card glass-card-hover rounded-xl overflow-hidden transition-all duration-300 group/card block">
-                    <div className="h-28 relative">
+                    <div className="h-28 relative bg-black/10">
                       <img 
-                        src={getValidGroupCover(group.coverUrl || group.cover_url)} 
+                        src={getValidGroupCover(group.coverUrl || group.cover_url, group.name)} 
                         alt={group.name} 
-                        onError={handleGroupImageError}
+                        onError={(e) => handleGroupImageError(e, group.name)}
                         className="w-full h-full object-cover" 
                       />
+                      <div className="absolute top-2 right-2 flex items-center gap-1">
+                        {Boolean(group.isPrivate ?? group.is_private) ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-600/85 text-white backdrop-blur-sm shadow-sm">
+                            🔒 Riêng tư
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/85 text-white backdrop-blur-sm shadow-sm">
+                            🌍 Công khai
+                          </span>
+                        )}
+                        {Boolean(group.requiresApproval ?? group.requires_approval) ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/85 text-white backdrop-blur-sm shadow-sm">
+                            ⏳ Cần duyệt
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/85 text-white backdrop-blur-sm shadow-sm">
+                            🔓 Tự do
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="p-4">
                       <h3 className="font-bold text-foreground text-[14px] mb-1 truncate">{group.name}</h3>
@@ -135,31 +167,63 @@ export default function GroupsPage() {
             ) : suggestedGroups.length === 0 ? (
               <div className="col-span-full text-center py-8 text-muted/50 text-sm italic">Chưa có nhóm nào mới để gợi ý cho bạn.</div>
             ) : (
-              suggestedGroups.map(group => (
-                <div key={group.id} className="glass-card glass-card-hover rounded-xl overflow-hidden transition-all duration-300 group/card">
-                  <div className="h-28 relative">
-                    <img 
-                      src={getValidGroupCover(group.coverUrl || group.cover_url)} 
-                      alt={group.name} 
-                      onError={handleGroupImageError}
-                      className="w-full h-full object-cover" 
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-bold text-foreground text-[14px] mb-1 truncate">{group.name}</h3>
-                    <div className="flex items-center gap-3 text-xs text-muted/70 mb-3">
-                      <span>👥 {group.memberCount ?? group.member_count ?? 1} thành viên</span>
+              suggestedGroups.map(group => {
+                const isPending = group.joinRequestStatus === 'PENDING' || group.join_request_status === 'PENDING';
+                return (
+                  <div key={group.id} className="glass-card glass-card-hover rounded-xl overflow-hidden transition-all duration-300 group/card">
+                    <div className="h-28 relative bg-black/10">
+                      <img 
+                        src={getValidGroupCover(group.coverUrl || group.cover_url, group.name)} 
+                        alt={group.name} 
+                        onError={(e) => handleGroupImageError(e, group.name)}
+                        className="w-full h-full object-cover" 
+                      />
+                      <div className="absolute top-2 right-2 flex items-center gap-1">
+                        {Boolean(group.isPrivate ?? group.is_private) ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-600/85 text-white backdrop-blur-sm shadow-sm">
+                            🔒 Riêng tư
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-500/85 text-white backdrop-blur-sm shadow-sm">
+                            🌍 Công khai
+                          </span>
+                        )}
+                        {Boolean(group.requiresApproval ?? group.requires_approval) ? (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/85 text-white backdrop-blur-sm shadow-sm">
+                            ⏳ Cần duyệt
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/85 text-white backdrop-blur-sm shadow-sm">
+                            🔓 Tự do
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-xs text-muted truncate mb-4">{group.description || "Chưa có mô tả"}</p>
-                    <button 
-                      onClick={() => handleJoinGroup(group.id)}
-                      className="w-full py-2 btn-anime rounded-lg text-xs font-semibold"
-                    >
-                      Tham gia nhóm
-                    </button>
+                    <div className="p-4">
+                      <Link href={`/groups/${group.id}`} className="hover:underline">
+                        <h3 className="font-bold text-foreground text-[14px] mb-1 truncate">{group.name}</h3>
+                      </Link>
+                      <div className="flex items-center gap-3 text-xs text-muted/70 mb-3">
+                        <span>👥 {group.memberCount ?? group.member_count ?? 1} thành viên</span>
+                      </div>
+                      <p className="text-xs text-muted truncate mb-4">{group.description || "Chưa có mô tả"}</p>
+                      
+                      {isPending ? (
+                        <div className="w-full py-2 bg-amber-500/10 text-amber-500 border border-amber-500/20 rounded-lg text-xs font-semibold text-center">
+                          ⏳ Đang chờ duyệt
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => handleJoinGroup(group.id)}
+                          className="w-full py-2 btn-anime rounded-lg text-xs font-semibold"
+                        >
+                          {Boolean(group.requiresApproval ?? group.requires_approval) ? '📨 Yêu cầu tham gia' : 'Tham gia nhóm'}
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </main>
@@ -168,7 +232,7 @@ export default function GroupsPage() {
       {/* Modal Tạo nhóm */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="glass-card rounded-xl shadow-xl w-full sm:max-w-md overflow-hidden animate-slide-up">
+          <div className="glass-card rounded-xl shadow-xl w-full sm:max-w-lg overflow-hidden animate-slide-up max-h-[90vh] flex flex-col">
             <div className="border-b border-indigo-500/10 px-4 py-3 flex items-center justify-between bg-black/5 dark:bg-white/[0.02]">
               <h3 className="font-bold text-foreground">Tạo nhóm mới</h3>
               <button 
@@ -179,9 +243,9 @@ export default function GroupsPage() {
               </button>
             </div>
             
-            <form onSubmit={handleCreateGroup} className="p-4">
-              <div className="mb-4">
-                <label className="block text-xs font-semibold text-secondary mb-1.5">Tên nhóm</label>
+            <form onSubmit={handleCreateGroup} className="p-4 overflow-y-auto space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-secondary mb-1.5">Tên nhóm <span className="text-red-500">*</span></label>
                 <input 
                   type="text" 
                   required
@@ -191,39 +255,116 @@ export default function GroupsPage() {
                   onChange={(e) => setNewGroupName(e.target.value)}
                 />
               </div>
-              <div className="mb-4">
-                <label className="block text-xs font-semibold text-secondary mb-1.5">Mô tả (Tùy chọn)</label>
+
+              <div>
+                <label className="block text-xs font-semibold text-secondary mb-1.5">Mô tả nhóm (Tùy chọn)</label>
                 <textarea 
                   placeholder="Nhóm này dùng để làm gì?" 
-                  rows={3}
+                  rows={2}
                   className="w-full px-3 py-2.5 input-anime rounded-lg text-sm text-foreground focus:outline-none resize-none placeholder-muted/50"
                   value={newGroupDesc}
                   onChange={(e) => setNewGroupDesc(e.target.value)}
                 />
               </div>
 
-              {/* Default Cover Image Preview & Note */}
-              <div className="mb-6 p-3 rounded-xl bg-black/10 dark:bg-white/[0.02] border border-indigo-500/10">
-                <div className="text-[11px] font-semibold text-accent-purple mb-1.5 flex items-center gap-1">
-                  <span>🖼️</span> Ảnh bìa mặc định
-                </div>
-                <div className="h-24 rounded-lg overflow-hidden relative border border-indigo-500/20 mb-2">
-                  <img 
-                    src={DEFAULT_GROUP_COVER} 
-                    alt="Default Cover Preview" 
-                    onError={handleGroupImageError}
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/20 flex items-center justify-center text-white text-[11px] font-bold">
-                    Ảnh bìa tự động gán
+              {/* Group Join Policy Option */}
+              <div>
+                <label className="block text-xs font-semibold text-secondary mb-2">Chế độ tham gia nhóm</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div
+                    onClick={() => setNewGroupRequiresApproval(false)}
+                    className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                      !newGroupRequiresApproval
+                        ? 'bg-indigo-500/10 border-indigo-500 text-foreground shadow-sm'
+                        : 'bg-black/5 dark:bg-white/[0.02] border-indigo-500/10 text-muted hover:border-indigo-500/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 font-bold text-xs mb-1">
+                      <span>🔓</span>
+                      <span>Tham gia tự do</span>
+                    </div>
+                    <p className="text-[11px] text-muted/70 leading-relaxed">
+                      Bất kỳ ai cũng có thể tham gia nhóm ngay lập tức mà không cần chờ duyệt.
+                    </p>
+                  </div>
+
+                  <div
+                    onClick={() => setNewGroupRequiresApproval(true)}
+                    className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                      newGroupRequiresApproval
+                        ? 'bg-indigo-500/10 border-indigo-500 text-foreground shadow-sm'
+                        : 'bg-black/5 dark:bg-white/[0.02] border-indigo-500/10 text-muted hover:border-indigo-500/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 font-bold text-xs mb-1">
+                      <span>🔒</span>
+                      <span>Cần phê duyệt</span>
+                    </div>
+                    <p className="text-[11px] text-muted/70 leading-relaxed">
+                      Người khác gửi yêu cầu, trưởng nhóm phải chấp nhận mới được vào nhóm.
+                    </p>
                   </div>
                 </div>
+              </div>
+
+              {/* Group Privacy Option */}
+              <div>
+                <label className="block text-xs font-semibold text-secondary mb-2">Quyền riêng tư của nhóm</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div
+                    onClick={() => setNewGroupIsPrivate(false)}
+                    className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                      !newGroupIsPrivate
+                        ? 'bg-indigo-500/10 border-indigo-500 text-foreground shadow-sm'
+                        : 'bg-black/5 dark:bg-white/[0.02] border-indigo-500/10 text-muted hover:border-indigo-500/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 font-bold text-xs mb-1">
+                      <span>🌍</span>
+                      <span>Nhóm công khai</span>
+                    </div>
+                    <p className="text-[11px] text-muted/70 leading-relaxed">
+                      Tất cả mọi người đều có thể tìm thấy nhóm và xem các bài viết thảo luận.
+                    </p>
+                  </div>
+
+                  <div
+                    onClick={() => setNewGroupIsPrivate(true)}
+                    className={`p-3 rounded-xl border cursor-pointer transition-all ${
+                      newGroupIsPrivate
+                        ? 'bg-indigo-500/10 border-indigo-500 text-foreground shadow-sm'
+                        : 'bg-black/5 dark:bg-white/[0.02] border-indigo-500/10 text-muted hover:border-indigo-500/30'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 font-bold text-xs mb-1">
+                      <span>🔒</span>
+                      <span>Nhóm riêng tư</span>
+                    </div>
+                    <p className="text-[11px] text-muted/70 leading-relaxed">
+                      Chỉ những thành viên đã vào nhóm mới có thể xem các bài viết thảo luận.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Default Cover Image Preview & Note */}
+              <div className="p-3 rounded-xl bg-black/10 dark:bg-white/[0.02] border border-indigo-500/10">
+                <div className="text-[11px] font-semibold text-accent-purple mb-1.5 flex items-center gap-1">
+                  <span>🖼️</span> Ảnh bìa mặc định theo tên nhóm
+                </div>
+                <div className="h-28 rounded-lg overflow-hidden relative border border-indigo-500/20 mb-2">
+                  <img 
+                    src={generateDefaultGroupCover(newGroupName || 'Tên nhóm của bạn')} 
+                    alt="Default Cover Preview" 
+                    className="w-full h-full object-cover"
+                  />
+                </div>
                 <p className="text-[10px] text-muted leading-relaxed">
-                  Nhóm sẽ tự động dùng ảnh bìa này. Trưởng nhóm có thể thay đổi ảnh bìa bất cứ lúc nào trong phần cài đặt nhóm.
+                  Ảnh bìa tự động hiển thị tên nhóm. Sau khi tạo, trưởng nhóm có thể tải ảnh bìa riêng từ máy lên bất kỳ lúc nào trong phần cài đặt.
                 </p>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex flex-col sm:flex-row gap-2 pt-2">
                 <button 
                   type="button" 
                   onClick={() => setShowCreateModal(false)}

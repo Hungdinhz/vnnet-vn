@@ -28,13 +28,15 @@ public class PostService {
     private final PostMentionRepository postMentionRepository;
     private final NotificationService notificationService;
     private final com.example.backend_java.mapper.PostMapper postMapper;
+    private final UserBlockRepository userBlockRepository;
 
     public PostService(PostRepository postRepository, LikeRepository likeRepository,
                        CommentRepository commentRepository, UserRepository userRepository,
                        JwtTokenProvider jwtTokenProvider, FriendshipRepository friendshipRepository,
                        GroupRepository groupRepository, GroupMemberRepository groupMemberRepository,
                        PostMentionRepository postMentionRepository, NotificationService notificationService,
-                       com.example.backend_java.mapper.PostMapper postMapper) {
+                       com.example.backend_java.mapper.PostMapper postMapper,
+                       UserBlockRepository userBlockRepository) {
         this.postRepository = postRepository;
         this.likeRepository = likeRepository;
         this.commentRepository = commentRepository;
@@ -46,6 +48,7 @@ public class PostService {
         this.postMentionRepository = postMentionRepository;
         this.notificationService = notificationService;
         this.postMapper = postMapper;
+        this.userBlockRepository = userBlockRepository;
     }
 
     // Tạo bài viết mới (tương đương crud_post.create_post)
@@ -106,6 +109,7 @@ public class PostService {
 
         java.util.Set<Long> joinedGroupIds = new java.util.HashSet<>();
         java.util.Set<Long> friendIds = new java.util.HashSet<>();
+        java.util.Set<Long> blockedIds = new java.util.HashSet<>();
         if (currentUserId != null) {
             joinedGroupIds = groupMemberRepository.findByUserId(currentUserId).stream()
                     .map(com.example.backend_java.entity.GroupMember::getGroupId)
@@ -113,11 +117,14 @@ public class PostService {
             friendIds = friendshipRepository.findAcceptedFriendships(currentUserId).stream()
                     .map(f -> f.getUserId().equals(currentUserId) ? f.getFriendId() : f.getUserId())
                     .collect(Collectors.toSet());
+            blockedIds = userBlockRepository.findAllBlockedRelatedUserIds(currentUserId);
         }
 
         final java.util.Set<Long> finalJoinedGroupIds = joinedGroupIds;
         final java.util.Set<Long> finalFriendIds = friendIds;
+        final java.util.Set<Long> finalBlockedIds = blockedIds;
         List<PostResponseDto> dtos = posts.stream()
+                .filter(post -> !finalBlockedIds.contains(post.getOwnerId()))
                 .filter(post -> post.getGroupId() == null || finalJoinedGroupIds.contains(post.getGroupId()))
                 .filter(post -> {
                     String vis = post.getVisibility();
@@ -190,9 +197,17 @@ public class PostService {
 
     // Lấy chi tiết bài viết theo ID
     public PostResponseDto getPostById(Long postId) {
+        return getPostById(postId, null);
+    }
+
+    public PostResponseDto getPostById(Long postId, Long currentUserId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bài viết không tồn tại"));
-        return toResponseDto(post, null);
+
+        if (currentUserId != null && userBlockRepository.isBlockedEither(post.getOwnerId(), currentUserId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Bài viết không tồn tại");
+        }
+        return toResponseDto(post, currentUserId);
     }
 
     // Cập nhật bài viết (chỉ chủ sở hữu)
@@ -255,6 +270,26 @@ public class PostService {
 
     // Lấy danh sách bài viết của một user cụ thể
     public List<PostResponseDto> getPostsByOwnerId(Long ownerId, Long currentUserId) {
+        if (currentUserId != null && userBlockRepository.isBlockedEither(ownerId, currentUserId)) {
+            return Collections.emptyList();
+        }
+
+        User owner = userRepository.findById(ownerId).orElse(null);
+        if (owner != null && Boolean.TRUE.equals(owner.getIsPrivate())) {
+            boolean isOwner = currentUserId != null && currentUserId.equals(ownerId);
+            if (!isOwner) {
+                boolean isFriend = false;
+                if (currentUserId != null) {
+                    isFriend = friendshipRepository.findExistingFriendship(ownerId, currentUserId)
+                            .map(f -> "accepted".equalsIgnoreCase(f.getStatus()))
+                            .orElse(false);
+                }
+                if (!isFriend) {
+                    return Collections.emptyList();
+                }
+            }
+        }
+
         List<Post> posts = postRepository.findByOwnerIdOrderByIdDesc(ownerId);
         return posts.stream()
                 .map(post -> toResponseDto(post, currentUserId))

@@ -34,7 +34,7 @@ public class SearchController {
 
         switch (type.toLowerCase()) {
             case "users":
-                PagedResponseDto<UserResponseDto> usersResult = searchService.searchUsers(query, page, size);
+                PagedResponseDto<UserResponseDto> usersResult = searchService.searchUsers(query, page, size, currentUserId);
                 return ResponseEntity.ok(usersResult);
             case "posts":
                 PagedResponseDto<PostResponseDto> postsResult = searchService.searchPosts(query, page, size, currentUserId);

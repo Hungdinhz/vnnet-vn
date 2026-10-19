@@ -45,4 +45,7 @@ public class ConversationMember {
 
     @Column(name = "nickname", length = 100)
     private String nickname;
+
+    @Column(name = "cleared_at")
+    private LocalDateTime clearedAt;
 }
