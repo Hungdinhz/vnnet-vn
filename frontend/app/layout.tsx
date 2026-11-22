@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import CustomToaster from "@/components/CustomToaster";
+import BackendKeepAlive from "@/components/BackendKeepAlive";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 const outfit = Outfit({
@@ -28,6 +29,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground transition-colors duration-300">
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          <BackendKeepAlive />
           {children}
           <CustomToaster />
         </ThemeProvider>

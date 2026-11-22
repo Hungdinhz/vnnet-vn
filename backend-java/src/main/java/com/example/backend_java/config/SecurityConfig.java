@@ -81,7 +81,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/games/leaderboard/global").permitAll()
                 .requestMatchers(HttpMethod.GET, "/games/stats/*").permitAll()
                 .requestMatchers("/ws/**").permitAll()
-                .requestMatchers("/").permitAll()
+                .requestMatchers("/", "/health", "/ping").permitAll()
                 // Marketplace endpoints
                 .requestMatchers(HttpMethod.GET, "/marketplace/my-items").authenticated()
                 .requestMatchers(HttpMethod.GET, "/marketplace", "/marketplace/**").permitAll()

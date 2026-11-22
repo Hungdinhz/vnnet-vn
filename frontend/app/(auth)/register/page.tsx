@@ -9,6 +9,7 @@ import api from '@/lib/axios';
 import { setAuthToken } from '@/lib/auth';
 import GoogleLoginButton, { GoogleUserInfo } from '@/components/GoogleLoginButton';
 import GuestLoginButton from '@/components/GuestLoginButton';
+import ServerStatusBanner from '@/components/ServerStatusBanner';
 import { checkPasswordRules, validatePassword, validateEmail } from '@/lib/passwordValidation';
 
 function PasswordRequirementsIndicator({ password }: { password: string }) {
@@ -271,6 +272,9 @@ function RegisterContent() {
                 : 'Tạo tài khoản mới ✨'}
           </p>
         </div>
+
+        {/* Trạng thái máy chủ Render */}
+        <ServerStatusBanner />
 
         {/* Badge chế độ tài khoản khách */}
         {registerMode === 'guest' && googleStep !== 'complete' && (

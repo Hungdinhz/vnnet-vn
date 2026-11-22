@@ -9,6 +9,7 @@ import api from '@/lib/axios';
 import { setAuthToken } from '@/lib/auth';
 import GoogleLoginButton from '@/components/GoogleLoginButton';
 import GuestLoginButton from '@/components/GuestLoginButton';
+import ServerStatusBanner from '@/components/ServerStatusBanner';
 
 function LoginContent() {
   const router = useRouter();
@@ -100,6 +101,9 @@ function LoginContent() {
         <h3 className="text-lg font-semibold text-center text-secondary mb-4">
           {isGuestMode ? 'Đăng nhập tài khoản khách' : 'Đăng nhập vào tài khoản'}
         </h3>
+
+        {/* Trạng thái máy chủ Render */}
+        <ServerStatusBanner />
 
         {/* Guest Mode indicator */}
         {isGuestMode && (
