@@ -3,10 +3,15 @@ package com.example.backend_java.controller;
 import com.example.backend_java.dto.auth.*;
 import com.example.backend_java.dto.common.MessageDto;
 import com.example.backend_java.dto.user.UserResponseDto;
+import com.example.backend_java.entity.User;
 import com.example.backend_java.service.AuthService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/auth")
@@ -24,12 +29,25 @@ public class AuthController {
         return ResponseEntity.ok(authService.registerUser(dto));
     }
 
-    // POST /auth/login - Đăng nhập
+    // POST /auth/login - Đăng nhập (chặn gửi mật khẩu qua URL query string)
     @PostMapping("/login")
     public ResponseEntity<TokenDto> login(
             @RequestParam("username") String username,
-            @RequestParam("password") String password) {
+            @RequestParam("password") String password,
+            HttpServletRequest request) {
+        if (request.getQueryString() != null && request.getQueryString().toLowerCase().contains("password=")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không được truyền mật khẩu qua URL query string");
+        }
         return ResponseEntity.ok(authService.login(username, password));
+    }
+
+    // POST /auth/logout - Đăng xuất và thu hồi toàn bộ JWT cũ
+    @PostMapping("/logout")
+    public ResponseEntity<MessageDto> logout(Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof User currentUser)) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Chưa đăng nhập");
+        }
+        return ResponseEntity.ok(authService.logout(currentUser));
     }
 
     // POST /auth/forgot-password - Quên mật khẩu

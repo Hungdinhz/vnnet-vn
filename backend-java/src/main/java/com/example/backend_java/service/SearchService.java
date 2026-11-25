@@ -34,31 +34,44 @@ public class SearchService {
         this.userBlockRepository = userBlockRepository;
     }
 
+    private String escapeLike(String query) {
+        if (query == null) return "";
+        return query.trim()
+                .replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
+    }
+
     // Tìm kiếm tổng hợp (users + posts)
     public SearchResultDto searchAll(String query, int page, int size, Long currentUserId) {
-        Pageable pageable = PageRequest.of(page, size);
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 50);
+        Pageable pageable = PageRequest.of(safePage, safeSize);
+        String safeQuery = escapeLike(query);
 
         java.util.Set<Long> blockedIds = currentUserId != null
                 ? userBlockRepository.findAllBlockedRelatedUserIds(currentUserId)
                 : java.util.Collections.emptySet();
 
-        Page<User> usersPage = userRepository.searchByUsernameOrEmail(query, pageable);
-        Page<Post> postsPage = postRepository.searchByTitleOrContent(query, pageable);
+        Page<User> usersPage = userRepository.searchByUsernameOrEmail(safeQuery, pageable);
+        Page<Post> postsPage = postRepository.searchByTitleOrContent(safeQuery, pageable);
 
         List<UserResponseDto> userDtos = usersPage.getContent().stream()
                 .filter(u -> !blockedIds.contains(u.getId()))
                 .map(u -> UserResponseDto.builder()
                         .id(u.getId())
                         .username(u.getUsername())
-                        .email(u.getEmail())
+                        .fullName(u.getFullName())
                         .avatarUrl(u.getAvatarUrl())
                         .coverUrl(u.getCoverUrl())
                         .bio(u.getBio())
+                        .isPrivate(u.getIsPrivate() != null && u.getIsPrivate())
                         .build())
                 .collect(Collectors.toList());
 
         List<PostResponseDto> postDtos = postsPage.getContent().stream()
                 .filter(p -> !blockedIds.contains(p.getOwnerId()))
+                .filter(p -> postService.canViewPost(p, currentUserId))
                 .map(p -> postService.toResponseDto(p, currentUserId))
                 .collect(Collectors.toList());
 
@@ -76,8 +89,10 @@ public class SearchService {
     }
 
     public PagedResponseDto<UserResponseDto> searchUsers(String query, int page, int size, Long currentUserId) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<User> usersPage = userRepository.searchByUsernameOrEmail(query, pageable);
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 50);
+        Pageable pageable = PageRequest.of(safePage, safeSize);
+        Page<User> usersPage = userRepository.searchByUsernameOrEmail(escapeLike(query), pageable);
 
         java.util.Set<Long> blockedIds = currentUserId != null
                 ? userBlockRepository.findAllBlockedRelatedUserIds(currentUserId)
@@ -88,17 +103,18 @@ public class SearchService {
                 .map(u -> UserResponseDto.builder()
                         .id(u.getId())
                         .username(u.getUsername())
-                        .email(u.getEmail())
+                        .fullName(u.getFullName())
                         .avatarUrl(u.getAvatarUrl())
                         .coverUrl(u.getCoverUrl())
                         .bio(u.getBio())
+                        .isPrivate(u.getIsPrivate() != null && u.getIsPrivate())
                         .build())
                 .collect(Collectors.toList());
 
         return PagedResponseDto.<UserResponseDto>builder()
                 .content(userDtos)
-                .page(page)
-                .size(size)
+                .page(safePage)
+                .size(safeSize)
                 .totalElements(userDtos.size())
                 .totalPages(usersPage.getTotalPages())
                 .hasNext(usersPage.hasNext())
@@ -107,8 +123,10 @@ public class SearchService {
 
     // Tìm kiếm chỉ posts
     public PagedResponseDto<PostResponseDto> searchPosts(String query, int page, int size, Long currentUserId) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Post> postsPage = postRepository.searchByTitleOrContent(query, pageable);
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 50);
+        Pageable pageable = PageRequest.of(safePage, safeSize);
+        Page<Post> postsPage = postRepository.searchByTitleOrContent(escapeLike(query), pageable);
 
         java.util.Set<Long> blockedIds = currentUserId != null
                 ? userBlockRepository.findAllBlockedRelatedUserIds(currentUserId)
@@ -116,13 +134,14 @@ public class SearchService {
 
         List<PostResponseDto> postDtos = postsPage.getContent().stream()
                 .filter(p -> !blockedIds.contains(p.getOwnerId()))
+                .filter(p -> postService.canViewPost(p, currentUserId))
                 .map(p -> postService.toResponseDto(p, currentUserId))
                 .collect(Collectors.toList());
 
         return PagedResponseDto.<PostResponseDto>builder()
                 .content(postDtos)
-                .page(page)
-                .size(size)
+                .page(safePage)
+                .size(safeSize)
                 .totalElements(postDtos.size())
                 .totalPages(postsPage.getTotalPages())
                 .hasNext(postsPage.hasNext())

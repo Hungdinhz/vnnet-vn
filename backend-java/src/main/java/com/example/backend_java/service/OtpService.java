@@ -7,6 +7,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,6 +16,8 @@ import java.util.Optional;
 
 @Service
 public class OtpService {
+
+    private static final int MAX_OTP_ATTEMPTS = 5;
 
     private final VerificationTokenRepository verificationTokenRepository;
     private final SecureRandom secureRandom = new SecureRandom();
@@ -64,8 +68,11 @@ public class OtpService {
     }
 
     public boolean validateOtp(String email, String otpCode, TokenType type) {
+        String normalizedEmail = email != null ? email.trim().toLowerCase() : "";
+        String normalizedOtp = otpCode != null ? otpCode.trim() : "";
+
         Optional<VerificationToken> latestOpt = verificationTokenRepository
-                .findTopByEmailAndTokenTypeAndIsUsedFalseOrderByCreatedAtDesc(email, type);
+                .findTopByEmailAndTokenTypeAndIsUsedFalseOrderByCreatedAtDesc(normalizedEmail, type);
 
         if (latestOpt.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã OTP không tồn tại hoặc đã được sử dụng");
@@ -73,12 +80,36 @@ public class OtpService {
 
         VerificationToken token = latestOpt.get();
 
-        if (!token.getOtpCode().equals(otpCode)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã OTP không chính xác");
+        // Kiểm tra hết hạn TRƯỚC khi so sánh mã OTP
+        if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
+            token.setIsUsed(true);
+            verificationTokenRepository.save(token);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã OTP đã hết hạn");
         }
 
-        if (token.getExpiresAt().isBefore(LocalDateTime.now())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã OTP đã hết hạn");
+        int attempts = token.getAttemptCount() != null ? token.getAttemptCount() : 0;
+        if (attempts >= MAX_OTP_ATTEMPTS) {
+            token.setIsUsed(true);
+            verificationTokenRepository.save(token);
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Mã OTP đã bị vô hiệu hóa do nhập sai quá số lần cho phép. Vui lòng yêu cầu mã mới.");
+        }
+
+        boolean matched = MessageDigest.isEqual(
+                token.getOtpCode().getBytes(StandardCharsets.UTF_8),
+                normalizedOtp.getBytes(StandardCharsets.UTF_8)
+        );
+
+        if (!matched) {
+            attempts++;
+            token.setAttemptCount(attempts);
+            if (attempts >= MAX_OTP_ATTEMPTS) {
+                token.setIsUsed(true);
+            }
+            verificationTokenRepository.save(token);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    attempts >= MAX_OTP_ATTEMPTS
+                            ? "Bạn đã nhập sai mã OTP quá 5 lần. Vui lòng yêu cầu gửi lại mã mới."
+                            : "Mã OTP không chính xác");
         }
 
         // Đánh dấu đã sử dụng

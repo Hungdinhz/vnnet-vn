@@ -9,12 +9,16 @@ RUN mvn dependency:go-offline
 COPY src ./src
 RUN mvn clean package -DskipTests
 
-# Bước 2: Chạy file .jar với môi trường JRE siêu nhẹ
+# Bước 2: Chạy file .jar với môi trường JRE siêu nhẹ dưới quyền non-root
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
 # Copy file .jar đã build từ bước 1 sang
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build --chown=appuser:appgroup /app/target/*.jar app.jar
+
+USER appuser
 
 # Mở port 8000 (khớp với server.port trong application.yml của bạn)
 EXPOSE 8000

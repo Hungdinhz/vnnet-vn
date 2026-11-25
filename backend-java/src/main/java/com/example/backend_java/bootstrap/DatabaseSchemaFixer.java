@@ -146,5 +146,18 @@ public class DatabaseSchemaFixer implements CommandLineRunner {
         } catch (Exception e) {
             log.warn("Error checking user_blocks table: {}", e.getMessage());
         }
+
+        try {
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS token_version INT DEFAULT 0;");
+            jdbcTemplate.execute("UPDATE users SET token_version = 0 WHERE token_version IS NULL;");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS recovery_key_hash VARCHAR(255);");
+            jdbcTemplate.execute("ALTER TABLE verification_tokens ADD COLUMN IF NOT EXISTS attempt_count INT DEFAULT 0;");
+            jdbcTemplate.execute("UPDATE verification_tokens SET attempt_count = 0 WHERE attempt_count IS NULL;");
+            jdbcTemplate.execute("ALTER TABLE pending_registrations ADD COLUMN IF NOT EXISTS attempt_count INT DEFAULT 0;");
+            jdbcTemplate.execute("UPDATE pending_registrations SET attempt_count = 0 WHERE attempt_count IS NULL;");
+            log.info("Successfully verified security schema columns (token_version, recovery_key_hash, attempt_count)");
+        } catch (Exception e) {
+            log.warn("Error checking security schema columns: {}", e.getMessage());
+        }
     }
 }

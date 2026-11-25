@@ -82,21 +82,32 @@ public class UserService {
         return authService.guestResetPassword(dto);
     }
 
+    public MessageDto logout(User currentUser) {
+        return authService.logout(currentUser);
+    }
+
     // Profile & User management methods
     public UserResponseDto getCurrentUser(User user) {
-        return userMapper.toResponseDto(user);
+        return userMapper.toSelfResponseDto(user);
     }
 
     public List<UserResponseDto> getAllUsers() {
-        return userRepository.findAll().stream()
-                .map(userMapper::toResponseDto)
+        return getAllUsers(0, 50);
+    }
+
+    public List<UserResponseDto> getAllUsers(int page, int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 50);
+        return userRepository.findAll(org.springframework.data.domain.PageRequest.of(safePage, safeSize))
+                .getContent().stream()
+                .map(userMapper::toPublicResponseDto)
                 .collect(Collectors.toList());
     }
 
     public UserResponseDto getUserById(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        return userMapper.toResponseDto(user);
+        return userMapper.toPublicResponseDto(user);
     }
 
     public UserResponseDto getUserByIdOrUsername(String identifier) {
@@ -114,12 +125,13 @@ public class UserService {
         } catch (NumberFormatException ignored) {}
 
         if (user == null) {
-            user = userRepository.findByUsername(identifier.trim())
+            user = userRepository.findByUsernameIgnoreCase(identifier.trim())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         }
 
-        UserResponseDto dto = userMapper.toResponseDto(user);
-        if (currentUserId != null && !currentUserId.equals(user.getId())) {
+        boolean isSelf = currentUserId != null && currentUserId.equals(user.getId());
+        UserResponseDto dto = isSelf ? userMapper.toSelfResponseDto(user) : userMapper.toPublicResponseDto(user);
+        if (currentUserId != null && !isSelf) {
             dto.setIsBlockedByMe(userBlockRepository.existsByBlockerIdAndBlockedId(currentUserId, user.getId()));
             dto.setIsBlockedByThem(userBlockRepository.existsByBlockerIdAndBlockedId(user.getId(), currentUserId));
         } else {
@@ -134,12 +146,24 @@ public class UserService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         if (dto.getUsername() != null && !dto.getUsername().trim().isEmpty()) {
-            user.setUsername(dto.getUsername().trim());
+            String newUsername = dto.getUsername().trim();
+            if (newUsername.length() < 3 || newUsername.length() > 50) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên đăng nhập phải từ 3 đến 50 ký tự!");
+            }
+            if (newUsername.matches("^\\d+$")) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên đăng nhập không được chỉ gồm chữ số!");
+            }
+            if (!newUsername.equalsIgnoreCase(user.getUsername()) && userRepository.existsByUsernameIgnoreCase(newUsername)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên đăng nhập này đã được sử dụng!");
+            }
+            user.setUsername(newUsername);
         }
         if (dto.getAvatarUrl() != null) {
+            com.example.backend_java.util.UrlValidationUtil.validateHttpUrlOrNull(dto.getAvatarUrl(), "avatarUrl");
             user.setAvatarUrl(dto.getAvatarUrl());
         }
         if (dto.getCoverUrl() != null) {
+            com.example.backend_java.util.UrlValidationUtil.validateHttpUrlOrNull(dto.getCoverUrl(), "coverUrl");
             user.setCoverUrl(dto.getCoverUrl());
         }
         if (dto.getBio() != null) {
@@ -155,6 +179,7 @@ public class UserService {
             user.setWorkplace(dto.getWorkplace());
         }
         if (dto.getWebsite() != null) {
+            com.example.backend_java.util.UrlValidationUtil.validateHttpUrlOrNull(dto.getWebsite(), "website");
             user.setWebsite(dto.getWebsite());
         }
         if (dto.getPhone() != null) {
@@ -165,7 +190,7 @@ public class UserService {
         }
 
         user = userRepository.save(user);
-        return userMapper.toResponseDto(user);
+        return userMapper.toSelfResponseDto(user);
     }
 
     public MessageDto changePassword(User currentUser, ChangePasswordDto dto) {
@@ -179,6 +204,8 @@ public class UserService {
         PasswordValidationUtil.validate(dto.getNewPassword());
 
         user.setHashedPassword(passwordEncoder.encode(dto.getNewPassword()));
+        int currentVersion = user.getTokenVersion() != null ? user.getTokenVersion() : 0;
+        user.setTokenVersion(currentVersion + 1);
         userRepository.save(user);
 
         return new MessageDto("Đổi mật khẩu thành công!");

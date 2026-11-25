@@ -190,7 +190,12 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
     } else {
       const el = document.createElement("div");
       el.className = "user-location-marker";
-      el.innerHTML = '<div class="user-marker-pulse"></div><div class="user-marker-dot"></div>';
+      const pulse = document.createElement("div");
+      pulse.className = "user-marker-pulse";
+      const dot = document.createElement("div");
+      dot.className = "user-marker-dot";
+      el.appendChild(pulse);
+      el.appendChild(dot);
 
       userMarkerRef.current = new mapboxgl.Marker({ element: el })
         .setLngLat([coords.lng, coords.lat])
@@ -512,9 +517,11 @@ export default function MapComponent({ accessToken }: MapComponentProps) {
           if (destinationMarkerRef.current) {
             destinationMarkerRef.current.remove();
           }
+          const popupContent = document.createElement("strong");
+          popupContent.textContent = `🏁 ${destination.name}`;
           destinationMarkerRef.current = new mapboxgl.Marker({ color: "#ef4444" })
             .setLngLat([destination.lng, destination.lat])
-            .setPopup(new mapboxgl.Popup({ offset: 25 }).setHTML(`<strong>🏁 ${destination.name}</strong>`))
+            .setPopup(new mapboxgl.Popup({ offset: 25 }).setDOMContent(popupContent))
             .addTo(map);
 
           if (!hasFittedBoundsRef.current) {

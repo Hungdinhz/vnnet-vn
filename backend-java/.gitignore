@@ -47,7 +47,8 @@ desktop.ini
 
 # Environment variables
 .env
-.env
+.env.*
+!.env.example
 
 # Java
 *.class

@@ -36,12 +36,24 @@ public class UserController {
         return ResponseEntity.ok(userService.registerUser(dto));
     }
 
-    // POST /users/login - Đăng nhập (frontend gửi form-urlencoded)
+    // POST /users/login - Đăng nhập (frontend gửi form-urlencoded, chặn truyền mật khẩu qua query string)
     @PostMapping("/login")
     public ResponseEntity<TokenDto> login(
             @RequestParam("username") String username,
-            @RequestParam("password") String password) {
+            @RequestParam("password") String password,
+            jakarta.servlet.http.HttpServletRequest request) {
+        if (request.getQueryString() != null && request.getQueryString().toLowerCase().contains("password=")) {
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.BAD_REQUEST, "Không được truyền mật khẩu qua URL query string");
+        }
         return ResponseEntity.ok(userService.login(username, password));
+    }
+
+    // POST /users/logout - Đăng xuất và thu hồi toàn bộ JWT cũ
+    @PostMapping("/logout")
+    public ResponseEntity<MessageDto> logout(Authentication authentication) {
+        User currentUser = (User) authentication.getPrincipal();
+        return ResponseEntity.ok(userService.logout(currentUser));
     }
 
     // POST /users/forgot-password - Quên mật khẩu
@@ -125,10 +137,12 @@ public class UserController {
         return ResponseEntity.ok(userService.changePassword(currentUser, dto));
     }
 
-    // GET /users/ - Danh sách tất cả user
+    // GET /users/ - Danh sách user (có phân trang, ẩn email/phone)
     @GetMapping({"", "/"})
-    public ResponseEntity<List<UserResponseDto>> listUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public ResponseEntity<List<UserResponseDto>> listUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(userService.getAllUsers(page, size));
     }
 
     // GET /users/{identifier} - Lấy user theo ID hoặc username

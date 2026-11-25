@@ -1,25 +1,20 @@
+import api from '@/lib/axios';
+
 /**
- * Helper to reliably download cross-origin files or images without navigation
+ * Helper tải tệp/ảnh an toàn qua backend proxy có xác thực JWT (chặn điều hướng cross-origin trực tiếp)
  */
 export async function downloadMediaOrFile(url: string, defaultFilename: string) {
   if (!url) return;
 
-  const backendUrl =
-    process.env.NEXT_PUBLIC_API_URL || 'https://vnnet-vn-java.onrender.com';
-  const proxyUrl = `${backendUrl.replace(/\/$/, '')}/upload/download?url=${encodeURIComponent(url)}&name=${encodeURIComponent(defaultFilename)}`;
-
   try {
-    const res = await fetch(proxyUrl);
-    if (!res.ok) {
-      if (res.status === 401) {
-        alert(
-          'Tệp này được tải lên trước khi sửa lỗi và bị Cloudinary chặn quyền truy cập trực tiếp. Bạn vui lòng gửi lại tệp PDF mới để tải về bình thường nhé!'
-        );
-        return;
-      }
-      throw new Error(`HTTP error ${res.status}`);
-    }
-    const blob = await res.blob();
+    const res = await api.get('/upload/download', {
+      params: { url, name: defaultFilename },
+      responseType: 'blob',
+    });
+
+    const blob = new Blob([res.data], {
+      type: res.headers['content-type'] || 'application/octet-stream',
+    });
     const blobUrl = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = blobUrl;
@@ -28,13 +23,13 @@ export async function downloadMediaOrFile(url: string, defaultFilename: string) 
     link.click();
     document.body.removeChild(link);
     setTimeout(() => window.URL.revokeObjectURL(blobUrl), 1000);
-  } catch (err) {
-    console.warn('Fetch blob download failed, falling back to direct anchor:', err);
-    const link = document.createElement('a');
-    link.href = proxyUrl;
-    link.setAttribute('download', defaultFilename);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  } catch (err: any) {
+    const status = err?.response?.status;
+    if (status === 401) {
+      alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tải tệp!');
+      return;
+    }
+    console.error('Không thể tải tệp xuống:', err);
+    alert('Không thể tải tệp này xuống. Tệp có thể không hợp lệ hoặc không thuộc máy chủ lưu trữ của hệ thống.');
   }
 }

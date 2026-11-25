@@ -37,10 +37,11 @@ function ForgotPasswordContent() {
   // Chế độ khôi phục: 'normal' (thường, cần OTP) | 'guest' (tài khoản khách, không cần OTP)
   const [accountType, setAccountType] = useState<'normal' | 'guest'>('normal');
 
-  // Step 1: Nhập email, Step 2: Nhập mật khẩu mới (hoặc OTP + mật khẩu mới)
+  // Step 1: Nhập email, Step 2: Nhập mật khẩu mới (hoặc OTP / Recovery Key + mật khẩu mới)
   const [step, setStep] = useState<1 | 2>(1);
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
+  const [recoveryKey, setRecoveryKey] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [showNewPassword, setShowNewPassword] = useState(false);
@@ -155,10 +156,15 @@ function ForgotPasswordContent() {
     }
   };
 
-  // Bước 2 khách: Đổi mật khẩu trực tiếp (KHÔNG CẦN OTP)
+  // Bước 2 khách: Đổi mật khẩu với Mã Khôi Phục bí mật
   const handleResetPasswordGuest = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!recoveryKey.trim()) {
+      setError('Vui lòng nhập Mã Khôi Phục bí mật của tài khoản khách!');
+      return;
+    }
 
     const passwordCheck = validatePassword(newPassword);
     if (!passwordCheck.isValid) {
@@ -176,6 +182,7 @@ function ForgotPasswordContent() {
     try {
       const response = await api.post('/users/guest/reset-password', {
         email: email.trim(),
+        recoveryKey: recoveryKey.trim(),
         newPassword
       });
       setSuccess(response.data.message || 'Đặt lại mật khẩu tài khoản khách thành công!');
@@ -292,8 +299,19 @@ function ForgotPasswordContent() {
               </button>
             </form>
           ) : (
-            /* Bước 2 khách: Đổi mật khẩu mới trực tiếp (KHÔNG CÓ OTP) */
+            /* Bước 2 khách: Đổi mật khẩu mới với Mã Khôi Phục bí mật */
             <form onSubmit={handleResetPasswordGuest} className="space-y-4">
+              <div>
+                <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Mã Khôi Phục bí mật</label>
+                <input
+                  type="text"
+                  value={recoveryKey}
+                  onChange={(e) => setRecoveryKey(e.target.value.toUpperCase())}
+                  className="w-full px-4 py-2.5 input-anime rounded-xl text-sm font-mono tracking-wider uppercase"
+                  placeholder="VD: VNNET-XXXX-XXXX-XXXX"
+                  required
+                />
+              </div>
               <div>
                 <label className="block text-accent-purple/70 text-sm font-medium mb-1.5">Mật khẩu mới</label>
                 <div className="relative">

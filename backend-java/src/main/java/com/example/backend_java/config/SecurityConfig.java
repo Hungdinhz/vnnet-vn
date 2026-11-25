@@ -1,5 +1,6 @@
 package com.example.backend_java.config;
 
+import com.example.backend_java.security.AuthRateLimitFilter;
 import com.example.backend_java.security.JwtAuthenticationFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
@@ -12,6 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
@@ -19,17 +21,26 @@ import org.springframework.web.cors.CorsConfigurationSource;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final AuthRateLimitFilter authRateLimitFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter,
+                          AuthRateLimitFilter authRateLimitFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+        this.authRateLimitFilter = authRateLimitFilter;
     }
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource)) // Dùng CorsConfig bean riêng
-            .csrf(csrf -> csrf.disable()) // Tắt CSRF cho REST API
+            .csrf(csrf -> csrf.disable()) // Tắt CSRF cho REST API (Stateless Bearer JWT)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .headers(headers -> headers
+                .frameOptions(frame -> frame.deny())
+                .contentTypeOptions(contentType -> {})
+                .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'none'; frame-ancestors 'none'"))
+            )
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((request, response, authException) -> {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -42,8 +53,11 @@ public class SecurityConfig {
                 // Luôn cho phép preflight CORS OPTIONS
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 // --- PROTECTED endpoints (cần token) ---
+                .requestMatchers(HttpMethod.POST, "/auth/logout", "/users/logout").authenticated()
                 .requestMatchers(HttpMethod.GET, "/users/me").authenticated()
                 .requestMatchers(HttpMethod.PUT, "/users/me").authenticated()
+                .requestMatchers(HttpMethod.GET, "/users", "/users/").authenticated()
+                .requestMatchers("/upload", "/upload/**").authenticated()
                 // --- PUBLIC endpoints (không cần token) ---
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/users/register").permitAll()
@@ -56,8 +70,6 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/users/verify-otp").permitAll()
                 .requestMatchers(HttpMethod.POST, "/users/resend-otp").permitAll()
                 .requestMatchers(HttpMethod.POST, "/users/guest/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/users/").permitAll()
-                .requestMatchers(HttpMethod.GET, "/users").permitAll()
                 .requestMatchers(HttpMethod.GET, "/users/{id}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/posts").permitAll()
                 .requestMatchers(HttpMethod.GET, "/posts/{id}").permitAll()
@@ -67,7 +79,6 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/groups/{id}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/groups/{id}/posts").permitAll()
                 .requestMatchers(HttpMethod.GET, "/groups/{id}/members").permitAll()
-                .requestMatchers("/upload", "/upload/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/search").permitAll()
                 .requestMatchers(HttpMethod.GET, "/events/**").permitAll()
                 // Game endpoints
@@ -90,6 +101,7 @@ public class SecurityConfig {
                 .requestMatchers("/stories/**").authenticated()
                 .anyRequest().authenticated()
             )
+            .addFilterBefore(authRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

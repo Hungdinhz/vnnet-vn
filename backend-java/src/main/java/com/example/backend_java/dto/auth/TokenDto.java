@@ -16,4 +16,7 @@ public class TokenDto {
 
     @JsonProperty("token_type")
     private String tokenType;
+
+    @JsonProperty("recovery_key")
+    private String recoveryKey;
 }

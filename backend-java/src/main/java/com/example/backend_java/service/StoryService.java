@@ -26,14 +26,20 @@ public class StoryService {
     private final StoryViewRepository storyViewRepository;
     private final UserRepository userRepository;
     private final com.example.backend_java.mapper.StoryMapper storyMapper;
+    private final com.example.backend_java.repository.UserBlockRepository userBlockRepository;
+    private final com.example.backend_java.repository.FriendshipRepository friendshipRepository;
 
     public StoryService(StoryRepository storyRepository, StoryViewRepository storyViewRepository,
                         UserRepository userRepository,
-                        com.example.backend_java.mapper.StoryMapper storyMapper) {
+                        com.example.backend_java.mapper.StoryMapper storyMapper,
+                        com.example.backend_java.repository.UserBlockRepository userBlockRepository,
+                        com.example.backend_java.repository.FriendshipRepository friendshipRepository) {
         this.storyRepository = storyRepository;
         this.storyViewRepository = storyViewRepository;
         this.userRepository = userRepository;
         this.storyMapper = storyMapper;
+        this.userBlockRepository = userBlockRepository;
+        this.friendshipRepository = friendshipRepository;
     }
 
     // Tạo story mới (hết hạn sau 24h)
@@ -42,6 +48,7 @@ public class StoryService {
             (dto.getImageUrl() == null || dto.getImageUrl().isBlank())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Story cần có nội dung hoặc ảnh");
         }
+        com.example.backend_java.util.UrlValidationUtil.validateHttpUrlOrNull(dto.getImageUrl(), "imageUrl");
 
         Story story = Story.builder()
                 .owner(currentUser)
@@ -56,15 +63,29 @@ public class StoryService {
         return toResponseDto(story, currentUser.getId());
     }
 
-    // Lấy tất cả stories đang active, nhóm theo user
+    // Lấy tất cả stories đang active (lọc người bị chặn & tài khoản riêng tư), nhóm theo user
     @Transactional(readOnly = true)
     public List<StoryGroupDto> getActiveStories(Long currentUserId) {
         List<Story> stories = storyRepository.findActiveStories(LocalDateTime.now());
+        Set<Long> blockedIds = userBlockRepository.findAllBlockedRelatedUserIds(currentUserId);
+        Set<Long> friendIds = friendshipRepository.findAcceptedFriendships(currentUserId).stream()
+                .map(f -> f.getUserId().equals(currentUserId) ? f.getFriendId() : f.getUserId())
+                .collect(Collectors.toSet());
 
-        // Nhóm theo owner
+        // Nhóm theo owner (bỏ qua user bị chặn và user riêng tư chưa kết bạn)
         Map<Long, List<Story>> groupedByOwner = new LinkedHashMap<>();
+        Map<Long, Boolean> ownerPrivacyCache = new HashMap<>();
         for (Story story : stories) {
-            groupedByOwner.computeIfAbsent(story.getOwnerId(), k -> new ArrayList<>()).add(story);
+            Long ownerId = story.getOwnerId();
+            if (blockedIds.contains(ownerId)) continue;
+            if (!ownerId.equals(currentUserId)) {
+                boolean isPrivate = ownerPrivacyCache.computeIfAbsent(ownerId, id ->
+                        userRepository.findById(id).map(u -> Boolean.TRUE.equals(u.getIsPrivate())).orElse(false));
+                if (isPrivate && !friendIds.contains(ownerId)) {
+                    continue;
+                }
+            }
+            groupedByOwner.computeIfAbsent(ownerId, k -> new ArrayList<>()).add(story);
         }
 
         // Đặt stories của current user lên đầu
@@ -110,6 +131,20 @@ public class StoryService {
 
         // Không ghi lượt xem cho chủ story
         if (story.getOwnerId().equals(viewerId)) return;
+
+        // Chặn xem story của người đã block hoặc tài khoản riêng tư chưa kết bạn
+        if (userBlockRepository.isBlockedEither(story.getOwnerId(), viewerId)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Không thể xem story này");
+        }
+        User owner = userRepository.findById(story.getOwnerId()).orElse(null);
+        if (owner != null && Boolean.TRUE.equals(owner.getIsPrivate())) {
+            boolean isFriend = friendshipRepository.findExistingFriendship(owner.getId(), viewerId)
+                    .map(f -> "accepted".equalsIgnoreCase(f.getStatus()))
+                    .orElse(false);
+            if (!isFriend) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản riêng tư: chỉ bạn bè mới xem được story");
+            }
+        }
 
         if (!storyViewRepository.existsByStoryIdAndViewerId(storyId, viewerId)) {
             StoryView view = StoryView.builder()

@@ -21,14 +21,13 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Danh sách domain/pattern được phép truy cập
+        // Danh sách domain được phép truy cập (Đã xóa wildcard https://*.vercel.app để chống credentialed CORS bypass)
         List<String> allowedPatterns = new ArrayList<>(Arrays.asList(
             "http://localhost:3000",
             "http://localhost:3001",
             "http://127.0.0.1:3000",
             "http://127.0.0.1:3001",
             "https://vnnet-vn.vercel.app",
-            "https://*.vercel.app",
             "https://vnnet-vn-java.onrender.com",
             "https://vnnet.onrender.com"
         ));

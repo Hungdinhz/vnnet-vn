@@ -51,18 +51,80 @@ public class PostService {
         this.userBlockRepository = userBlockRepository;
     }
 
+    // Kiểm tra quyền xem bài viết tập trung (chặn, nhóm kín, tài khoản riêng tư, visibility)
+    public boolean canViewPost(Post post, Long currentUserId) {
+        if (post == null) return false;
+
+        if (currentUserId != null && userBlockRepository.isBlockedEither(post.getOwnerId(), currentUserId)) {
+            return false;
+        }
+
+        boolean isOwner = currentUserId != null && currentUserId.equals(post.getOwnerId());
+        if (isOwner) return true;
+
+        // Nếu bài viết thuộc nhóm kín -> bắt buộc là thành viên nhóm
+        if (post.getGroupId() != null) {
+            com.example.backend_java.entity.Group grp = post.getGroup() != null
+                    ? post.getGroup()
+                    : groupRepository.findById(post.getGroupId()).orElse(null);
+            if (grp != null && Boolean.TRUE.equals(grp.getIsPrivate())) {
+                if (currentUserId == null) return false;
+                boolean isMember = groupMemberRepository.existsByGroupIdAndUserId(grp.getId(), currentUserId)
+                        || currentUserId.equals(grp.getCreatorId());
+                if (!isMember) return false;
+            }
+        }
+
+        // Kiểm tra cài đặt riêng tư của chủ bài viết
+        User owner = post.getOwner() != null ? post.getOwner() : userRepository.findById(post.getOwnerId()).orElse(null);
+        boolean isFriend = false;
+        if (currentUserId != null) {
+            isFriend = friendshipRepository.findExistingFriendship(post.getOwnerId(), currentUserId)
+                    .map(f -> "accepted".equalsIgnoreCase(f.getStatus()))
+                    .orElse(false);
+        }
+
+        if (owner != null && Boolean.TRUE.equals(owner.getIsPrivate()) && !isFriend) {
+            return false;
+        }
+
+        String vis = post.getVisibility();
+        if (vis == null || "public".equalsIgnoreCase(vis)) {
+            return true;
+        }
+        if ("friends".equalsIgnoreCase(vis)) {
+            return isFriend;
+        }
+        // "private" chỉ chủ bài viết xem được (đã return true ở trên)
+        return false;
+    }
+
+    public void assertCanViewPost(Post post, Long currentUserId) {
+        if (!canViewPost(post, currentUserId)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Bài viết không tồn tại");
+        }
+    }
+
     // Tạo bài viết mới (tương đương crud_post.create_post)
     public PostResponseDto createPost(PostCreateDto dto, User currentUser) {
+        com.example.backend_java.util.UrlValidationUtil.validateHttpUrlOrNull(dto.getImageUrl(), "imageUrl");
+
         Post sharedPost = null;
         if (dto.getSharedPostId() != null) {
             sharedPost = postRepository.findById(dto.getSharedPostId())
                     .orElseThrow(() -> new ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Không tìm thấy bài viết để chia sẻ"));
+            assertCanViewPost(sharedPost, currentUser.getId());
         }
 
         com.example.backend_java.entity.Group group = null;
         if (dto.getGroupId() != null) {
             group = groupRepository.findById(dto.getGroupId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại"));
+            boolean isMember = groupMemberRepository.existsByGroupIdAndUserId(group.getId(), currentUser.getId())
+                    || currentUser.getId().equals(group.getCreatorId());
+            if (!isMember) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn phải là thành viên nhóm để đăng bài trong nhóm này");
+            }
         }
 
         String visibility = dto.getVisibility();
@@ -83,18 +145,23 @@ public class PostService {
 
         post = postRepository.save(post);
 
-        // Lưu mentions (tag bạn bè)
+        // Lưu mentions (tối đa 20 người, khử trùng lặp và không tag người đã chặn)
         if (dto.getMentionedUserIds() != null && !dto.getMentionedUserIds().isEmpty()) {
-            for (Long mentionedUserId : dto.getMentionedUserIds()) {
-                if (!mentionedUserId.equals(currentUser.getId())) {
+            java.util.Set<Long> uniqueMentionIds = new java.util.LinkedHashSet<>(dto.getMentionedUserIds());
+            int count = 0;
+            for (Long mentionedUserId : uniqueMentionIds) {
+                if (count >= 20) break;
+                if (mentionedUserId != null && !mentionedUserId.equals(currentUser.getId())
+                        && !userBlockRepository.isBlockedEither(currentUser.getId(), mentionedUserId)
+                        && userRepository.existsById(mentionedUserId)) {
                     PostMention mention = PostMention.builder()
                             .post(post)
                             .mentionedUserId(mentionedUserId)
                             .build();
                     postMentionRepository.save(mention);
-                    // Gửi thông báo cho người được tag
                     notificationService.createNotification(
                             mentionedUserId, currentUser.getId(), "mention", post.getId());
+                    count++;
                 }
             }
         }
@@ -105,6 +172,8 @@ public class PostService {
     // Lấy danh sách bài viết (tương đương crud_post.get_posts)
     // currentUserId có thể null nếu chưa đăng nhập
     public PagedResponseDto<PostResponseDto> getPosts(int page, int size, Long currentUserId) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 50);
         List<Post> posts = postRepository.findAllByOrderByIdDesc();
 
         java.util.Set<Long> joinedGroupIds = new java.util.HashSet<>();
@@ -178,20 +247,20 @@ public class PostService {
             });
         }
 
-        // Áp dụng phân trang
+        // Áp dụng phân trang an toàn
         int totalElements = dtos.size();
-        int totalPages = (int) Math.ceil((double) totalElements / size);
-        int fromIndex = Math.min(page * size, totalElements);
-        int toIndex = Math.min(fromIndex + size, totalElements);
+        int totalPages = (int) Math.ceil((double) totalElements / safeSize);
+        int fromIndex = Math.min(safePage * safeSize, totalElements);
+        int toIndex = Math.min(fromIndex + safeSize, totalElements);
         List<PostResponseDto> pageContent = dtos.subList(fromIndex, toIndex);
 
         return PagedResponseDto.<PostResponseDto>builder()
                 .content(pageContent)
-                .page(page)
-                .size(size)
+                .page(safePage)
+                .size(safeSize)
                 .totalElements(totalElements)
                 .totalPages(totalPages)
-                .hasNext(page < totalPages - 1)
+                .hasNext(safePage < totalPages - 1)
                 .build();
     }
 
@@ -204,9 +273,7 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Bài viết không tồn tại"));
 
-        if (currentUserId != null && userBlockRepository.isBlockedEither(post.getOwnerId(), currentUserId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Bài viết không tồn tại");
-        }
+        assertCanViewPost(post, currentUserId);
         return toResponseDto(post, currentUserId);
     }
 
@@ -227,6 +294,7 @@ public class PostService {
             post.setContent(dto.getContent());
         }
         if (dto.getImageUrl() != null) {
+            com.example.backend_java.util.UrlValidationUtil.validateHttpUrlOrNull(dto.getImageUrl(), "imageUrl");
             post.setImageUrl(dto.getImageUrl());
         }
 
@@ -292,6 +360,7 @@ public class PostService {
 
         List<Post> posts = postRepository.findByOwnerIdOrderByIdDesc(ownerId);
         return posts.stream()
+                .filter(post -> canViewPost(post, currentUserId))
                 .map(post -> toResponseDto(post, currentUserId))
                 .collect(Collectors.toList());
     }
@@ -301,8 +370,10 @@ public class PostService {
         return postMapper.toResponseDto(post, currentUserId);
     }
 
-    // Lấy danh sách reactions chi tiết
-    public List<ReactionResponseDto> getReactions(Long postId) {
+    // Lấy danh sách reactions chi tiết (kiểm tra quyền xem bài viết)
+    public List<ReactionResponseDto> getReactions(Long postId, Long currentUserId) {
+        Post post = getPostEntity(postId);
+        assertCanViewPost(post, currentUserId);
         return likeRepository.findAllByPostId(postId).stream()
                 .map(like -> {
                     User user = userRepository.findById(like.getUserId()).orElse(null);

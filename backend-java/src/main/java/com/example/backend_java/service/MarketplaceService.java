@@ -188,10 +188,18 @@ public class MarketplaceService {
             item.setLocation(dto.getLocation());
         }
         if (dto.getImageUrls() != null) {
+            for (String imgUrl : dto.getImageUrls()) {
+                com.example.backend_java.util.UrlValidationUtil.validateHttpUrlOrNull(imgUrl, "imageUrls");
+            }
             item.setImageUrls(String.join("|||", dto.getImageUrls()));
         }
         if (dto.getStatus() != null && !dto.getStatus().isBlank()) {
-            item.setStatus(dto.getStatus());
+            String st = dto.getStatus().trim().toLowerCase();
+            if ("active".equals(st) || "hidden".equals(st)) {
+                item.setStatus(st);
+            } else if ("sold".equals(st)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vui lòng sử dụng chức năng Đánh dấu đã bán để chọn người mua");
+            }
         }
 
         MarketplaceItem updated = marketplaceItemRepository.save(item);
@@ -252,44 +260,29 @@ public class MarketplaceService {
         User seller = userRepository.findById(sellerId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người bán"));
 
-        MarketplaceItem item = null;
-        if (dto.getItemId() != null) {
-            item = marketplaceItemRepository.findById(dto.getItemId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm"));
+        if (dto.getItemId() == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cần chỉ định sản phẩm đã mua để gửi đánh giá");
+        }
 
-            if (!item.getSellerId().equals(sellerId)) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sản phẩm này không thuộc về người bán này");
-            }
+        MarketplaceItem item = marketplaceItemRepository.findById(dto.getItemId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy sản phẩm"));
 
-            // Kiểm tra trạng thái đã bán
-            if (!"sold".equalsIgnoreCase(item.getStatus())) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sản phẩm chưa được đánh dấu đã bán");
-            }
+        if (!item.getSellerId().equals(sellerId)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sản phẩm này không thuộc về người bán này");
+        }
 
-            // Kiểm tra người mua: nếu item đã gán buyerId, phải khớp với currentUser
-            if (item.getBuyerId() != null && !item.getBuyerId().equals(currentUser.getId())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ người mua sản phẩm này mới có quyền đánh giá");
-            }
+        if (!"sold".equalsIgnoreCase(item.getStatus())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Sản phẩm chưa được đánh dấu đã bán");
+        }
 
-            // Tránh đánh giá trùng lặp cho cùng 1 sản phẩm
-            if (sellerReviewRepository.existsByItemIdAndReviewerId(item.getId(), currentUser.getId())) {
-                throw new ResponseStatusException(HttpStatus.CONFLICT, "Bạn đã đánh giá người bán cho sản phẩm này rồi");
-            }
+        // Bắt buộc người bán đã gán đúng người mua mới được quyền đánh giá (chặn người lạ tự nhận là người mua)
+        if (item.getBuyerId() == null || !item.getBuyerId().equals(currentUser.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ người mua được xác nhận của sản phẩm này mới có quyền đánh giá");
+        }
 
-            // Nếu item chưa set buyerId, gán buyerId cho currentUser
-            if (item.getBuyerId() == null) {
-                item.setBuyer(currentUser);
-                marketplaceItemRepository.save(item);
-            }
-        } else {
-            // Nếu không truyền itemId cụ thể, kiểm tra xem currentUser đã từng mua sản phẩm nào từ người bán này chưa
-            List<MarketplaceItem> userBoughtItems = marketplaceItemRepository.findByBuyerIdOrderByIdDesc(currentUser.getId());
-            boolean hasPurchasedFromSeller = userBoughtItems.stream()
-                    .anyMatch(i -> i.getSellerId().equals(sellerId));
-
-            if (!hasPurchasedFromSeller) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn chưa mua hàng từ người bán này nên chưa thể gửi đánh giá");
-            }
+        // Tránh đánh giá trùng lặp cho cùng 1 sản phẩm
+        if (sellerReviewRepository.existsByItemIdAndReviewerId(item.getId(), currentUser.getId())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Bạn đã đánh giá người bán cho sản phẩm này rồi");
         }
 
         SellerReview review = SellerReview.builder()

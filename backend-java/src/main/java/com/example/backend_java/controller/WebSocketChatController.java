@@ -4,6 +4,7 @@ import com.example.backend_java.dto.chat.ChatMessageRequestDto;
 import com.example.backend_java.dto.chat.ReadReceiptDto;
 import com.example.backend_java.dto.chat.TypingEventDto;
 import com.example.backend_java.entity.User;
+import com.example.backend_java.repository.ConversationMemberRepository;
 import com.example.backend_java.service.ChatMessageService;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
@@ -19,10 +20,14 @@ public class WebSocketChatController {
 
     private final ChatMessageService chatMessageService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ConversationMemberRepository conversationMemberRepository;
 
-    public WebSocketChatController(ChatMessageService chatMessageService, SimpMessagingTemplate messagingTemplate) {
+    public WebSocketChatController(ChatMessageService chatMessageService,
+                                   SimpMessagingTemplate messagingTemplate,
+                                   ConversationMemberRepository conversationMemberRepository) {
         this.chatMessageService = chatMessageService;
         this.messagingTemplate = messagingTemplate;
+        this.conversationMemberRepository = conversationMemberRepository;
     }
 
     @MessageMapping("/chat.sendMessage")
@@ -37,6 +42,9 @@ public class WebSocketChatController {
     public void handleTyping(@Payload TypingEventDto event, Principal principal) {
         User user = getUserFromPrincipal(principal);
         if (user != null && event.getConversationId() != null) {
+            if (!conversationMemberRepository.existsByConversationIdAndUserId(event.getConversationId(), user.getId())) {
+                return;
+            }
             event.setUserId(user.getId());
             event.setUsername(user.getUsername());
             messagingTemplate.convertAndSend("/topic/conversation." + event.getConversationId() + ".typing", event);

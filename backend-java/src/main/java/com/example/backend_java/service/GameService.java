@@ -77,17 +77,26 @@ public class GameService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Trò chơi này hiện đang tạm dừng hoạt động");
         }
 
+        if (dto.getScore() == null || dto.getScore() < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Điểm số không hợp lệ");
+        }
+        if (dto.getPlayTimeSeconds() != null && dto.getPlayTimeSeconds() < 1) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Thời gian chơi không hợp lệ");
+        }
+
         if (game.getMaxScore() != null && dto.getScore() > game.getMaxScore()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "Điểm số không hợp lệ. Điểm tối đa cho phép là " + game.getMaxScore());
         }
 
-        // Rate limiting check: 1 submission per 5 seconds
-        LocalDateTime fiveSecondsAgo = LocalDateTime.now().minusSeconds(5);
-        long recentCount = gameScoreRepository.countRecentSubmissions(gameId, currentUser.getId(), fiveSecondsAgo);
-        if (recentCount > 0) {
-            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
-                    "Bạn gửi điểm quá nhanh, vui lòng đợi vài giây trước khi thử lại");
+        // Rate limiting chống race-condition: tối đa 1 lần gửi điểm / 5 giây cho mỗi user
+        synchronized (("game_submit_" + currentUser.getId()).intern()) {
+            LocalDateTime fiveSecondsAgo = LocalDateTime.now().minusSeconds(5);
+            long recentCount = gameScoreRepository.countRecentSubmissions(gameId, currentUser.getId(), fiveSecondsAgo);
+            if (recentCount > 0) {
+                throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
+                        "Bạn gửi điểm quá nhanh, vui lòng đợi vài giây trước khi thử lại");
+            }
         }
 
         // Save score
@@ -272,7 +281,8 @@ public class GameService {
         for (int i = 0; i < results.size(); i++) {
             Object[] row = results.get(i);
             Long userId = ((Number) row[0]).longValue();
-            Integer score = ((Number) row[1]).intValue();
+            long rawScore = ((Number) row[1]).longValue();
+            Integer score = (int) Math.min(Integer.MAX_VALUE, Math.max(0L, rawScore));
             Long plays = ((Number) row[2]).longValue();
             LocalDateTime lastPlayed = (LocalDateTime) row[3];
 

@@ -61,6 +61,8 @@ function RegisterContent() {
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [guestRecoveryKey, setGuestRecoveryKey] = useState('');
+  const [copiedRecoveryKey, setCopiedRecoveryKey] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -162,16 +164,21 @@ function RegisterContent() {
       });
 
       const token = response.data.access_token || response.data.token;
-      
-      setSuccess('🎉 Đăng ký tài khoản khách thành công! Đang chuyển hướng vào hệ thống...');
-      
+      const recoveryKey = response.data.recovery_key;
+
       if (token) {
         setAuthToken(token);
       }
 
-      setTimeout(() => {
-        router.push('/');
-      }, 1500);
+      if (recoveryKey) {
+        setGuestRecoveryKey(recoveryKey);
+        setSuccess('🎉 Đăng ký tài khoản khách thành công! Hãy lưu lại Mã Khôi Phục bí mật bên dưới trước khi tiếp tục.');
+      } else {
+        setSuccess('🎉 Đăng ký tài khoản khách thành công! Đang chuyển hướng vào hệ thống...');
+        setTimeout(() => {
+          router.push('/');
+        }, 1500);
+      }
 
     } catch (err: any) {
       const errorMsg = err.response?.data?.detail || err.response?.data?.message;
@@ -302,6 +309,40 @@ function RegisterContent() {
         {success && (
           <div className="bg-emerald-500/10 text-emerald-400 p-3 rounded-lg mb-4 text-sm text-center font-medium border border-emerald-500/20">
             {success}
+          </div>
+        )}
+
+        {/* Hộp hiển thị Mã Khôi Phục Bí Mật 1 lần cho tài khoản khách */}
+        {guestRecoveryKey && (
+          <div className="mb-5 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-3 animate-fade-in">
+            <div className="text-xs font-bold text-amber-400 uppercase tracking-wider text-center">
+              🔑 Mã Khôi Phục Mật Khẩu Bí Mật (Chỉ hiện 1 lần)
+            </div>
+            <div className="flex items-center justify-between gap-2 bg-black/30 px-3 py-2.5 rounded-lg border border-amber-500/20">
+              <code className="text-sm font-mono font-bold text-amber-200 tracking-widest select-all">
+                {guestRecoveryKey}
+              </code>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard?.writeText(guestRecoveryKey);
+                  setCopiedRecoveryKey(true);
+                }}
+                className="px-2.5 py-1 rounded-md bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-semibold transition-colors cursor-pointer shrink-0"
+              >
+                {copiedRecoveryKey ? 'Đã chép ✓' : 'Sao chép'}
+              </button>
+            </div>
+            <p className="text-[11px] text-amber-200/80 text-center leading-relaxed">
+              Vui lòng lưu mã này ở nơi an toàn. Bạn sẽ cần nhập mã này nếu sau này quên mật khẩu tài khoản khách.
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push('/')}
+              className="w-full py-2.5 px-4 rounded-xl text-sm font-bold btn-anime cursor-pointer"
+            >
+              Tôi đã lưu mã — Vào VnNet ngay →
+            </button>
           </div>
         )}
 

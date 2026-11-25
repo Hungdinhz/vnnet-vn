@@ -11,6 +11,9 @@ public class GuestResetPasswordDto {
     @Email(message = "Email không đúng định dạng")
     private String email;
 
+    @NotBlank(message = "Mã khôi phục không được để trống")
+    private String recoveryKey;
+
     @NotBlank(message = "Mật khẩu mới không được để trống")
     private String newPassword;
 }
