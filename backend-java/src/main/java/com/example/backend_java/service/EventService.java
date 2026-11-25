@@ -91,7 +91,17 @@ public class EventService {
     @Transactional(readOnly = true)
     public List<EventResponseDto> getAllEvents() {
         List<Event> events = eventRepository.findAllByOrderByEventDateAsc();
-        return events.stream().map(this::toResponseDto).collect(Collectors.toList());
+        return events.stream()
+                .filter(e -> {
+                    if ("GROUP".equalsIgnoreCase(e.getOrganizerType()) && e.getOrganizerId() != null) {
+                        return groupRepository.findById(e.getOrganizerId())
+                                .map(g -> !Boolean.TRUE.equals(g.getIsPrivate()))
+                                .orElse(false);
+                    }
+                    return true;
+                })
+                .map(this::toResponseDto)
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
@@ -107,11 +117,14 @@ public class EventService {
         if ("GROUP".equalsIgnoreCase(dto.getOrganizerType())) {
             Group group = groupRepository.findById(dto.getOrganizerId())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nhóm không tồn tại"));
-            
-            // Check if user is member/admin of group
-            boolean isMember = groupMemberRepository.existsByGroupIdAndUserId(group.getId(), currentUser.getId());
-            if (!isMember && !currentUser.getId().equals(group.getCreatorId())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn phải là thành viên nhóm để tạo sự kiện");
+
+            // Chỉ Quản trị viên (ADMIN) hoặc Trưởng nhóm mới được tạo sự kiện dưới danh nghĩa nhóm
+            boolean isCreator = currentUser.getId().equals(group.getCreatorId());
+            boolean isAdmin = groupMemberRepository.findByGroupIdAndUserId(group.getId(), currentUser.getId())
+                    .map(m -> "ADMIN".equalsIgnoreCase(m.getRole()))
+                    .orElse(false);
+            if (!isCreator && !isAdmin) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Chỉ Quản trị viên nhóm mới có quyền tạo sự kiện của nhóm");
             }
         } else {
             // Organizer must be the current user

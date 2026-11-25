@@ -1,5 +1,6 @@
 server:
   port: ${PORT:${SERVER_PORT:8000}}
+  forward-headers-strategy: framework
 
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://127.0.0.1:3000,https://vnnet-vn.vercel.app}
@@ -20,7 +21,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-    show-sql: true
+    show-sql: false
   servlet:
     multipart:
       max-file-size: 10MB
@@ -38,7 +39,8 @@ spring:
             enable: true
             required: true
           ssl:
-            trust: "*"
+            trust: "${SPRING_MAIL_HOST:smtp.gmail.com}"
+            checkserveridentity: true
           connectiontimeout: 10000
           timeout: 10000
           writetimeout: 10000

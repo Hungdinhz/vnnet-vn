@@ -2,12 +2,14 @@ package com.example.backend_java.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.UUID;
 
 @Component
 public class JwtTokenProvider {
@@ -18,37 +20,61 @@ public class JwtTokenProvider {
     @Value("${jwt.expiration}")
     private long jwtExpiration;
 
-    // Tạo JWT token (tương đương create_access_token trong Python)
+    private SecretKey signingKey;
+
+    @PostConstruct
+    public void init() {
+        if (jwtSecret == null || jwtSecret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("JWT_SECRET phải có độ dài tối thiểu 32 byte (256 bit) để đảm bảo an toàn HS256.");
+        }
+        this.signingKey = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+    }
+
+    // Tạo JWT token kèm tokenVersion để hỗ trợ thu hồi tức thì
     public String generateToken(String email) {
+        return generateToken(email, 0);
+    }
+
+    public String generateToken(String email, Integer tokenVersion) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpiration);
+        int tv = tokenVersion != null ? tokenVersion : 0;
 
         return Jwts.builder()
-                .subject(email)                     // "sub" claim = email (giống Python)
+                .id(UUID.randomUUID().toString())
+                .subject(email)
+                .claim("tv", tv)
                 .issuedAt(now)
-                .expiration(expiryDate)              // "exp" claim
+                .expiration(expiryDate)
                 .signWith(getSigningKey())
                 .compact();
     }
 
     // Lấy email từ token (giải mã "sub")
     public String getEmailFromToken(String token) {
-        Claims claims = Jwts.parser()
+        return parseClaims(token).getSubject();
+    }
+
+    public Integer getTokenVersionFromToken(String token) {
+        Object tv = parseClaims(token).get("tv");
+        if (tv instanceof Number num) {
+            return num.intValue();
+        }
+        return 0;
+    }
+
+    public Claims parseClaims(String token) {
+        return Jwts.parser()
                 .verifyWith(getSigningKey())
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-
-        return claims.getSubject();
     }
 
     // Kiểm tra token có hợp lệ không
     public boolean validateToken(String token) {
         try {
-            Jwts.parser()
-                    .verifyWith(getSigningKey())
-                    .build()
-                    .parseSignedClaims(token);
+            parseClaims(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;
@@ -56,14 +82,9 @@ public class JwtTokenProvider {
     }
 
     private SecretKey getSigningKey() {
-        // Dùng HMAC-SHA key từ secret string
-        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
-        // Pad key to at least 256 bits (32 bytes) for HS256
-        if (keyBytes.length < 32) {
-            byte[] paddedKey = new byte[32];
-            System.arraycopy(keyBytes, 0, paddedKey, 0, keyBytes.length);
-            keyBytes = paddedKey;
+        if (this.signingKey == null) {
+            init();
         }
-        return Keys.hmacShaKeyFor(keyBytes);
+        return this.signingKey;
     }
 }

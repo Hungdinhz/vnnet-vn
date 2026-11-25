@@ -96,6 +96,7 @@ public class PostController {
             Authentication authentication) {
         User currentUser = (User) authentication.getPrincipal();
         Post post = postService.getPostEntity(postId);
+        postService.assertCanViewPost(post, currentUser.getId());
 
         MessageDto result = interactionService.toggleReaction(currentUser.getId(), postId, post, reactionType);
 
@@ -110,8 +111,11 @@ public class PostController {
 
     // GET /posts/{post_id}/reactions - Xem danh sách reactions chi tiết
     @GetMapping("/{postId}/reactions")
-    public ResponseEntity<List<ReactionResponseDto>> getReactions(@PathVariable Long postId) {
-        return ResponseEntity.ok(postService.getReactions(postId));
+    public ResponseEntity<List<ReactionResponseDto>> getReactions(
+            @PathVariable Long postId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+        Long currentUserId = postService.resolveCurrentUserId(authHeader);
+        return ResponseEntity.ok(postService.getReactions(postId, currentUserId));
     }
 
     // GET /posts/trending-hashtags - Lấy top trending hashtags
@@ -128,6 +132,7 @@ public class PostController {
             Authentication authentication) {
         User currentUser = (User) authentication.getPrincipal();
         Post post = postService.getPostEntity(postId);
+        postService.assertCanViewPost(post, currentUser.getId());
 
         CommentResponseDto comment = interactionService.createComment(dto, currentUser.getId(), postId, post);
 
@@ -135,12 +140,16 @@ public class PostController {
         notificationService.createNotification(
                 post.getOwnerId(), currentUser.getId(), "comment", postId);
 
-        // Tạo thông báo cho những người được tag trong comment
+        // Tạo thông báo cho những người được tag trong comment (tối đa 20, khử trùng lặp)
         if (dto.getMentionedUserIds() != null && !dto.getMentionedUserIds().isEmpty()) {
-            for (Long mentionedUserId : dto.getMentionedUserIds()) {
-                if (!mentionedUserId.equals(currentUser.getId())) {
+            java.util.Set<Long> uniqueIds = new java.util.LinkedHashSet<>(dto.getMentionedUserIds());
+            int count = 0;
+            for (Long mentionedUserId : uniqueIds) {
+                if (count >= 20) break;
+                if (mentionedUserId != null && !mentionedUserId.equals(currentUser.getId())) {
                     notificationService.createNotification(
                             mentionedUserId, currentUser.getId(), "mention", postId);
+                    count++;
                 }
             }
         }
@@ -155,6 +164,8 @@ public class PostController {
             @PathVariable Long commentId,
             Authentication authentication) {
         User currentUser = (User) authentication.getPrincipal();
+        Post post = postService.getPostEntity(postId);
+        postService.assertCanViewPost(post, currentUser.getId());
         return ResponseEntity.ok(interactionService.toggleCommentLike(currentUser.getId(), commentId));
     }
 
@@ -162,14 +173,18 @@ public class PostController {
     @GetMapping("/{postId}/comments")
     public ResponseEntity<List<CommentResponseDto>> getComments(
             @PathVariable Long postId,
+            @RequestHeader(value = "Authorization", required = false) String authHeader,
             Authentication authentication) {
-        postService.getPostEntity(postId);
-        
+        Post post = postService.getPostEntity(postId);
+
         Long currentUserId = null;
         if (authentication != null && authentication.getPrincipal() instanceof User) {
             currentUserId = ((User) authentication.getPrincipal()).getId();
+        } else if (authHeader != null) {
+            currentUserId = postService.resolveCurrentUserId(authHeader);
         }
-        
+
+        postService.assertCanViewPost(post, currentUserId);
         return ResponseEntity.ok(interactionService.getCommentsByPost(postId, currentUserId));
     }
 }

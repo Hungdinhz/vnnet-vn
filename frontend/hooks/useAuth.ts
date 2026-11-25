@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '@/lib/axios';
-import { getAuthToken, removeAuthToken } from '@/lib/auth';
+import { getAuthToken, getSafeRedirectPath, removeAuthToken } from '@/lib/auth';
 import { User } from '@/types/user';
 
 interface UseAuthOptions {
@@ -13,6 +13,7 @@ interface UseAuthOptions {
 
 export function useAuth(options: UseAuthOptions = {}) {
   const { requireAuth = false, redirectTo = '/login' } = options;
+  const safeRedirectTo = getSafeRedirectPath(redirectTo, '/login');
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
@@ -23,7 +24,7 @@ export function useAuth(options: UseAuthOptions = {}) {
       setCurrentUser(null);
       setIsLoading(false);
       if (requireAuth) {
-        router.push(redirectTo);
+        router.push(safeRedirectTo);
       }
       return;
     }
@@ -36,22 +37,28 @@ export function useAuth(options: UseAuthOptions = {}) {
       removeAuthToken();
       setCurrentUser(null);
       if (requireAuth) {
-        router.push(redirectTo);
+        router.push(safeRedirectTo);
       }
     } finally {
       setIsLoading(false);
     }
-  }, [requireAuth, redirectTo, router]);
+  }, [requireAuth, safeRedirectTo, router]);
 
   useEffect(() => {
     fetchCurrentUser();
   }, [fetchCurrentUser]);
 
-  const logout = useCallback(() => {
-    removeAuthToken();
-    setCurrentUser(null);
-    router.push('/login');
-  }, [router]);
+  const logout = useCallback(async () => {
+    try {
+      await api.post('/users/logout');
+    } catch {
+      // Vẫn xóa phiên phía client ngay cả khi máy chủ không phản hồi
+    } finally {
+      removeAuthToken();
+      setCurrentUser(null);
+      window.location.replace('/login');
+    }
+  }, []);
 
   return { currentUser, setCurrentUser, isLoading, logout, refreshUser: fetchCurrentUser };
 }

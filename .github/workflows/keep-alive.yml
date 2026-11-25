@@ -1,5 +1,7 @@
 name: Keep Render Backend Awake
 
+permissions: {}
+
 on:
   schedule:
     # Chạy mỗi 10 phút để giữ Render Free Tier luôn thức (Render sleep sau 15 phút không hoạt động)

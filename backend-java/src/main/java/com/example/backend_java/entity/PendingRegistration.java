@@ -40,6 +40,10 @@ public class PendingRegistration {
     @Column(name = "otp_code", length = 6, nullable = false)
     private String otpCode;
 
+    @Column(name = "attempt_count")
+    @Builder.Default
+    private Integer attemptCount = 0;
+
     @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
 

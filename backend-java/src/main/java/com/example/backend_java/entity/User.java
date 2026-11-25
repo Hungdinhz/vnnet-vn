@@ -72,6 +72,14 @@ public class User {
     @Builder.Default
     private Boolean isPrivate = false;
 
+    @ColumnDefault("0")
+    @Column(name = "token_version")
+    @Builder.Default
+    private Integer tokenVersion = 0;
+
+    @Column(name = "recovery_key_hash", length = 255)
+    private String recoveryKeyHash;
+
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Post> posts = new ArrayList<>();

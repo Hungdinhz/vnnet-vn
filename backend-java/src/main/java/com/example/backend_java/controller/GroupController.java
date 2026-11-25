@@ -171,8 +171,11 @@ public class GroupController {
     }
 
     @GetMapping("/{id}/members")
-    public ResponseEntity<List<SocialGroupMemberDto>> getGroupMembers(@PathVariable Long id) {
-        return ResponseEntity.ok(groupService.getGroupMembers(id));
+    public ResponseEntity<List<SocialGroupMemberDto>> getGroupMembers(
+            @PathVariable Long id,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+        Long userId = getCurrentUserIdSilently(token);
+        return ResponseEntity.ok(groupService.getGroupMembers(id, userId));
     }
 
     @PutMapping("/{id}/members/{userId}/role")

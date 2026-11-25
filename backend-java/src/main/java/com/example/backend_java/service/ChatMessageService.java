@@ -77,8 +77,20 @@ public class ChatMessageService {
 
         ChatMessage replyTo = null;
         if (request.getReplyToId() != null) {
-            replyTo = messageRepository.findById(request.getReplyToId()).orElse(null);
+            replyTo = messageRepository.findById(request.getReplyToId())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tin nhắn phản hồi không tồn tại."));
+            if (replyTo.getConversation() == null || !replyTo.getConversation().getId().equals(conversation.getId())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Không thể phản hồi tin nhắn thuộc cuộc trò chuyện khác.");
+            }
         }
+
+        // Chặn người dùng giả mạo tin nhắn hệ thống và kiểm tra URL đính kèm
+        MessageType messageType = request.getMessageType() != null ? request.getMessageType() : MessageType.TEXT;
+        if (messageType == MessageType.SYSTEM) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Loại tin nhắn không hợp lệ.");
+        }
+        com.example.backend_java.util.UrlValidationUtil.validateHttpUrlOrNull(request.getImageUrl(), "imageUrl");
+        com.example.backend_java.util.UrlValidationUtil.validateHttpUrlOrNull(request.getFileUrl(), "fileUrl");
 
         User receiver = null;
         if (conversation.getType() == ConversationType.DIRECT) {
@@ -99,7 +111,7 @@ public class ChatMessageService {
                 .sender(sender)
                 .receiver(receiver)
                 .content(request.getContent() != null ? request.getContent() : "")
-                .messageType(request.getMessageType() != null ? request.getMessageType() : MessageType.TEXT)
+                .messageType(messageType)
                 .imageUrl(request.getImageUrl())
                 .fileUrl(request.getFileUrl())
                 .fileName(request.getFileName())
@@ -211,6 +223,9 @@ public class ChatMessageService {
         message.setIsDeleted(true);
         message.setContent("Tin nhắn đã được thu hồi");
         message.setImageUrl(null);
+        message.setFileUrl(null);
+        message.setFileName(null);
+        message.setFileSize(null);
         ChatMessage saved = messageRepository.save(message);
 
         ChatMessageResponseDto dto = mapToResponseDto(saved);
@@ -226,7 +241,7 @@ public class ChatMessageService {
     @Transactional
     public List<ChatMessageResponseDto> getChatHistory(User currentUser, Long contactId) {
         ConversationResponseDto conv = conversationService.getOrCreateDirectConversation(currentUser, contactId);
-        return getMessages(conv.getId(), currentUser, Pageable.unpaged());
+        return getMessages(conv.getId(), currentUser, org.springframework.data.domain.PageRequest.of(0, 100));
     }
 
     public List<ConversationDto> getRecentConversations(User currentUser) {

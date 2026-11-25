@@ -19,46 +19,26 @@ public class DatabaseConstraintMigrationRunner implements CommandLineRunner {
     @Override
     public void run(String... args) {
         try {
-            log.info("Removing any unique constraints on users.username...");
+            log.info("Ensuring case-insensitive uniqueness on users.username...");
+            // Khử trùng lặp username hiện có (nếu có) bằng cách gắn hậu tố _id trước khi tạo unique index
             jdbcTemplate.execute("""
-                DO $$
-                DECLARE
-                    r RECORD;
-                BEGIN
-                    FOR r IN (
-                        SELECT tc.constraint_name
-                        FROM information_schema.table_constraints tc
-                        JOIN information_schema.constraint_column_usage ccu ON tc.constraint_name = ccu.constraint_name
-                        WHERE tc.table_name = 'users'
-                          AND ccu.column_name = 'username'
-                          AND tc.constraint_type = 'UNIQUE'
-                    ) LOOP
-                        RAISE NOTICE 'Dropping constraint %', r.constraint_name;
-                        EXECUTE 'ALTER TABLE users DROP CONSTRAINT IF EXISTS ' || quote_ident(r.constraint_name);
-                    END LOOP;
-                END $$;
+                WITH duplicates AS (
+                    SELECT id, username,
+                           ROW_NUMBER() OVER (PARTITION BY LOWER(username) ORDER BY id ASC) AS rn
+                    FROM users
+                )
+                UPDATE users u
+                SET username = LEFT(d.username, 40) || '_' || d.id
+                FROM duplicates d
+                WHERE u.id = d.id AND d.rn > 1;
             """);
 
-            jdbcTemplate.execute("""
-                DO $$
-                DECLARE
-                    idx RECORD;
-                BEGIN
-                    FOR idx IN (
-                        SELECT indexname
-                        FROM pg_indexes
-                        WHERE tablename = 'users'
-                          AND indexname LIKE '%username%'
-                          AND indexdef LIKE '%UNIQUE%'
-                    ) LOOP
-                        RAISE NOTICE 'Dropping unique index %', idx.indexname;
-                        EXECUTE 'DROP INDEX IF EXISTS ' || quote_ident(idx.indexname);
-                    END LOOP;
-                END $$;
-            """);
-            log.info("Unique constraints on users.username successfully dropped.");
+            jdbcTemplate.execute(
+                "CREATE UNIQUE INDEX IF NOT EXISTS uq_users_username_lower ON users (LOWER(username));"
+            );
+            log.info("Case-insensitive unique index on users.username verified.");
         } catch (Exception e) {
-            log.warn("Could not drop unique constraint on username: {}", e.getMessage());
+            log.warn("Could not enforce unique index on username: {}", e.getMessage());
         }
     }
 }

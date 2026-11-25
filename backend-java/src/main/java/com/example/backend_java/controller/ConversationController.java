@@ -99,7 +99,9 @@ public class ConversationController {
             @RequestParam(defaultValue = "50") int size,
             Authentication authentication) {
         User currentUser = (User) authentication.getPrincipal();
-        Pageable pageable = PageRequest.of(page, size);
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        Pageable pageable = PageRequest.of(safePage, safeSize);
         return ResponseEntity.ok(chatMessageService.getMessages(id, currentUser, pageable));
     }
 

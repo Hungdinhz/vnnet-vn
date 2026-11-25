@@ -1,0 +1,18 @@
+# Environment & Secrets (NEVER commit secrets)
+.env
+.env.*
+**/.env
+**/.env.*
+!.env.example
+!**/.env.example
+
+# Keys & Certificates
+*.pem
+*.key
+*.p12
+*.jks
+
+# Logs & OS artifacts
+*.log
+.DS_Store
+Thumbs.db

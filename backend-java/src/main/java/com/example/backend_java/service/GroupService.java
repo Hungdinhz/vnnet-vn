@@ -263,9 +263,18 @@ public class GroupService {
     }
 
     @Transactional(readOnly = true)
-    public List<SocialGroupMemberDto> getGroupMembers(Long groupId) {
-        if (!groupRepository.existsById(groupId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại");
+    public List<SocialGroupMemberDto> getGroupMembers(Long groupId, Long currentUserId) {
+        Group group = groupRepository.findById(groupId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại"));
+
+        if (Boolean.TRUE.equals(group.getIsPrivate())) {
+            boolean isMember = currentUserId != null && (
+                    groupMemberRepository.existsByGroupIdAndUserId(groupId, currentUserId)
+                    || currentUserId.equals(group.getCreatorId())
+            );
+            if (!isMember) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Nhóm riêng tư: chỉ thành viên mới xem được danh sách thành viên");
+            }
         }
 
         List<GroupMember> members = groupMemberRepository.findByGroupId(groupId);
@@ -289,6 +298,15 @@ public class GroupService {
         Group group = groupRepository.findById(groupId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Nhóm không tồn tại"));
 
+        if (targetUserId.equals(group.getCreatorId())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Không thể thay đổi vai trò của Trưởng nhóm sáng lập");
+        }
+
+        String normalizedRole = newRole != null ? newRole.trim().toUpperCase() : "";
+        if (!"ADMIN".equals(normalizedRole) && !"MEMBER".equals(normalizedRole)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vai trò không hợp lệ (chỉ chấp nhận ADMIN hoặc MEMBER)");
+        }
+
         GroupMember currentMember = groupMemberRepository.findByGroupIdAndUserId(groupId, currentUser.getId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Bạn không thuộc nhóm này"));
 
@@ -299,7 +317,7 @@ public class GroupService {
         GroupMember targetMember = groupMemberRepository.findByGroupIdAndUserId(groupId, targetUserId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Thành viên không tồn tại trong nhóm"));
 
-        targetMember.setRole(newRole);
+        targetMember.setRole(normalizedRole);
         groupMemberRepository.save(targetMember);
     }
 

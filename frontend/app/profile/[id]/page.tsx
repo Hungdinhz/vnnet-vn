@@ -369,7 +369,9 @@ export default function ProfilePage() {
                             </span>
                           )}
                         </div>
-                        <p className="text-xs sm:text-sm font-semibold text-indigo-400/50 mt-0.5">{profileData.email}</p>
+                        {isOwnProfile && profileData.email && (
+                          <p className="text-xs sm:text-sm font-semibold text-indigo-400/50 mt-0.5">{profileData.email}</p>
+                        )}
                       </div>
                     </div>
                     <div className="md:mb-4">

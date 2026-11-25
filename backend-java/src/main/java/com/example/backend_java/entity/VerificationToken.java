@@ -32,6 +32,10 @@ public class VerificationToken {
     @Builder.Default
     private Boolean isUsed = false;
 
+    @Column(name = "attempt_count")
+    @Builder.Default
+    private Integer attemptCount = 0;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime createdAt = LocalDateTime.now();

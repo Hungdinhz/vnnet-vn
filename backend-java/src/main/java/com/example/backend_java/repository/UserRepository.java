@@ -18,16 +18,20 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     Optional<User> findByUsername(String username);
 
+    Optional<User> findByUsernameIgnoreCase(String username);
+
     boolean existsByEmail(String email);
 
     boolean existsByUsername(String username);
 
-    // Tìm kiếm user theo username hoặc email (case-insensitive)
-    @Query("SELECT u FROM User u WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :query, '%')) " +
-           "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%'))")
+    boolean existsByUsernameIgnoreCase(String username);
+
+    // Tìm kiếm user theo username hoặc fullName (không lộ tìm kiếm theo email riêng tư)
+    @Query("SELECT u FROM User u WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :query, '%')) ESCAPE '\\' " +
+           "OR LOWER(COALESCE(u.fullName, '')) LIKE LOWER(CONCAT('%', :query, '%')) ESCAPE '\\'")
     Page<User> searchByUsernameOrEmail(@Param("query") String query, Pageable pageable);
 
-    @Query("SELECT u FROM User u WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :query, '%')) " +
-           "OR LOWER(u.email) LIKE LOWER(CONCAT('%', :query, '%'))")
+    @Query("SELECT u FROM User u WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :query, '%')) ESCAPE '\\' " +
+           "OR LOWER(COALESCE(u.fullName, '')) LIKE LOWER(CONCAT('%', :query, '%')) ESCAPE '\\'")
     List<User> searchByUsernameOrEmail(@Param("query") String query);
 }

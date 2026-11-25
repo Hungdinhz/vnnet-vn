@@ -145,9 +145,15 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
-    removeAuthToken();
-    router.push('/login');
+  const handleLogout = async () => {
+    try {
+      await api.post('/users/logout');
+    } catch {
+      // ignore
+    } finally {
+      removeAuthToken();
+      window.location.replace('/login');
+    }
   };
 
   return (

@@ -198,7 +198,8 @@ public class ConversationService {
 
         if (request.getMemberIds() != null) {
             for (Long uid : request.getMemberIds()) {
-                if (uid != null && !addedUserIds.contains(uid)) {
+                if (uid != null && !addedUserIds.contains(uid)
+                        && !userBlockRepository.isBlockedEither(currentUser.getId(), uid)) {
                     userRepository.findById(uid).ifPresent(u -> {
                         members.add(ConversationMember.builder()
                                 .conversation(savedConv)
@@ -284,7 +285,8 @@ public class ConversationService {
         List<ConversationMember> newMembers = new ArrayList<>();
         if (request.getMemberIds() != null) {
             for (Long uid : request.getMemberIds()) {
-                if (uid != null && !existingIds.contains(uid)) {
+                if (uid != null && !existingIds.contains(uid)
+                        && !userBlockRepository.isBlockedEither(currentUser.getId(), uid)) {
                     userRepository.findById(uid).ifPresent(u -> {
                         newMembers.add(ConversationMember.builder()
                                 .conversation(conv)

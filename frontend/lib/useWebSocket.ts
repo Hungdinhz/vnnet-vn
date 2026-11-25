@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Client, IMessage } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
 import api from '@/lib/axios';
+import { getAuthToken } from '@/lib/auth';
 import { ChatMessage, TypingEvent, ReadReceiptDto, OnlineStatusEvent, Conversation, MessageType } from '@/types/messages';
 
 export function useWebSocket(currentUser: any) {
@@ -20,13 +21,19 @@ export function useWebSocket(currentUser: any) {
   useEffect(() => {
     if (!currentUser || typeof window === 'undefined') return;
 
-    const token = localStorage.getItem('token');
-    if (!token) return;
+    const initialToken = getAuthToken();
+    if (!initialToken) return;
 
     const client = new Client({
       webSocketFactory: () => new SockJS(getWsUrl()),
+      beforeConnect: () => {
+        const latestToken = getAuthToken();
+        client.connectHeaders = latestToken
+          ? { Authorization: `Bearer ${latestToken}` }
+          : {};
+      },
       connectHeaders: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${initialToken}`,
       },
       debug: (msg) => {
         // Can be disabled in production

@@ -16,11 +16,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 
 @Service
 public class AuthService {
+
+    private static final int MAX_OTP_ATTEMPTS = 5;
+    private static final String RECOVERY_KEY_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
     private final UserRepository userRepository;
     private final PendingRegistrationRepository pendingRegistrationRepository;
@@ -47,11 +52,35 @@ public class AuthService {
         this.googleAuthService = googleAuthService;
     }
 
+    private void validateUsernameForRegistration(String username) {
+        if (username == null || username.length() < 3 || username.length() > 50) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên đăng nhập phải từ 3 đến 50 ký tự!");
+        }
+        if (username.matches("^\\d+$")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên đăng nhập không được chỉ gồm chữ số!");
+        }
+        if (userRepository.existsByUsernameIgnoreCase(username)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên đăng nhập này đã được sử dụng!");
+        }
+    }
+
+    private String generateRecoveryKey() {
+        StringBuilder sb = new StringBuilder("VNNET-");
+        for (int i = 0; i < 12; i++) {
+            if (i > 0 && i % 4 == 0) {
+                sb.append('-');
+            }
+            sb.append(RECOVERY_KEY_ALPHABET.charAt(secureRandom.nextInt(RECOVERY_KEY_ALPHABET.length())));
+        }
+        return sb.toString();
+    }
+
     // Đăng ký user mới: Lưu tạm vào pending_registrations
     public UserResponseDto registerUser(UserCreateDto dto) {
         String email = dto.getEmail().trim().toLowerCase();
         String username = dto.getUsername().trim();
 
+        validateUsernameForRegistration(username);
         PasswordValidationUtil.validate(dto.getPassword());
 
         if (!EmailValidationUtil.hasMxRecord(email)) {
@@ -73,6 +102,7 @@ public class AuthService {
             pending.setUsername(username);
             pending.setHashedPassword(hashedPassword);
             pending.setOtpCode(otp);
+            pending.setAttemptCount(0);
             pending.setExpiresAt(LocalDateTime.now().plusMinutes(10));
             pending.setCreatedAt(LocalDateTime.now());
         } else {
@@ -81,6 +111,7 @@ public class AuthService {
                     .username(username)
                     .hashedPassword(hashedPassword)
                     .otpCode(otp)
+                    .attemptCount(0)
                     .expiresAt(LocalDateTime.now().plusMinutes(10))
                     .createdAt(LocalDateTime.now())
                     .build();
@@ -103,7 +134,7 @@ public class AuthService {
         User user = userRepository.findByEmail(identifier.toLowerCase())
                 .orElse(null);
 
-        if (user == null) {
+        if (user == null || user.getHashedPassword() == null) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sai email hoặc mật khẩu");
         }
 
@@ -111,11 +142,12 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Sai email hoặc mật khẩu");
         }
 
-        if (Boolean.FALSE.equals(user.getIsVerified())) {
+        // Tài khoản khách được phép đăng nhập dù isVerified=false; tài khoản thường bắt buộc isVerified=true
+        if (!Boolean.TRUE.equals(user.getIsGuest()) && Boolean.FALSE.equals(user.getIsVerified())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản chưa được kích hoạt. Vui lòng xác minh email trước khi đăng nhập!");
         }
 
-        String token = jwtTokenProvider.generateToken(user.getEmail());
+        String token = jwtTokenProvider.generateToken(user.getEmail(), user.getTokenVersion());
 
         return TokenDto.builder()
                 .accessToken(token)
@@ -123,27 +155,42 @@ public class AuthService {
                 .build();
     }
 
-    // Quên mật khẩu
+    // Đăng xuất: Tăng tokenVersion để thu hồi ngay toàn bộ JWT cũ
+    public MessageDto logout(User currentUser) {
+        User user = userRepository.findById(currentUser.getId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        int currentVersion = user.getTokenVersion() != null ? user.getTokenVersion() : 0;
+        user.setTokenVersion(currentVersion + 1);
+        userRepository.save(user);
+        return new MessageDto("Đăng xuất thành công");
+    }
+
+    // Quên mật khẩu (trả thông báo đồng nhất để chống dò email tồn tại)
     public MessageDto forgotPassword(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng với email này"));
+        String normalizedEmail = email.trim().toLowerCase();
+        User user = userRepository.findByEmail(normalizedEmail).orElse(null);
 
-        String otp = otpService.generateOtp(user.getEmail(), TokenType.PASSWORD_RESET, 10);
-        emailService.sendPasswordResetEmail(user.getEmail(), otp);
+        if (user != null && Boolean.TRUE.equals(user.getIsVerified()) && !Boolean.TRUE.equals(user.getIsGuest())) {
+            String otp = otpService.generateOtp(user.getEmail(), TokenType.PASSWORD_RESET, 10);
+            emailService.sendPasswordResetEmail(user.getEmail(), otp);
+        }
 
-        return new MessageDto("Mã OTP đã được gửi đến email của bạn");
+        return new MessageDto("Nếu email tồn tại trong hệ thống, mã OTP đã được gửi đến hộp thư của bạn");
     }
 
     // Đặt lại mật khẩu
     public MessageDto resetPassword(ResetPasswordDto dto) {
-        User user = userRepository.findByEmail(dto.getEmail())
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng với email này"));
+        String normalizedEmail = dto.getEmail().trim().toLowerCase();
+        User user = userRepository.findByEmail(normalizedEmail)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã OTP không hợp lệ hoặc đã hết hạn"));
 
         PasswordValidationUtil.validate(dto.getNewPassword());
 
-        otpService.validateOtp(dto.getEmail(), dto.getOtp(), TokenType.PASSWORD_RESET);
+        otpService.validateOtp(normalizedEmail, dto.getOtp(), TokenType.PASSWORD_RESET);
 
         user.setHashedPassword(passwordEncoder.encode(dto.getNewPassword()));
+        int currentVersion = user.getTokenVersion() != null ? user.getTokenVersion() : 0;
+        user.setTokenVersion(currentVersion + 1);
         userRepository.save(user);
 
         return new MessageDto("Đặt lại mật khẩu thành công");
@@ -152,17 +199,18 @@ public class AuthService {
     // Google Login
     public GoogleAuthResponseDto googleLogin(GoogleLoginDto dto) {
         com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload payload = googleAuthService.verifyIdToken(dto.getIdToken());
+        if (!Boolean.TRUE.equals(payload.getEmailVerified())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email Google chưa được xác minh!");
+        }
         String email = payload.getEmail().trim().toLowerCase();
         String googleId = payload.getSubject();
         String name = (String) payload.get("name");
         String pictureUrl = (String) payload.get("picture");
 
-        String mode = dto.getMode() != null ? dto.getMode().trim().toLowerCase() : "login";
-
         User user = userRepository.findByEmail(email).orElse(null);
 
-        // Nếu user đã tồn tại và đã xác thực -> Đăng nhập luôn
-        if (user != null && Boolean.TRUE.equals(user.getIsVerified())) {
+        // Chỉ cho đăng nhập tự động nếu là tài khoản THƯỜNG đã xác thực (tuyệt đối không gộp vào tài khoản khách)
+        if (user != null && Boolean.TRUE.equals(user.getIsVerified()) && !Boolean.TRUE.equals(user.getIsGuest())) {
             if (user.getGoogleId() == null) {
                 user.setGoogleId(googleId);
             }
@@ -174,7 +222,7 @@ public class AuthService {
             }
             user = userRepository.save(user);
 
-            String token = jwtTokenProvider.generateToken(user.getEmail());
+            String token = jwtTokenProvider.generateToken(user.getEmail(), user.getTokenVersion());
             return GoogleAuthResponseDto.builder()
                     .accessToken(token)
                     .tokenType("bearer")
@@ -187,10 +235,10 @@ public class AuthService {
         } else {
             // User chưa có tài khoản hoặc chưa xác thực -> Chuyển sang hoàn tất đăng ký
             String baseUsername = email.split("@")[0].replaceAll("[^a-zA-Z0-9_]", "");
-            if (baseUsername.isBlank()) baseUsername = "user";
+            if (baseUsername.isBlank() || baseUsername.matches("^\\d+$")) baseUsername = "user";
             String suggestedUsername = baseUsername;
             int counter = 1;
-            while (userRepository.existsByUsername(suggestedUsername)) {
+            while (userRepository.existsByUsernameIgnoreCase(suggestedUsername)) {
                 suggestedUsername = baseUsername + counter;
                 counter++;
             }
@@ -210,16 +258,20 @@ public class AuthService {
     // Google Register
     public UserResponseDto googleRegister(GoogleRegisterDto dto) {
         com.google.api.client.googleapis.auth.oauth2.GoogleIdToken.Payload payload = googleAuthService.verifyIdToken(dto.getIdToken());
+        if (!Boolean.TRUE.equals(payload.getEmailVerified())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email Google chưa được xác minh!");
+        }
         String email = payload.getEmail().trim().toLowerCase();
         String googleId = payload.getSubject();
         String pictureUrl = (String) payload.get("picture");
 
         User existingUser = userRepository.findByEmail(email).orElse(null);
-        if (existingUser != null && Boolean.TRUE.equals(existingUser.getIsVerified())) {
+        if (existingUser != null && Boolean.TRUE.equals(existingUser.getIsVerified()) && !Boolean.TRUE.equals(existingUser.getIsGuest())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email này đã được đăng ký tài khoản!");
         }
 
         String username = dto.getUsername().trim();
+        validateUsernameForRegistration(username);
 
         String fullName = dto.getFullName() != null && !dto.getFullName().trim().isEmpty()
                 ? dto.getFullName().trim()
@@ -238,6 +290,7 @@ public class AuthService {
             pending.setAvatarUrl(pictureUrl);
             pending.setGoogleId(googleId);
             pending.setOtpCode(otp);
+            pending.setAttemptCount(0);
             pending.setExpiresAt(LocalDateTime.now().plusMinutes(10));
             pending.setCreatedAt(LocalDateTime.now());
         } else {
@@ -249,6 +302,7 @@ public class AuthService {
                     .avatarUrl(pictureUrl)
                     .googleId(googleId)
                     .otpCode(otp)
+                    .attemptCount(0)
                     .expiresAt(LocalDateTime.now().plusMinutes(10))
                     .createdAt(LocalDateTime.now())
                     .build();
@@ -266,7 +320,7 @@ public class AuthService {
                 .build();
     }
 
-    // Verify OTP email
+    // Verify OTP email (Đã vá CRIT-01: Tuyệt đối không cấp token nếu không có PendingRegistration hợp lệ)
     public TokenDto verifyEmail(VerifyOtpDto dto) {
         String identifier = dto.getEmail().trim().toLowerCase();
         String otpCode = dto.getOtp().trim();
@@ -276,16 +330,6 @@ public class AuthService {
                 .orElse(null);
 
         if (pending == null) {
-            User alreadyUser = userRepository.findByEmail(identifier)
-                    .or(() -> userRepository.findByUsername(identifier))
-                    .orElse(null);
-            if (alreadyUser != null && Boolean.TRUE.equals(alreadyUser.getIsVerified())) {
-                String token = jwtTokenProvider.generateToken(alreadyUser.getEmail());
-                return TokenDto.builder()
-                        .accessToken(token)
-                        .tokenType("bearer")
-                        .build();
-            }
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Yêu cầu đăng ký không tồn tại hoặc đã hết hạn. Vui lòng đăng ký lại!");
         }
 
@@ -294,14 +338,44 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã OTP đã hết hạn. Vui lòng thực hiện đăng ký lại!");
         }
 
-        if (!pending.getOtpCode().equals(otpCode)) {
+        int attempts = pending.getAttemptCount() != null ? pending.getAttemptCount() : 0;
+        if (attempts >= MAX_OTP_ATTEMPTS) {
+            pendingRegistrationRepository.delete(pending);
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Mã OTP đã bị hủy do nhập sai quá 5 lần. Vui lòng đăng ký lại!");
+        }
+
+        boolean matched = MessageDigest.isEqual(
+                pending.getOtpCode().getBytes(StandardCharsets.UTF_8),
+                otpCode.getBytes(StandardCharsets.UTF_8)
+        );
+        if (!matched) {
+            attempts++;
+            if (attempts >= MAX_OTP_ATTEMPTS) {
+                pendingRegistrationRepository.delete(pending);
+                throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, "Bạn đã nhập sai mã OTP quá 5 lần. Vui lòng đăng ký lại!");
+            }
+            pending.setAttemptCount(attempts);
+            pendingRegistrationRepository.save(pending);
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Mã OTP không chính xác!");
         }
 
-        if (userRepository.existsByEmail(pending.getEmail())) {
-            pendingRegistrationRepository.delete(pending);
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email này đã được sử dụng bởi một tài khoản khác!");
+        User existingByEmail = userRepository.findByEmail(pending.getEmail()).orElse(null);
+        if (existingByEmail != null) {
+            if (Boolean.TRUE.equals(existingByEmail.getIsGuest()) && !Boolean.TRUE.equals(existingByEmail.getIsVerified())) {
+                // Nếu một tài khoản khách chưa xác thực đang chiếm trước email này, đổi email của tài khoản khách đó sang định danh nội bộ
+                existingByEmail.setEmail("guest_" + existingByEmail.getId() + "_" + System.currentTimeMillis() + "@guest.local");
+                userRepository.save(existingByEmail);
+            } else {
+                pendingRegistrationRepository.delete(pending);
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email này đã được sử dụng bởi một tài khoản khác!");
+            }
         }
+
+        if (userRepository.existsByUsernameIgnoreCase(pending.getUsername())) {
+            pendingRegistrationRepository.delete(pending);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tên đăng nhập này đã được sử dụng bởi tài khoản khác!");
+        }
+
         User user = User.builder()
                 .email(pending.getEmail())
                 .username(pending.getUsername())
@@ -310,12 +384,14 @@ public class AuthService {
                 .avatarUrl(pending.getAvatarUrl())
                 .googleId(pending.getGoogleId())
                 .isVerified(true)
+                .isGuest(false)
+                .tokenVersion(0)
                 .build();
 
         user = userRepository.save(user);
         pendingRegistrationRepository.delete(pending);
 
-        String token = jwtTokenProvider.generateToken(user.getEmail());
+        String token = jwtTokenProvider.generateToken(user.getEmail(), user.getTokenVersion());
         return TokenDto.builder()
                 .accessToken(token)
                 .tokenType("bearer")
@@ -325,7 +401,12 @@ public class AuthService {
     // Gửi lại mã OTP
     public MessageDto resendOtp(ResendOtpDto dto) {
         String identifier = dto.getEmail().trim().toLowerCase();
-        TokenType type = TokenType.valueOf(dto.getType());
+        TokenType type;
+        try {
+            type = TokenType.valueOf(dto.getType());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Loại xác thực không hợp lệ");
+        }
 
         if (type == TokenType.REGISTER_VERIFICATION) {
             PendingRegistration pending = pendingRegistrationRepository.findByEmail(identifier)
@@ -342,6 +423,7 @@ public class AuthService {
             int otpNum = 100000 + secureRandom.nextInt(900000);
             String otp = String.valueOf(otpNum);
             pending.setOtpCode(otp);
+            pending.setAttemptCount(0);
             pending.setExpiresAt(LocalDateTime.now().plusMinutes(10));
             pending.setCreatedAt(LocalDateTime.now());
             pendingRegistrationRepository.save(pending);
@@ -349,23 +431,23 @@ public class AuthService {
             emailService.sendVerificationEmail(pending.getEmail(), otp);
             return new MessageDto("Mã OTP đã được gửi lại thành công");
         } else if (type == TokenType.PASSWORD_RESET) {
-            User user = userRepository.findByEmail(identifier)
-                    .or(() -> userRepository.findByUsername(identifier))
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng với email này"));
-
-            String otp = otpService.generateOtp(user.getEmail(), type, 10);
-            emailService.sendPasswordResetEmail(user.getEmail(), otp);
-            return new MessageDto("Mã OTP đặt lại mật khẩu đã được gửi lại thành công");
+            User user = userRepository.findByEmail(identifier).orElse(null);
+            if (user != null && Boolean.TRUE.equals(user.getIsVerified()) && !Boolean.TRUE.equals(user.getIsGuest())) {
+                String otp = otpService.generateOtp(user.getEmail(), type, 10);
+                emailService.sendPasswordResetEmail(user.getEmail(), otp);
+            }
+            return new MessageDto("Nếu email tồn tại trong hệ thống, mã OTP đặt lại mật khẩu đã được gửi lại");
         }
 
         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Loại xác thực không hợp lệ");
     }
 
-    // Đăng ký tài khoản khách (Kích hoạt ngay không cần OTP)
+    // Đăng ký tài khoản khách (Không cần OTP, cấp Mã Khôi Phục Bí Mật 1 lần)
     public TokenDto registerGuest(GuestRegisterDto dto) {
         String email = dto.getEmail().trim().toLowerCase();
         String username = dto.getUsername().trim();
 
+        validateUsernameForRegistration(username);
         PasswordValidationUtil.validate(dto.getPassword());
 
         if (!EmailValidationUtil.isValidSyntax(email)) {
@@ -376,54 +458,56 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email này đã được sử dụng!");
         }
 
+        String recoveryKey = generateRecoveryKey();
+
         User guestUser = User.builder()
                 .username(username)
                 .email(email)
                 .fullName(username)
                 .hashedPassword(passwordEncoder.encode(dto.getPassword()))
-                .isVerified(true)
+                .recoveryKeyHash(passwordEncoder.encode(recoveryKey))
+                .isVerified(false) // Không chiếm trạng thái xác thực của email thật
                 .isGuest(true)
+                .tokenVersion(0)
                 .build();
 
         guestUser = userRepository.save(guestUser);
 
-        String token = jwtTokenProvider.generateToken(guestUser.getEmail());
+        String token = jwtTokenProvider.generateToken(guestUser.getEmail(), guestUser.getTokenVersion());
         return TokenDto.builder()
                 .accessToken(token)
                 .tokenType("bearer")
+                .recoveryKey(recoveryKey)
                 .build();
     }
 
-    // Kiểm tra email tài khoản khách cho bước quên mật khẩu (không gửi OTP)
+    // Kiểm tra cú pháp email tài khoản khách cho bước quên mật khẩu (không tiết lộ tài khoản có tồn tại hay không)
     public MessageDto guestForgotPasswordCheck(String email) {
         String normalizedEmail = email.trim().toLowerCase();
         if (!EmailValidationUtil.isValidSyntax(normalizedEmail)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Địa chỉ email không đúng định dạng (Ví dụ: user@example.com)!");
         }
 
-        User user = userRepository.findByEmail(normalizedEmail)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng với email này"));
-
-        if (!Boolean.TRUE.equals(user.getIsGuest())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email này thuộc tài khoản thông thường. Vui lòng sử dụng chức năng khôi phục có xác thực mã OTP!");
-        }
-
-        return new MessageDto("Xác nhận tài khoản khách hợp lệ");
+        return new MessageDto("Vui lòng nhập Mã Khôi Phục bí mật và mật khẩu mới để tiếp tục");
     }
 
-    // Đặt lại mật khẩu tài khoản khách trực tiếp (không cần OTP)
+    // Đặt lại mật khẩu tài khoản khách (BẮT BUỘC có Mã Khôi Phục bí mật hợp lệ)
     public MessageDto guestResetPassword(GuestResetPasswordDto dto) {
         String email = dto.getEmail().trim().toLowerCase();
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy người dùng với email này"));
+        String rawRecoveryKey = dto.getRecoveryKey() != null ? dto.getRecoveryKey().trim().toUpperCase() : "";
 
-        if (!Boolean.TRUE.equals(user.getIsGuest())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tài khoản này không phải là tài khoản khách!");
+        User user = userRepository.findByEmail(email).orElse(null);
+
+        if (user == null || !Boolean.TRUE.equals(user.getIsGuest()) || user.getRecoveryKeyHash() == null
+                || !passwordEncoder.matches(rawRecoveryKey, user.getRecoveryKeyHash())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email hoặc Mã Khôi Phục tài khoản khách không chính xác!");
         }
 
         PasswordValidationUtil.validate(dto.getNewPassword());
 
         user.setHashedPassword(passwordEncoder.encode(dto.getNewPassword()));
+        int currentVersion = user.getTokenVersion() != null ? user.getTokenVersion() : 0;
+        user.setTokenVersion(currentVersion + 1);
         userRepository.save(user);
 
         return new MessageDto("Đặt lại mật khẩu tài khoản khách thành công");
