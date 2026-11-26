@@ -9,6 +9,7 @@ import Navbar from '@/components/Navbar';
 import AnimeQuiz from '../../components/games/AnimeQuiz';
 import MemoryMatch from '../../components/games/MemoryMatch';
 import SpeedType from '../../components/games/SpeedType';
+import CaroOnline from '../../components/games/CaroOnline';
 import { GameItem, GameScoreResult } from '@/types/game';
 import { normalizeGameItem } from '@/lib/gameUtils';
 import api from '@/lib/axios';
@@ -100,7 +101,27 @@ function GamePlayContent() {
     );
   }
 
+  const isMultiplayerGame =
+    game.game_mode === 'MULTIPLAYER' ||
+    game.game_mode === 'HYBRID' ||
+    game.slug === 'caro-online';
+
   const renderGameComponent = () => {
+    const slug = game.slug?.toLowerCase();
+    if (slug === 'caro-online' || game.title.toLowerCase().includes('caro')) {
+      return <CaroOnline key={gameSessionKey} game={game} />;
+    }
+    if (slug === 'memory-match') {
+      return <MemoryMatch key={gameSessionKey} game={game} onGameEnd={handleGameEnd} />;
+    }
+    if (slug === 'speed-typing') {
+      return <SpeedType key={gameSessionKey} game={game} onGameEnd={handleGameEnd} />;
+    }
+    if (slug === 'quiz-knowledge') {
+      return <AnimeQuiz key={gameSessionKey} game={game} onGameEnd={handleGameEnd} />;
+    }
+
+    // Legacy fallback by category
     const cat = game.category?.toUpperCase();
     if (cat === 'PUZZLE' || game.title.toLowerCase().includes('memory')) {
       return <MemoryMatch key={gameSessionKey} game={game} onGameEnd={handleGameEnd} />;
@@ -134,12 +155,18 @@ function GamePlayContent() {
             </span>
           </div>
 
-          <button
-            onClick={restartGame}
-            className="flex items-center gap-1.5 text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-xl bg-surface-hover hover:bg-surface-hover/80 text-text-muted hover:text-foreground border border-indigo-500/20 transition-all cursor-pointer shrink-0"
-          >
-            <RotateCcw className="w-3.5 h-3.5 shrink-0" /> <span className="hidden xs:inline">Chơi lại</span>
-          </button>
+          {!isMultiplayerGame ? (
+            <button
+              onClick={restartGame}
+              className="flex items-center gap-1.5 text-xs font-semibold px-2.5 sm:px-3 py-1.5 rounded-xl bg-surface-hover hover:bg-surface-hover/80 text-text-muted hover:text-foreground border border-indigo-500/20 transition-all cursor-pointer shrink-0"
+            >
+              <RotateCcw className="w-3.5 h-3.5 shrink-0" /> <span className="hidden xs:inline">Chơi lại</span>
+            </button>
+          ) : (
+            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
+              ● ONLINE
+            </span>
+          )}
         </div>
 
         {/* Game Arena */}

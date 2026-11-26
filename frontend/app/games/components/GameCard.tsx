@@ -47,6 +47,7 @@ export default function GameCard({ game: rawGame }: GameCardProps) {
   };
 
   const isHot = game.play_count >= 40;
+  const isMultiplayer = game.game_mode === 'MULTIPLAYER' || game.game_mode === 'HYBRID';
 
   return (
     <div className="glass-card glass-card-hover rounded-2xl overflow-hidden flex flex-col transition-all duration-300 group border border-indigo-500/20 hover:border-indigo-500/40">
@@ -61,6 +62,12 @@ export default function GameCard({ game: rawGame }: GameCardProps) {
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
+          {isMultiplayer && (
+            <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/90 text-white shadow-lg shadow-emerald-500/30">
+              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+              ONLINE {game.max_players ? `1-${game.max_players}P` : 'PvP'}
+            </span>
+          )}
           {isHot && (
             <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-500/90 text-white shadow-lg shadow-rose-500/30">
               <Flame className="w-3 h-3" /> HOT

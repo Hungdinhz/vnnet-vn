@@ -2,6 +2,8 @@ package com.example.backend_java.websocket;
 
 import com.example.backend_java.dto.chat.OnlineStatusDto;
 import com.example.backend_java.entity.User;
+import com.example.backend_java.game.engine.GameRoomManager;
+import com.example.backend_java.game.engine.MatchmakingService;
 import com.example.backend_java.service.OnlineStatusService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
@@ -20,6 +22,8 @@ public class WebSocketEventListener {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final OnlineStatusService onlineStatusService;
+    private final GameRoomManager gameRoomManager;
+    private final MatchmakingService matchmakingService;
 
     @EventListener
     public void handleWebSocketConnectListener(SessionConnectedEvent event) {
@@ -44,6 +48,8 @@ public class WebSocketEventListener {
             if (auth.getPrincipal() instanceof User user) {
                 boolean nowOffline = onlineStatusService.userDisconnected(user.getId());
                 if (nowOffline) {
+                    matchmakingService.cancelQueue(user.getId(), null);
+                    gameRoomManager.handleUserDisconnect(user.getId());
                     messagingTemplate.convertAndSend("/topic/online",
                             OnlineStatusDto.builder()
                                     .userId(user.getId())

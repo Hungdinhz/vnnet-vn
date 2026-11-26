@@ -49,6 +49,8 @@ public class GameService {
 
         if (keyword != null && !keyword.trim().isEmpty()) {
             games = gameRepository.searchByTitle(keyword.trim());
+        } else if (category != null && "MULTIPLAYER".equalsIgnoreCase(category.trim())) {
+            games = gameRepository.findByGameModeInAndIsActiveTrueOrderByPlayCountDesc(List.of("MULTIPLAYER", "HYBRID"));
         } else if (category != null && !category.trim().isEmpty()
                 && !"ALL".equalsIgnoreCase(category)
                 && !"Tất cả".equalsIgnoreCase(category)) {

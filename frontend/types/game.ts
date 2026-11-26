@@ -1,8 +1,12 @@
 export interface GameItem {
   id: number;
   title: string;
+  slug?: string;
   description: string;
   category: string;
+  game_mode?: 'SINGLE' | 'MULTIPLAYER' | 'HYBRID';
+  min_players?: number;
+  max_players?: number;
   image_url: string;
   thumbnail_url: string;
   max_score: number;
@@ -60,4 +64,78 @@ export interface GameStats {
   achievements_unlocked: number;
   favorite_game?: GameItem | null;
   recent_scores?: GameScoreResult[];
+}
+
+export interface RoomPlayer {
+  userId: number | null;
+  username: string;
+  avatarUrl?: string | null;
+  seatIndex: number;
+  symbol?: string;
+  ready: boolean;
+  host: boolean;
+  bot: boolean;
+  connected: boolean;
+  elo: number;
+  eloDelta?: number | null;
+  wantsRematch: boolean;
+}
+
+export interface RoomChatMessage {
+  id: string;
+  roomCode: string;
+  senderId: number;
+  senderName: string;
+  senderAvatar?: string | null;
+  content: string;
+  type: 'CHAT' | 'EMOJI' | 'SYSTEM';
+  timestamp: number;
+}
+
+export interface CaroGameState {
+  boardSize: number;
+  board: number[][];
+  currentTurnSeat: number;
+  blockTwoEnds: boolean;
+  moveCount: number;
+  lastMove: [number, number] | null;
+  winningCells: [number, number][];
+}
+
+export interface RoomState {
+  roomCode: string;
+  roomName: string;
+  gameSlug: string;
+  gameId: number;
+  status: 'WAITING' | 'PLAYING' | 'FINISHED';
+  isPrivate: boolean;
+  vsBot: boolean;
+  maxPlayers: number;
+  turnTimeSeconds: number;
+  turnDeadlineEpochMs?: number | null;
+  reconnectDeadlineEpochMs?: number | null;
+  disconnectedUserId?: number | null;
+  hostUserId: number;
+  rules: Record<string, any>;
+  players: RoomPlayer[];
+  gameState: CaroGameState | Record<string, any>;
+  winnerUserId?: number | null;
+  winnerSeat?: number | null;
+  endReason?: string | null;
+  systemMessage?: string | null;
+  recentChat: RoomChatMessage[];
+}
+
+export interface UserGameRating {
+  rank: number;
+  userId: number;
+  username: string;
+  avatarUrl?: string | null;
+  elo: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  winStreak: number;
+  bestWinStreak: number;
+  winRate: number;
 }
