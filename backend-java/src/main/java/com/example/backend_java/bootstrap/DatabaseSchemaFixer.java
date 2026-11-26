@@ -159,5 +159,79 @@ public class DatabaseSchemaFixer implements CommandLineRunner {
         } catch (Exception e) {
             log.warn("Error checking security schema columns: {}", e.getMessage());
         }
+
+        try {
+            // Admin RBAC, account status, audit logs, content reports & soft-hide columns
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS role VARCHAR(20) NOT NULL DEFAULT 'USER';");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS account_status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE';");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS banned_until TIMESTAMP NULL;");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS ban_reason TEXT NULL;");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;");
+            jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMP NULL;");
+            jdbcTemplate.execute("UPDATE users SET role = 'USER' WHERE role IS NULL;");
+            jdbcTemplate.execute("UPDATE users SET account_status = 'ACTIVE' WHERE account_status IS NULL;");
+            jdbcTemplate.execute("UPDATE users SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL;");
+
+            jdbcTemplate.execute("ALTER TABLE verification_tokens DROP CONSTRAINT IF EXISTS verification_tokens_token_type_check;");
+            jdbcTemplate.execute("ALTER TABLE verification_tokens ADD CONSTRAINT verification_tokens_token_type_check CHECK (token_type IN ('REGISTER_VERIFICATION', 'PASSWORD_RESET', 'ADMIN_LOGIN_OTP'));");
+
+            jdbcTemplate.execute("""
+                CREATE TABLE IF NOT EXISTS admin_audit_logs (
+                    id BIGSERIAL PRIMARY KEY,
+                    actor_id BIGINT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+                    actor_email VARCHAR(100) NOT NULL,
+                    actor_role VARCHAR(20) NOT NULL,
+                    action VARCHAR(60) NOT NULL,
+                    target_type VARCHAR(40) NOT NULL,
+                    target_id BIGINT NULL,
+                    reason TEXT NULL,
+                    metadata_json TEXT NULL,
+                    ip_address VARCHAR(64) NULL,
+                    user_agent VARCHAR(255) NULL,
+                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+                );
+            """);
+
+            jdbcTemplate.execute("""
+                CREATE TABLE IF NOT EXISTS content_reports (
+                    id BIGSERIAL PRIMARY KEY,
+                    reporter_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    target_type VARCHAR(30) NOT NULL,
+                    target_id BIGINT NOT NULL,
+                    reason_category VARCHAR(40) NOT NULL,
+                    description TEXT NULL,
+                    status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+                    handled_by BIGINT NULL REFERENCES users(id) ON DELETE SET NULL,
+                    resolution_note TEXT NULL,
+                    action_taken VARCHAR(40) NULL,
+                    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    resolved_at TIMESTAMP NULL
+                );
+            """);
+
+            jdbcTemplate.execute("ALTER TABLE posts ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN NOT NULL DEFAULT FALSE;");
+            jdbcTemplate.execute("ALTER TABLE posts ADD COLUMN IF NOT EXISTS hidden_reason TEXT NULL;");
+            jdbcTemplate.execute("ALTER TABLE posts ADD COLUMN IF NOT EXISTS hidden_at TIMESTAMP NULL;");
+            jdbcTemplate.execute("ALTER TABLE posts ADD COLUMN IF NOT EXISTS hidden_by BIGINT NULL REFERENCES users(id) ON DELETE SET NULL;");
+
+            jdbcTemplate.execute("ALTER TABLE comments ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN NOT NULL DEFAULT FALSE;");
+            jdbcTemplate.execute("ALTER TABLE comments ADD COLUMN IF NOT EXISTS hidden_reason TEXT NULL;");
+            jdbcTemplate.execute("ALTER TABLE comments ADD COLUMN IF NOT EXISTS hidden_at TIMESTAMP NULL;");
+            jdbcTemplate.execute("ALTER TABLE comments ADD COLUMN IF NOT EXISTS hidden_by BIGINT NULL REFERENCES users(id) ON DELETE SET NULL;");
+
+            jdbcTemplate.execute("ALTER TABLE app_groups ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN NOT NULL DEFAULT FALSE;");
+            jdbcTemplate.execute("ALTER TABLE app_groups ADD COLUMN IF NOT EXISTS hidden_reason TEXT NULL;");
+            jdbcTemplate.execute("ALTER TABLE app_groups ADD COLUMN IF NOT EXISTS hidden_at TIMESTAMP NULL;");
+            jdbcTemplate.execute("ALTER TABLE app_groups ADD COLUMN IF NOT EXISTS hidden_by BIGINT NULL REFERENCES users(id) ON DELETE SET NULL;");
+
+            jdbcTemplate.execute("ALTER TABLE marketplace_items ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN NOT NULL DEFAULT FALSE;");
+            jdbcTemplate.execute("ALTER TABLE marketplace_items ADD COLUMN IF NOT EXISTS hidden_reason TEXT NULL;");
+            jdbcTemplate.execute("ALTER TABLE marketplace_items ADD COLUMN IF NOT EXISTS hidden_at TIMESTAMP NULL;");
+            jdbcTemplate.execute("ALTER TABLE marketplace_items ADD COLUMN IF NOT EXISTS hidden_by BIGINT NULL REFERENCES users(id) ON DELETE SET NULL;");
+
+            log.info("Successfully verified admin RBAC, audit log, report & moderation schema");
+        } catch (Exception e) {
+            log.warn("Error checking admin RBAC schema: {}", e.getMessage());
+        }
     }
 }

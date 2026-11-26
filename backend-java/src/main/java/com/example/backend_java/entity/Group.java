@@ -44,4 +44,17 @@ public class Group {
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "is_hidden", nullable = false)
+    @Builder.Default
+    private Boolean isHidden = false;
+
+    @Column(name = "hidden_reason", columnDefinition = "TEXT")
+    private String hiddenReason;
+
+    @Column(name = "hidden_at")
+    private LocalDateTime hiddenAt;
+
+    @Column(name = "hidden_by")
+    private Long hiddenBy;
 }
