@@ -16,8 +16,18 @@ public class GameResponseDto {
 
     private Long id;
     private String title;
+    private String slug;
     private String description;
     private String category;
+
+    @JsonProperty("game_mode")
+    private String gameMode;
+
+    @JsonProperty("min_players")
+    private Integer minPlayers;
+
+    @JsonProperty("max_players")
+    private Integer maxPlayers;
 
     @JsonProperty("image_url")
     private String imageUrl;

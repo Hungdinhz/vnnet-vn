@@ -7,13 +7,18 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface GameRepository extends JpaRepository<Game, Long> {
 
+    Optional<Game> findBySlug(String slug);
+
     List<Game> findByIsActiveTrueOrderByPlayCountDesc();
 
     List<Game> findByCategoryAndIsActiveTrueOrderByPlayCountDesc(String category);
+
+    List<Game> findByGameModeInAndIsActiveTrueOrderByPlayCountDesc(List<String> gameModes);
 
     @Query("SELECT g FROM Game g WHERE g.isActive = true AND " +
            "LOWER(g.title) LIKE LOWER(CONCAT('%', :keyword, '%')) " +

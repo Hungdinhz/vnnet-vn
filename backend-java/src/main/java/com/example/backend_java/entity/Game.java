@@ -24,11 +24,26 @@ public class Game {
     @Column(length = 100, nullable = false)
     private String title;
 
+    @Column(length = 64, unique = true)
+    private String slug;
+
     @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(length = 50)
     private String category; // "QUIZ", "ACTION", "PUZZLE", "SPORTS", "ADVENTURE", "STRATEGY"
+
+    @Column(name = "game_mode", length = 20)
+    @Builder.Default
+    private String gameMode = "SINGLE"; // "SINGLE", "MULTIPLAYER", "HYBRID"
+
+    @Column(name = "min_players")
+    @Builder.Default
+    private Integer minPlayers = 1;
+
+    @Column(name = "max_players")
+    @Builder.Default
+    private Integer maxPlayers = 1;
 
     @Column(name = "image_url")
     private String imageUrl;

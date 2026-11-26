@@ -16,6 +16,8 @@ import { Gamepad2, Search, Trophy, Flame, Sparkles } from 'lucide-react';
 
 const CATEGORIES = [
   { key: 'ALL', label: 'Tất cả' },
+  { key: 'MULTIPLAYER', label: '🌐 Chơi Online' },
+  { key: 'STRATEGY', label: 'Chiến Thuật' },
   { key: 'QUIZ', label: 'Câu Đố' },
   { key: 'PUZZLE', label: 'Xếp Hình' },
   { key: 'ACTION', label: 'Hành Động' },
