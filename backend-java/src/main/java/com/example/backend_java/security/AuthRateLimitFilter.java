@@ -35,7 +35,11 @@ public class AuthRateLimitFilter extends OncePerRequestFilter {
         String clientIp = extractClientIp(request);
 
         boolean allowed = true;
-        if (path.endsWith("/login")) {
+        if (path.endsWith("/admin/auth/login-step1") || path.endsWith("/admin/auth/login-step2")) {
+            allowed = rateLimitService.isAllowed("admin_login:" + clientIp, 5, 300);
+        } else if (path.endsWith("/reports")) {
+            allowed = rateLimitService.isAllowed("report:" + clientIp, 20, 600);
+        } else if (path.endsWith("/login")) {
             allowed = rateLimitService.isAllowed("login:" + clientIp, 15, 300);
         } else if (path.endsWith("/verify-email") || path.endsWith("/verify-otp")
                 || path.endsWith("/reset-password") || path.endsWith("/guest/reset-password")) {

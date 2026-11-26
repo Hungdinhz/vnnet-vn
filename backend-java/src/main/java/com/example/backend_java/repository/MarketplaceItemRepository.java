@@ -25,4 +25,18 @@ public interface MarketplaceItemRepository extends JpaRepository<MarketplaceItem
     @org.springframework.data.jpa.repository.Modifying
     @org.springframework.data.jpa.repository.Query("UPDATE MarketplaceItem m SET m.viewsCount = COALESCE(m.viewsCount, 0) + 1 WHERE m.id = :id")
     void incrementViewsCount(@org.springframework.data.repository.query.Param("id") Long id);
+
+    @org.springframework.data.jpa.repository.Query("""
+        SELECT m FROM MarketplaceItem m
+        WHERE (:q IS NULL OR :q = ''
+               OR LOWER(m.title) LIKE LOWER(CONCAT('%', :q, '%'))
+               OR LOWER(m.description) LIKE LOWER(CONCAT('%', :q, '%')))
+          AND (:hidden IS NULL OR COALESCE(m.isHidden, false) = :hidden)
+        ORDER BY m.id DESC
+    """)
+    Page<MarketplaceItem> adminSearchItems(@org.springframework.data.repository.query.Param("q") String q,
+                                           @org.springframework.data.repository.query.Param("hidden") Boolean hidden,
+                                           Pageable pageable);
+
+    long countByStatusAndIsHiddenFalse(String status);
 }

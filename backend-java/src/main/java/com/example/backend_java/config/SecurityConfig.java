@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -18,6 +19,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -48,10 +50,19 @@ public class SecurityConfig {
                     response.setCharacterEncoding("UTF-8");
                     response.getWriter().write("{\"detail\":\"Unauthorized: Vui lòng đăng nhập để tiếp tục\"}");
                 })
+                .accessDeniedHandler((request, response, accessDeniedException) -> {
+                    response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                    response.setContentType("application/json");
+                    response.setCharacterEncoding("UTF-8");
+                    response.getWriter().write("{\"detail\":\"Forbidden: Bạn không có quyền thực hiện thao tác này\"}");
+                })
             )
             .authorizeHttpRequests(auth -> auth
                 // Luôn cho phép preflight CORS OPTIONS
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // --- ADMIN PORTAL endpoints (tách biệt hoàn toàn, yêu cầu scope=ADMIN + RBAC) ---
+                .requestMatchers(HttpMethod.POST, "/admin/auth/login-step1", "/admin/auth/login-step2").permitAll()
+                .requestMatchers("/admin/**").hasAnyRole("MODERATOR", "ADMIN", "SUPER_ADMIN")
                 // --- PROTECTED endpoints (cần token) ---
                 .requestMatchers(HttpMethod.POST, "/auth/logout", "/users/logout").authenticated()
                 .requestMatchers(HttpMethod.GET, "/users/me").authenticated()

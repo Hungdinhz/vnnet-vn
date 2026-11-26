@@ -3,7 +3,9 @@ package com.example.backend_java.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.CreationTimestamp;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -80,7 +82,51 @@ public class User {
     @Column(name = "recovery_key_hash", length = 255)
     private String recoveryKeyHash;
 
+    @Enumerated(EnumType.STRING)
+    @ColumnDefault("'USER'")
+    @Column(name = "role", length = 20, nullable = false)
+    @Builder.Default
+    private Role role = Role.USER;
+
+    @Enumerated(EnumType.STRING)
+    @ColumnDefault("'ACTIVE'")
+    @Column(name = "account_status", length = 20, nullable = false)
+    @Builder.Default
+    private AccountStatus accountStatus = AccountStatus.ACTIVE;
+
+    @Column(name = "banned_until")
+    private LocalDateTime bannedUntil;
+
+    @Column(name = "ban_reason", columnDefinition = "TEXT")
+    private String banReason;
+
+    @CreationTimestamp
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    @Column(name = "last_login_at")
+    private LocalDateTime lastLoginAt;
+
     @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Post> posts = new ArrayList<>();
+
+    public Role getEffectiveRole() {
+        return this.role != null ? this.role : Role.USER;
+    }
+
+    public AccountStatus getEffectiveAccountStatus() {
+        return this.accountStatus != null ? this.accountStatus : AccountStatus.ACTIVE;
+    }
+
+    public boolean isCurrentlyRestricted() {
+        AccountStatus status = getEffectiveAccountStatus();
+        if (status == AccountStatus.BANNED) {
+            return true;
+        }
+        if (status == AccountStatus.SUSPENDED) {
+            return this.bannedUntil == null || this.bannedUntil.isAfter(LocalDateTime.now());
+        }
+        return false;
+    }
 }

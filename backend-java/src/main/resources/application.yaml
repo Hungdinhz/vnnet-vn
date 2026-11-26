@@ -48,6 +48,12 @@ spring:
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION:1800000}
+  admin-expiration: ${JWT_ADMIN_EXPIRATION:1800000}
+
+admin:
+  bootstrap:
+    email: ${ADMIN_BOOTSTRAP_EMAIL:}
+    password: ${ADMIN_BOOTSTRAP_PASSWORD:}
 
 cloudinary:
   cloud-name: ${CLOUDINARY_CLOUD_NAME}

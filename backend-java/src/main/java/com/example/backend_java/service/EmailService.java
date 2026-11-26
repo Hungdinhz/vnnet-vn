@@ -55,6 +55,17 @@ public class EmailService {
         sendHtmlEmail(toEmail, subject, content);
     }
 
+    @Async("taskExecutor")
+    public void sendAdminLoginOtpEmail(String toEmail, String otpCode) {
+        String subject = "[VnNet Security] Mã xác thực đăng nhập Quản trị";
+        String content = buildHtmlEmail(
+                "Xác thực phiên Quản trị (2FA)",
+                "Mã OTP đăng nhập cổng quản trị của bạn (hết hạn sau 5 phút, tuyệt đối không chia sẻ cho bất kỳ ai):",
+                otpCode
+        );
+        sendHtmlEmail(toEmail, subject, content);
+    }
+
     private void sendHtmlEmail(String to, String subject, String htmlBody) {
         // 1. Gửi qua Brevo REST API (HTTPS port 443 - hoạt động tốt trên Render Free Tier vì không bị chặn port SMTP)
         if (brevoApiKey != null && !brevoApiKey.isBlank()) {

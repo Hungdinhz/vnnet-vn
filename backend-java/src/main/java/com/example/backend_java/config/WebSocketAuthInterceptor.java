@@ -67,9 +67,10 @@ public class WebSocketAuthInterceptor implements ChannelInterceptor {
             }
 
             int userTokenVersion = user.getTokenVersion() != null ? user.getTokenVersion() : 0;
-            boolean accountActive = Boolean.TRUE.equals(user.getIsVerified()) || Boolean.TRUE.equals(user.getIsGuest());
+            boolean accountActive = (Boolean.TRUE.equals(user.getIsVerified()) || Boolean.TRUE.equals(user.getIsGuest()))
+                    && !user.isCurrentlyRestricted();
             if (!accountActive || tokenVersion == null || tokenVersion != userTokenVersion) {
-                throw new MessageDeliveryException("Unauthorized: Phiên đăng nhập đã bị thu hồi");
+                throw new MessageDeliveryException("Unauthorized: Phiên đăng nhập đã bị thu hồi hoặc tài khoản bị khóa");
             }
 
             // Use email as the principal name so that convertAndSendToUser matches correctly

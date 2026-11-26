@@ -69,6 +69,19 @@ public class MarketplaceItem {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "is_hidden", nullable = false)
+    @Builder.Default
+    private Boolean isHidden = false;
+
+    @Column(name = "hidden_reason", columnDefinition = "TEXT")
+    private String hiddenReason;
+
+    @Column(name = "hidden_at")
+    private LocalDateTime hiddenAt;
+
+    @Column(name = "hidden_by")
+    private Long hiddenBy;
+
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();

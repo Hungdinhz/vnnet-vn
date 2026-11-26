@@ -147,12 +147,39 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Tài khoản chưa được kích hoạt. Vui lòng xác minh email trước khi đăng nhập!");
         }
 
+        enforceNotRestricted(user);
+        user.setLastLoginAt(LocalDateTime.now());
+        userRepository.save(user);
+
         String token = jwtTokenProvider.generateToken(user.getEmail(), user.getTokenVersion());
 
         return TokenDto.builder()
                 .accessToken(token)
                 .tokenType("bearer")
                 .build();
+    }
+
+    private void enforceNotRestricted(User user) {
+        if (user.isCurrentlyRestricted()) {
+            String reason = (user.getBanReason() != null && !user.getBanReason().isBlank())
+                    ? " Lý do: " + user.getBanReason()
+                    : "";
+            if (user.getEffectiveAccountStatus() == com.example.backend_java.entity.AccountStatus.SUSPENDED
+                    && user.getBannedUntil() != null) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "Tài khoản của bạn đang bị tạm khóa đến " + user.getBannedUntil() + "." + reason);
+            }
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                    "Tài khoản của bạn đã bị khóa." + reason);
+        }
+        // Tự động mở khóa nếu tạm khóa đã hết hạn
+        if (user.getEffectiveAccountStatus() == com.example.backend_java.entity.AccountStatus.SUSPENDED
+                && user.getBannedUntil() != null
+                && user.getBannedUntil().isBefore(LocalDateTime.now())) {
+            user.setAccountStatus(com.example.backend_java.entity.AccountStatus.ACTIVE);
+            user.setBannedUntil(null);
+            user.setBanReason(null);
+        }
     }
 
     // Đăng xuất: Tăng tokenVersion để thu hồi ngay toàn bộ JWT cũ
@@ -211,6 +238,7 @@ public class AuthService {
 
         // Chỉ cho đăng nhập tự động nếu là tài khoản THƯỜNG đã xác thực (tuyệt đối không gộp vào tài khoản khách)
         if (user != null && Boolean.TRUE.equals(user.getIsVerified()) && !Boolean.TRUE.equals(user.getIsGuest())) {
+            enforceNotRestricted(user);
             if (user.getGoogleId() == null) {
                 user.setGoogleId(googleId);
             }
@@ -220,6 +248,7 @@ public class AuthService {
             if (user.getAvatarUrl() == null || user.getAvatarUrl().isBlank()) {
                 user.setAvatarUrl(pictureUrl);
             }
+            user.setLastLoginAt(LocalDateTime.now());
             user = userRepository.save(user);
 
             String token = jwtTokenProvider.generateToken(user.getEmail(), user.getTokenVersion());
