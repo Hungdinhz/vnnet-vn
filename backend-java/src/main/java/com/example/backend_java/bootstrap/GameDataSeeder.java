@@ -3,7 +3,9 @@ package com.example.backend_java.bootstrap;
 import com.example.backend_java.entity.Game;
 import com.example.backend_java.entity.GameAchievement;
 import com.example.backend_java.repository.GameAchievementRepository;
+import com.example.backend_java.repository.GameMatchRepository;
 import com.example.backend_java.repository.GameRepository;
+import com.example.backend_java.repository.GameScoreRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
@@ -12,12 +14,21 @@ import java.util.List;
 @Component
 public class GameDataSeeder implements CommandLineRunner {
 
+    private static final String CARO_BANNER_URL = "/images/caro-banner.jpg";
+
     private final GameRepository gameRepository;
     private final GameAchievementRepository gameAchievementRepository;
+    private final GameScoreRepository gameScoreRepository;
+    private final GameMatchRepository gameMatchRepository;
 
-    public GameDataSeeder(GameRepository gameRepository, GameAchievementRepository gameAchievementRepository) {
+    public GameDataSeeder(GameRepository gameRepository,
+                          GameAchievementRepository gameAchievementRepository,
+                          GameScoreRepository gameScoreRepository,
+                          GameMatchRepository gameMatchRepository) {
         this.gameRepository = gameRepository;
         this.gameAchievementRepository = gameAchievementRepository;
+        this.gameScoreRepository = gameScoreRepository;
+        this.gameMatchRepository = gameMatchRepository;
     }
 
     @Override
@@ -81,6 +92,28 @@ public class GameDataSeeder implements CommandLineRunner {
 
         // 3. Đảm bảo các game Multiplayer mới luôn được seed (idempotent theo slug)
         seedMultiplayerGames();
+
+        // 4. Đồng bộ playCount thật từ DB (bỏ hoàn toàn dữ liệu mẫu) & cập nhật ảnh bìa Caro
+        for (Game g : gameRepository.findAll()) {
+            boolean dirty = false;
+            boolean isMulti = "MULTIPLAYER".equalsIgnoreCase(g.getGameMode())
+                    || "HYBRID".equalsIgnoreCase(g.getGameMode());
+            long realPlays = isMulti
+                    ? gameMatchRepository.countByGameId(g.getId())
+                    : gameScoreRepository.countByGameId(g.getId());
+            if (g.getPlayCount() == null || !g.getPlayCount().equals(realPlays)) {
+                g.setPlayCount(realPlays);
+                dirty = true;
+            }
+            if ("caro-online".equalsIgnoreCase(g.getSlug()) && !CARO_BANNER_URL.equals(g.getImageUrl())) {
+                g.setImageUrl(CARO_BANNER_URL);
+                g.setThumbnailUrl(CARO_BANNER_URL);
+                dirty = true;
+            }
+            if (dirty) {
+                gameRepository.save(g);
+            }
+        }
     }
 
     private void updateGameAchievements(Game game) {
@@ -114,7 +147,7 @@ public class GameDataSeeder implements CommandLineRunner {
                 .difficulty("MEDIUM")
                 .maxScore(1500)
                 .isActive(true)
-                .playCount(48L)
+                .playCount(0L)
                 .description("Thử thách kiến thức tổng hợp với đa dạng chủ đề hấp dẫn: Khoa học, Địa lý, Lịch sử, Âm nhạc, Đố vui Logo...")
                 .imageUrl("https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?w=800&auto=format&fit=crop&q=60")
                 .thumbnailUrl("https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?w=400&auto=format&fit=crop&q=60")
@@ -139,7 +172,7 @@ public class GameDataSeeder implements CommandLineRunner {
                 .difficulty("EASY")
                 .maxScore(1000)
                 .isActive(true)
-                .playCount(35L)
+                .playCount(0L)
                 .description("Lật thẻ và tìm các cặp biểu tượng giống nhau trong lưới 4x4. Rèn luyện khả năng quan sát và trí nhớ đỉnh cao!")
                 .imageUrl("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=60")
                 .thumbnailUrl("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&auto=format&fit=crop&q=60")
@@ -164,7 +197,7 @@ public class GameDataSeeder implements CommandLineRunner {
                 .difficulty("HARD")
                 .maxScore(2000)
                 .isActive(true)
-                .playCount(62L)
+                .playCount(0L)
                 .description("Kiểm tra tốc độ gõ phím và độ chính xác với các từ vựng tiếng Việt và thuật ngữ phổ biến trong thời gian 60 giây!")
                 .imageUrl("https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=800&auto=format&fit=crop&q=60")
                 .thumbnailUrl("https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400&auto=format&fit=crop&q=60")
@@ -192,10 +225,10 @@ public class GameDataSeeder implements CommandLineRunner {
                     .difficulty("MEDIUM")
                     .maxScore(3000)
                     .isActive(true)
-                    .playCount(85L)
-                    .description("Đấu trí Cờ Caro 15×15 realtime chuẩn ELO! Ghép trận nhanh 1v1, tạo phòng riêng mời bạn bè hoặc luyện tập cùng Bot AI thông minh.")
-                    .imageUrl("https://images.unsplash.com/photo-1529699211952-734e80c4d42b?w=800&auto=format&fit=crop&q=60")
-                    .thumbnailUrl("https://images.unsplash.com/photo-1529699211952-734e80c4d42b?w=400&auto=format&fit=crop&q=60")
+                    .playCount(0L)
+                    .description("Đấu trí Cờ Caro 15×15 online chuẩn ELO! Ghép trận nhanh 1v1, tạo phòng riêng mời bạn bè hoặc luyện tập cùng Bot AI 3 cấp độ.")
+                    .imageUrl(CARO_BANNER_URL)
+                    .thumbnailUrl(CARO_BANNER_URL)
                     .build();
             caro = gameRepository.save(caro);
 

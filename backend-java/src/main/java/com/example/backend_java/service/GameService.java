@@ -24,6 +24,7 @@ public class GameService {
     private final GameScoreRepository gameScoreRepository;
     private final GameAchievementRepository gameAchievementRepository;
     private final UserAchievementRepository userAchievementRepository;
+    private final UserGameRatingRepository userGameRatingRepository;
     private final UserRepository userRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final GameMapper gameMapper;
@@ -32,6 +33,7 @@ public class GameService {
                        GameScoreRepository gameScoreRepository,
                        GameAchievementRepository gameAchievementRepository,
                        UserAchievementRepository userAchievementRepository,
+                       UserGameRatingRepository userGameRatingRepository,
                        UserRepository userRepository,
                        JwtTokenProvider jwtTokenProvider,
                        GameMapper gameMapper) {
@@ -39,6 +41,7 @@ public class GameService {
         this.gameScoreRepository = gameScoreRepository;
         this.gameAchievementRepository = gameAchievementRepository;
         this.userAchievementRepository = userAchievementRepository;
+        this.userGameRatingRepository = userGameRatingRepository;
         this.userRepository = userRepository;
         this.jwtTokenProvider = jwtTokenProvider;
         this.gameMapper = gameMapper;
@@ -112,8 +115,8 @@ public class GameService {
                 .build();
         gameScore = gameScoreRepository.save(gameScore);
 
-        // Increment game play count
-        game.setPlayCount((game.getPlayCount() != null ? game.getPlayCount() : 0L) + 1L);
+        // Sync real play count from DB
+        game.setPlayCount(gameScoreRepository.countByGameId(game.getId()));
         gameRepository.save(game);
 
         // Check & unlock achievements
@@ -150,11 +153,52 @@ public class GameService {
     }
 
     public PagedResponseDto<LeaderboardEntryDto> getLeaderboard(Long gameId, int page, int size) {
-        if (!gameRepository.existsById(gameId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy trò chơi");
-        }
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Không tìm thấy trò chơi"));
 
         Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 50));
+
+        // For multiplayer ELO games, return the real ELO ranking instead of raw match points
+        boolean isMulti = "MULTIPLAYER".equalsIgnoreCase(game.getGameMode())
+                || "HYBRID".equalsIgnoreCase(game.getGameMode());
+        if (isMulti) {
+            List<UserGameRating> ratings = userGameRatingRepository.findByGameIdOrderByEloDescWinsDesc(gameId, pageable);
+            long totalElements = userGameRatingRepository.countByGameId(gameId);
+            int totalPages = (int) Math.ceil((double) totalElements / pageable.getPageSize());
+
+            Set<Long> userIds = ratings.stream().map(UserGameRating::getUserId).collect(Collectors.toSet());
+            Map<Long, User> userMap = userRepository.findAllById(userIds).stream()
+                    .collect(Collectors.toMap(User::getId, u -> u));
+
+            List<LeaderboardEntryDto> entries = new ArrayList<>();
+            int baseRank = pageable.getPageNumber() * pageable.getPageSize();
+            for (int i = 0; i < ratings.size(); i++) {
+                UserGameRating r = ratings.get(i);
+                User u = userMap.get(r.getUserId());
+                long totalMatches = (long) r.getWins() + r.getLosses() + r.getDraws();
+                entries.add(LeaderboardEntryDto.builder()
+                        .rank(baseRank + i + 1)
+                        .user(LeaderboardEntryDto.UserOutDto.builder()
+                                .id(r.getUserId())
+                                .username(u != null ? u.getUsername() : "Người chơi")
+                                .avatarUrl(u != null ? u.getAvatarUrl() : null)
+                                .build())
+                        .highScore(r.getElo())
+                        .totalPlays(totalMatches)
+                        .lastPlayedAt(r.getUpdatedAt())
+                        .build());
+            }
+
+            return PagedResponseDto.<LeaderboardEntryDto>builder()
+                    .content(entries)
+                    .page(pageable.getPageNumber())
+                    .size(pageable.getPageSize())
+                    .totalElements(totalElements)
+                    .totalPages(totalPages)
+                    .hasNext(pageable.getPageNumber() + 1 < totalPages)
+                    .build();
+        }
+
         List<Object[]> results = gameScoreRepository.findLeaderboardByGameId(gameId, pageable);
         long totalElements = gameScoreRepository.countDistinctUsersByGameId(gameId);
         int totalPages = (int) Math.ceil((double) totalElements / pageable.getPageSize());

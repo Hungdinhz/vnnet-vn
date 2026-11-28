@@ -12,6 +12,8 @@ import java.util.List;
 @Repository
 public interface GameMatchRepository extends JpaRepository<GameMatch, Long> {
 
+    long countByGameId(Long gameId);
+
     @Query("SELECT DISTINCT m FROM GameMatch m JOIN FETCH m.players p " +
            "WHERE m.gameId = :gameId AND EXISTS (" +
            "  SELECT 1 FROM GameMatchPlayer mp WHERE mp.match = m AND mp.userId = :userId" +

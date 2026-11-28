@@ -122,9 +122,21 @@ public class GameRoomManager {
                 .build());
 
         if (vsBot) {
+            CaroBotAi.Difficulty botDiff = CaroBotAi.Difficulty.fromString(room.getRules().get("botDifficulty"));
+            room.getRules().put("botDifficulty", botDiff.name());
+            String botLabel = switch (botDiff) {
+                case EASY -> "Bot AI (Dễ)";
+                case HARD -> "Bot AI (Khó)";
+                default -> "Bot AI (Trung bình)";
+            };
+            int botElo = switch (botDiff) {
+                case EASY -> 800;
+                case HARD -> 1400;
+                default -> 1100;
+            };
             room.getPlayers().add(GameRoom.PlayerSlot.builder()
                     .userId(null)
-                    .username("VnNet Bot AI")
+                    .username(botLabel)
                     .avatarUrl(null)
                     .seatIndex(1)
                     .symbol("O")
@@ -132,7 +144,7 @@ public class GameRoomManager {
                     .host(false)
                     .bot(true)
                     .connected(true)
-                    .elo(1100)
+                    .elo(botElo)
                     .build());
         }
 
@@ -518,7 +530,8 @@ public class GameRoomManager {
 
                 int botPiece = state.pieceForSeat(botSeat);
                 int humanPiece = state.pieceForSeat(botSeat == 0 ? 1 : 0);
-                int[] move = CaroBotAi.chooseBestMove(state.getBoard(), botPiece, humanPiece, state.isBlockTwoEnds());
+                CaroBotAi.Difficulty botDiff = CaroBotAi.Difficulty.fromString(room.getRules().get("botDifficulty"));
+                int[] move = CaroBotAi.chooseBestMove(state.getBoard(), botPiece, humanPiece, state.isBlockTwoEnds(), botDiff);
                 if (move == null) return;
 
                 CaroEngine caroEngine = (CaroEngine) enginesBySlug.get(CaroEngine.SLUG);

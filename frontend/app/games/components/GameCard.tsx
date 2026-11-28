@@ -18,12 +18,24 @@ export default function GameCard({ game: rawGame }: GameCardProps) {
   const getDifficultyColor = (diff: string) => {
     switch (diff?.toUpperCase()) {
       case 'EASY':
-        return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+        return 'text-emerald-300 bg-slate-950/80 border-emerald-400/40';
       case 'HARD':
-        return 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+        return 'text-rose-300 bg-slate-950/80 border-rose-400/40';
       case 'MEDIUM':
       default:
-        return 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+        return 'text-amber-300 bg-slate-950/80 border-amber-400/40';
+    }
+  };
+
+  const getDifficultyLabel = (diff: string) => {
+    switch (diff?.toUpperCase()) {
+      case 'EASY':
+        return 'Dễ';
+      case 'HARD':
+        return 'Khó';
+      case 'MEDIUM':
+      default:
+        return 'Trung bình';
     }
   };
 
@@ -46,7 +58,7 @@ export default function GameCard({ game: rawGame }: GameCardProps) {
     }
   };
 
-  const isHot = game.play_count >= 40;
+  const isHot = game.play_count >= 10;
   const isMultiplayer = game.game_mode === 'MULTIPLAYER' || game.game_mode === 'HYBRID';
 
   return (
@@ -54,38 +66,40 @@ export default function GameCard({ game: rawGame }: GameCardProps) {
       {/* Thumbnail */}
       <div className="relative h-44 w-full overflow-hidden bg-surface-hover">
         <img
-          src={game.thumbnail_url || game.image_url || 'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=600&auto=format&fit=crop&q=60'}
+          src={game.thumbnail_url || game.image_url || '/images/caro-banner.jpg'}
           alt={game.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-background/25 to-slate-950/35" />
 
-        {/* Badges */}
-        <div className="absolute top-3 left-3 flex gap-1.5 flex-wrap">
-          {isMultiplayer && (
-            <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/90 text-white shadow-lg shadow-emerald-500/30">
-              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-              ONLINE {game.max_players ? `1-${game.max_players}P` : 'PvP'}
+        {/* Responsive Badges Row — prevents overlap on all screen sizes */}
+        <div className="absolute top-2.5 left-2.5 right-2.5 flex items-start justify-between gap-2">
+          <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+            {isMultiplayer && (
+              <span className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/95 text-white shadow-md whitespace-nowrap">
+                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                ONLINE
+              </span>
+            )}
+            {isHot && (
+              <span className="flex items-center gap-1 text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-500/95 text-white shadow-md whitespace-nowrap">
+                <Flame className="w-3 h-3" /> HOT
+              </span>
+            )}
+            <span className="text-[10px] sm:text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-600/90 backdrop-blur-md text-white border border-indigo-400/30 whitespace-nowrap">
+              {getCategoryLabel(game.category)}
+            </span>
+          </div>
+
+          {!isMultiplayer && (
+            <span className={`shrink-0 text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full border backdrop-blur-md whitespace-nowrap ${getDifficultyColor(game.difficulty)}`}>
+              {getDifficultyLabel(game.difficulty)}
             </span>
           )}
-          {isHot && (
-            <span className="flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-500/90 text-white shadow-lg shadow-rose-500/30">
-              <Flame className="w-3 h-3" /> HOT
-            </span>
-          )}
-          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-indigo-600/80 backdrop-blur-md text-indigo-100 border border-indigo-400/30">
-            {getCategoryLabel(game.category)}
-          </span>
-        </div>
-
-        <div className="absolute top-3 right-3">
-          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border backdrop-blur-md ${getDifficultyColor(game.difficulty)}`}>
-            {game.difficulty}
-          </span>
         </div>
 
         {/* Bottom thumbnail info */}
-        <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-xs text-white/90 drop-shadow">
+        <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between text-xs text-white/95 drop-shadow">
           <span className="flex items-center gap-1">
             <Users className="w-3.5 h-3.5 text-indigo-300" />
             <span>{game.play_count} lượt chơi</span>
@@ -93,7 +107,7 @@ export default function GameCard({ game: rawGame }: GameCardProps) {
           {game.current_user_high_score !== undefined && game.current_user_high_score !== null && (
             <span className="flex items-center gap-1 font-semibold text-amber-300">
               <Trophy className="w-3.5 h-3.5" />
-              <span>Kỷ lục: {game.current_user_high_score}</span>
+              <span>{isMultiplayer ? `ELO: ${game.current_user_high_score}` : `Kỷ lục: ${game.current_user_high_score}`}</span>
             </span>
           )}
         </div>

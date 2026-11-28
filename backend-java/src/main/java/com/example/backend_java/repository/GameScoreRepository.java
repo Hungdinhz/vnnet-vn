@@ -20,6 +20,8 @@ public interface GameScoreRepository extends JpaRepository<GameScore, Long> {
 
     long countByGameIdAndUserId(Long gameId, Long userId);
 
+    long countByGameId(Long gameId);
+
     long countByUserId(Long userId);
 
     @Query("SELECT gs.user.id, MAX(gs.score) as highScore, COUNT(gs.id) as totalPlays, MAX(gs.createdAt) as lastPlayed " +

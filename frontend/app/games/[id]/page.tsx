@@ -120,12 +120,20 @@ function GameDetailContent() {
                     <span className="text-xs font-bold px-3 py-1 rounded-full bg-indigo-600/80 backdrop-blur-md text-white border border-indigo-400/30">
                       {game.category}
                     </span>
-                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-surface-hover/80 backdrop-blur-md text-amber-300 border border-amber-500/30">
-                      Độ khó: {game.difficulty}
-                    </span>
-                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-surface-hover/80 backdrop-blur-md text-indigo-300 border border-indigo-500/20">
-                      Điểm tối đa: {game.max_score}
-                    </span>
+                    {game.game_mode === 'MULTIPLAYER' || game.game_mode === 'HYBRID' ? (
+                      <span className="text-xs font-bold px-3 py-1 rounded-full bg-emerald-500/85 backdrop-blur-md text-white border border-emerald-400/30">
+                        Đấu Online 1v1 • ELO
+                      </span>
+                    ) : (
+                      <>
+                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-surface-hover/80 backdrop-blur-md text-amber-300 border border-amber-500/30">
+                          Độ khó: {game.difficulty === 'EASY' ? 'Dễ' : game.difficulty === 'HARD' ? 'Khó' : 'Trung bình'}
+                        </span>
+                        <span className="text-xs font-bold px-3 py-1 rounded-full bg-surface-hover/80 backdrop-blur-md text-indigo-300 border border-indigo-500/20">
+                          Điểm tối đa: {game.max_score}
+                        </span>
+                      </>
+                    )}
                   </div>
 
                   <h1 className="text-2xl md:text-4xl font-black text-white tracking-tight drop-shadow-md">

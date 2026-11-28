@@ -151,7 +151,9 @@ function GamePlayContent() {
               {game.title}
             </h1>
             <span className="text-[10px] sm:text-xs text-text-muted truncate block">
-              Độ khó: {game.difficulty} • Tối đa: {game.max_score} điểm
+              {isMultiplayerGame
+                ? 'Đấu trí 1v1 • Xếp hạng ELO'
+                : `Độ khó: ${game.difficulty === 'EASY' ? 'Dễ' : game.difficulty === 'HARD' ? 'Khó' : 'Trung bình'} • Tối đa: ${game.max_score} điểm`}
             </span>
           </div>
 
@@ -163,9 +165,7 @@ function GamePlayContent() {
               <RotateCcw className="w-3.5 h-3.5 shrink-0" /> <span className="hidden xs:inline">Chơi lại</span>
             </button>
           ) : (
-            <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0">
-              ● ONLINE
-            </span>
+            <div className="w-12 shrink-0" />
           )}
         </div>
 

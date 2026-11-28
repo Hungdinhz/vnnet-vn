@@ -10,7 +10,10 @@ export function normalizeGameItem(game: GameItem): GameItem {
   let imageUrl = game.image_url;
   let thumbnailUrl = game.thumbnail_url;
 
-  if (titleLower.includes('quiz')) {
+  if (game.slug === 'caro-online' || titleLower.includes('caro')) {
+    imageUrl = '/images/caro-banner.jpg';
+    thumbnailUrl = '/images/caro-banner.jpg';
+  } else if (titleLower.includes('quiz')) {
     title = 'Đố Vui Kiến Thức';
     description = 'Thử thách kiến thức tổng hợp với đa dạng chủ đề hấp dẫn: Khoa học, Địa lý, Lịch sử, Âm nhạc, Đố vui Logo...';
     imageUrl = 'https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?w=800&auto=format&fit=crop&q=60';

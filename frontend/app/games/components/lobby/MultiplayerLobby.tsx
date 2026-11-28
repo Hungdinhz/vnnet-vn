@@ -31,6 +31,8 @@ interface FriendItem {
   avatar_url?: string | null;
 }
 
+export type BotDifficulty = 'EASY' | 'MEDIUM' | 'HARD';
+
 interface MultiplayerLobbyProps {
   game: GameItem;
   currentUserId: number;
@@ -41,7 +43,7 @@ interface MultiplayerLobbyProps {
   eloLeaderboard: UserGameRating[];
   onQuickMatch: () => void;
   onCancelMatch: () => void;
-  onPlayVsBot: (blockTwoEnds: boolean, turnTimeSeconds: number) => void;
+  onPlayVsBot: (blockTwoEnds: boolean, turnTimeSeconds: number, botDifficulty: BotDifficulty) => void;
   onCreateRoom: (opts: {
     roomName: string;
     isPrivate: boolean;
@@ -80,6 +82,7 @@ export default function MultiplayerLobby({
   const [isPrivate, setIsPrivate] = useState(false);
   const [turnTime, setTurnTime] = useState(30);
   const [blockTwoEnds, setBlockTwoEnds] = useState(true);
+  const [botDifficulty, setBotDifficulty] = useState<BotDifficulty>('MEDIUM');
 
   // Waiting room helpers
   const [copied, setCopied] = useState(false);
@@ -366,17 +369,43 @@ export default function MultiplayerLobby({
             <div className="w-10 h-10 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-3">
               <Bot className="w-5 h-5" />
             </div>
-            <h3 className="font-black text-base text-foreground">Đấu Với Bot AI</h3>
+            <h3 className="font-black text-base text-foreground">Luyện Tập Với Máy</h3>
             <p className="text-xs text-text-muted mt-1">
-              Luyện tập ngay lập tức với Bot AI chiến thuật thông minh, không cần chờ đợi.
+              Chọn độ khó để luyện tập tự do. Đấu máy không tính vào ELO và số trận thắng.
             </p>
           </div>
-          <button
-            onClick={() => onPlayVsBot(blockTwoEnds, turnTime)}
-            className="w-full py-2.5 rounded-xl text-xs font-bold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/35 flex items-center justify-center gap-2 transition-all cursor-pointer"
-          >
-            <Bot className="w-4 h-4" /> Chơi Với Máy
-          </button>
+
+          <div className="space-y-2.5">
+            <div className="grid grid-cols-3 gap-1.5">
+              {(
+                [
+                  { key: 'EASY', label: 'Dễ' },
+                  { key: 'MEDIUM', label: 'Trung bình' },
+                  { key: 'HARD', label: 'Khó' },
+                ] as { key: BotDifficulty; label: string }[]
+              ).map((lvl) => (
+                <button
+                  key={lvl.key}
+                  type="button"
+                  onClick={() => setBotDifficulty(lvl.key)}
+                  className={`py-1.5 rounded-lg text-[11px] font-bold border transition-all cursor-pointer ${
+                    botDifficulty === lvl.key
+                      ? 'bg-emerald-500/25 border-emerald-400 text-emerald-200'
+                      : 'bg-surface-hover/50 border-indigo-500/15 text-text-muted hover:text-foreground'
+                  }`}
+                >
+                  {lvl.label}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => onPlayVsBot(blockTwoEnds, turnTime, botDifficulty)}
+              className="w-full py-2.5 rounded-xl text-xs font-bold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/35 flex items-center justify-center gap-2 transition-all cursor-pointer"
+            >
+              <Bot className="w-4 h-4" /> Chơi Với Máy
+            </button>
+          </div>
         </div>
 
         {/* My ELO Card */}
@@ -384,16 +413,6 @@ export default function MultiplayerLobby({
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-amber-400 flex items-center gap-1.5">
               <Trophy className="w-4 h-4" /> Hồ Sơ Kỳ Thủ
-            </span>
-            <span
-              className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 ${
-                isConnected
-                  ? 'bg-emerald-500/15 text-emerald-400'
-                  : 'bg-amber-500/15 text-amber-400'
-              }`}
-            >
-              <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-              {isConnected ? 'Realtime OK' : 'Đang kết nối...'}
             </span>
           </div>
 

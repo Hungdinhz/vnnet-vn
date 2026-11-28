@@ -101,10 +101,19 @@ class CaroEngineTest {
         board[7][7] = CaroState.SEAT_X;
         board[7][8] = CaroState.SEAT_X;
 
-        int[] botMove = CaroBotAi.chooseBestMove(board, CaroState.SEAT_O, CaroState.SEAT_X, true);
-        assertNotNull(botMove);
-        assertEquals(7, botMove[0]);
-        assertTrue(botMove[1] == 4 || botMove[1] == 9, "Bot phải chặn đầu (7,4) hoặc (7,9)");
+        int[] medMove = CaroBotAi.chooseBestMove(board, CaroState.SEAT_O, CaroState.SEAT_X, true, CaroBotAi.Difficulty.MEDIUM);
+        assertNotNull(medMove);
+        assertEquals(7, medMove[0]);
+        assertTrue(medMove[1] == 4 || medMove[1] == 9, "Bot MEDIUM phải chặn đầu (7,4) hoặc (7,9)");
+
+        int[] hardMove = CaroBotAi.chooseBestMove(board, CaroState.SEAT_O, CaroState.SEAT_X, true, CaroBotAi.Difficulty.HARD);
+        assertNotNull(hardMove);
+        assertEquals(7, hardMove[0]);
+        assertTrue(hardMove[1] == 4 || hardMove[1] == 9, "Bot HARD phải chặn đầu (7,4) hoặc (7,9)");
+
+        int[] easyMove = CaroBotAi.chooseBestMove(board, CaroState.SEAT_O, CaroState.SEAT_X, true, CaroBotAi.Difficulty.EASY);
+        assertNotNull(easyMove);
+        assertEquals(CaroState.EMPTY, board[easyMove[0]][easyMove[1]]);
     }
 
     private GameActionRequest move(int row, int col) {

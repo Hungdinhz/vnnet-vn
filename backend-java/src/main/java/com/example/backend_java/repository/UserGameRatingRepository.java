@@ -14,4 +14,6 @@ public interface UserGameRatingRepository extends JpaRepository<UserGameRating, 
     Optional<UserGameRating> findByUserIdAndGameId(Long userId, Long gameId);
 
     List<UserGameRating> findByGameIdOrderByEloDescWinsDesc(Long gameId, Pageable pageable);
+
+    long countByGameId(Long gameId);
 }

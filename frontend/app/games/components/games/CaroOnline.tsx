@@ -10,7 +10,7 @@ import {
   UserGameRating,
 } from '@/types/game';
 import { useGameWebSocket } from '@/lib/useGameWebSocket';
-import MultiplayerLobby from '../lobby/MultiplayerLobby';
+import MultiplayerLobby, { BotDifficulty } from '../lobby/MultiplayerLobby';
 import api from '@/lib/axios';
 import toast from 'react-hot-toast';
 import {
@@ -165,20 +165,25 @@ export default function CaroOnline({ game }: CaroOnlineProps) {
     cancelMatchmakingWs(gameSlug);
   };
 
-  const handlePlayVsBot = async (blockTwoEnds: boolean, turnTimeSeconds: number) => {
+  const handlePlayVsBot = async (
+    blockTwoEnds: boolean,
+    turnTimeSeconds: number,
+    botDifficulty: BotDifficulty
+  ) => {
+    const label = botDifficulty === 'EASY' ? 'Dễ' : botDifficulty === 'HARD' ? 'Khó' : 'Trung bình';
     try {
       const res = await api.post('/games/multiplayer/rooms', {
         gameSlug,
-        roomName: 'Luyện tập cùng Bot AI',
+        roomName: `Luyện tập với máy (${label})`,
         isPrivate: true,
         vsBot: true,
         turnTimeSeconds,
-        rules: { blockTwoEnds },
+        rules: { blockTwoEnds, botDifficulty },
       });
       setRoom(res.data);
       setChatMessages(res.data.recentChat || []);
     } catch (e: any) {
-      toast.error(e.response?.data?.message || 'Không thể tạo trận đấu với Bot');
+      toast.error(e.response?.data?.message || 'Không thể tạo trận đấu với máy');
     }
   };
 
@@ -334,16 +339,23 @@ export default function CaroOnline({ game }: CaroOnlineProps) {
                   : 'HÒA CỜ!'}
               </h3>
               <p className="text-xs text-text-muted">{room.systemMessage}</p>
-              {mySlot?.eloDelta !== null && mySlot?.eloDelta !== undefined && (
-                <span
-                  className={`inline-block mt-1 text-xs font-mono font-black px-2 py-0.5 rounded-full ${
-                    mySlot.eloDelta >= 0
-                      ? 'bg-emerald-500/20 text-emerald-400'
-                      : 'bg-rose-500/20 text-rose-400'
-                  }`}
-                >
-                  ELO: {mySlot.elo} ({mySlot.eloDelta >= 0 ? `+${mySlot.eloDelta}` : mySlot.eloDelta})
+              {room.vsBot ? (
+                <span className="inline-block mt-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-surface-hover text-text-muted border border-indigo-500/20">
+                  Trận luyện tập với máy — Không tính ELO &amp; số trận thắng
                 </span>
+              ) : (
+                mySlot?.eloDelta !== null &&
+                mySlot?.eloDelta !== undefined && (
+                  <span
+                    className={`inline-block mt-1 text-xs font-mono font-black px-2 py-0.5 rounded-full ${
+                      mySlot.eloDelta >= 0
+                        ? 'bg-emerald-500/20 text-emerald-400'
+                        : 'bg-rose-500/20 text-rose-400'
+                    }`}
+                  >
+                    ELO: {mySlot.elo} ({mySlot.eloDelta >= 0 ? `+${mySlot.eloDelta}` : mySlot.eloDelta})
+                  </span>
+                )
               )}
             </div>
           </div>

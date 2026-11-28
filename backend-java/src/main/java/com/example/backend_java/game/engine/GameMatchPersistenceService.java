@@ -50,14 +50,19 @@ public class GameMatchPersistenceService {
                     .orElse(null);
         }
 
-        // Calculate ELO for 2-player human PvP matches
+        // Calculate ELO ONLY for real 2-player human PvP matches (NEVER for Bot matches)
         boolean isPvp = !room.isVsBot() && room.getPlayers().size() == 2
                 && room.getPlayers().stream().noneMatch(GameRoom.PlayerSlot::isBot);
 
+        // Anti-farm guard: if a PvP match ends by FORFEIT/DISCONNECT before 4 total moves, abort without ELO/score changes
+        boolean isAbortedEarly = isPvp && totalMoves < 4
+                && ("FORFEIT".equals(endReason) || "DISCONNECT".equals(endReason));
+
         Map<Integer, Integer> eloBeforeMap = new HashMap<>();
         Map<Integer, Integer> eloAfterMap = new HashMap<>();
+        Map<Integer, Integer> winStreakAfterMap = new HashMap<>();
 
-        if (isPvp) {
+        if (isPvp && !isAbortedEarly) {
             GameRoom.PlayerSlot p0 = room.getPlayers().get(0);
             GameRoom.PlayerSlot p1 = room.getPlayers().get(1);
 
@@ -78,29 +83,23 @@ public class GameMatchPersistenceService {
 
             eloAfterMap.put(p0.getSeatIndex(), newElos[0]);
             eloAfterMap.put(p1.getSeatIndex(), newElos[1]);
+            winStreakAfterMap.put(p0.getSeatIndex(), r0.getWinStreak());
+            winStreakAfterMap.put(p1.getSeatIndex(), r1.getWinStreak());
 
             p0.setEloDelta(newElos[0] - eloBeforeMap.get(p0.getSeatIndex()));
             p0.setElo(newElos[0]);
             p1.setEloDelta(newElos[1] - eloBeforeMap.get(p1.getSeatIndex()));
             p1.setElo(newElos[1]);
         } else {
-            // Bot match: record wins/losses without changing PvP ELO drastically (or +5 on win)
+            // Bot practice match OR early-aborted match: DO NOT touch ELO or wins/losses/draws!
             for (GameRoom.PlayerSlot slot : room.getPlayers()) {
-                if (slot.isBot()) {
-                    eloBeforeMap.put(slot.getSeatIndex(), 1100);
-                    eloAfterMap.put(slot.getSeatIndex(), 1100);
-                    continue;
-                }
-                UserGameRating r = getOrCreateRating(slot.getUserId(), game.getId());
-                int before = r.getElo();
-                eloBeforeMap.put(slot.getSeatIndex(), before);
-                double score = winnerSeat == null ? 0.5 : (winnerSeat == slot.getSeatIndex() ? 1.0 : 0.0);
-                int after = score == 1.0 ? before + 5 : before;
-                updateRatingStats(r, after, score);
-                ratingRepository.save(r);
-                eloAfterMap.put(slot.getSeatIndex(), after);
-                slot.setEloDelta(after - before);
-                slot.setElo(after);
+                int currentElo = slot.isBot() ? slot.getElo() : getUserElo(slot.getUserId(), game.getId());
+                eloBeforeMap.put(slot.getSeatIndex(), currentElo);
+                eloAfterMap.put(slot.getSeatIndex(), currentElo);
+                slot.setEloDelta(null);
+            }
+            if (isAbortedEarly) {
+                room.setSystemMessage("Trận đấu kết thúc quá sớm (< 4 nước đi) nên không tính điểm ELO.");
             }
         }
 
@@ -109,8 +108,8 @@ public class GameMatchPersistenceService {
                 .gameId(game.getId())
                 .roomCode(room.getRoomCode())
                 .mode(room.isVsBot() ? "BOT" : "PVP")
-                .status("FINISHED")
-                .winnerId(winnerUserId)
+                .status(isAbortedEarly ? "ABORTED" : "FINISHED")
+                .winnerId(isAbortedEarly ? null : winnerUserId)
                 .durationSeconds(durationSeconds)
                 .totalMoves(totalMoves)
                 .endReason(endReason)
@@ -118,10 +117,25 @@ public class GameMatchPersistenceService {
                 .build();
 
         for (GameRoom.PlayerSlot slot : room.getPlayers()) {
-            String result = winnerSeat == null ? "DRAW" : (winnerSeat == slot.getSeatIndex() ? "WIN" : "LOSS");
+            String result = isAbortedEarly
+                    ? "DRAW"
+                    : (winnerSeat == null ? "DRAW" : (winnerSeat == slot.getSeatIndex() ? "WIN" : "LOSS"));
             int eloAfter = eloAfterMap.getOrDefault(slot.getSeatIndex(), slot.getElo());
             int eloBefore = eloBeforeMap.getOrDefault(slot.getSeatIndex(), slot.getElo());
-            int matchScore = "WIN".equals(result) ? Math.max(500, eloAfter) : ("DRAW".equals(result) ? 300 : 150);
+
+            // Fair real-world match score (ONLY for valid PvP matches; Bot & aborted = 0)
+            int matchScore = 0;
+            if (isPvp && !isAbortedEarly) {
+                if ("WIN".equals(result)) {
+                    int baseWin = 100;
+                    int efficiencyBonus = totalMoves <= 25 ? 50 : (totalMoves <= 45 ? 30 : 20);
+                    int streak = winStreakAfterMap.getOrDefault(slot.getSeatIndex(), 1);
+                    int streakBonus = Math.min(50, Math.max(0, (streak - 1) * 10));
+                    matchScore = baseWin + efficiencyBonus + streakBonus; // 120 - 200 pts
+                } else if ("DRAW".equals(result) && totalMoves >= 10) {
+                    matchScore = 50;
+                }
+            }
 
             GameMatchPlayer mp = GameMatchPlayer.builder()
                     .match(match)
@@ -136,8 +150,8 @@ public class GameMatchPersistenceService {
                     .build();
             match.getPlayers().add(mp);
 
-            // Also record GameScore & unlock achievements for human players
-            if (!slot.isBot() && slot.getUserId() != null) {
+            // Record GameScore & achievements ONLY for real PvP matches with positive score (never Bot farming!)
+            if (isPvp && !isAbortedEarly && !slot.isBot() && slot.getUserId() != null && matchScore > 0) {
                 User user = userRepository.findById(slot.getUserId()).orElse(null);
                 if (user != null) {
                     int cappedScore = game.getMaxScore() != null ? Math.min(matchScore, game.getMaxScore()) : matchScore;
@@ -150,15 +164,16 @@ public class GameMatchPersistenceService {
                             .playTimeSeconds(durationSeconds)
                             .build();
                     gameScoreRepository.save(gs);
-                    unlockAchievements(game, user, cappedScore);
+                    unlockAchievements(game, user, eloAfter);
                 }
             }
         }
 
         gameMatchRepository.save(match);
 
-        // Increment play count
-        game.setPlayCount((game.getPlayCount() != null ? game.getPlayCount() : 0L) + 1L);
+        // Sync real play count from DB
+        long realPlays = gameMatchRepository.countByGameId(game.getId());
+        game.setPlayCount(realPlays);
         gameRepository.save(game);
     }
 
