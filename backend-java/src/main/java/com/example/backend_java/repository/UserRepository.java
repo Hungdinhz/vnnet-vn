@@ -65,6 +65,50 @@ public interface UserRepository extends JpaRepository<User, Long> {
     """, nativeQuery = true)
     List<Object[]> countDailyNewUsers(@Param("since") LocalDateTime since);
 
+    @Query(value = """
+        SELECT day, COUNT(DISTINCT user_id) AS cnt
+        FROM (
+            SELECT CAST(last_login_at AS DATE) AS day, id AS user_id
+            FROM users
+            WHERE last_login_at >= :since
+            UNION
+            SELECT CAST(created_at AS DATE) AS day, owner_id AS user_id
+            FROM posts
+            WHERE created_at >= :since AND owner_id IS NOT NULL
+            UNION
+            SELECT CAST(created_at AS DATE) AS day, user_id AS user_id
+            FROM comments
+            WHERE created_at >= :since AND user_id IS NOT NULL
+            UNION
+            SELECT CAST(created_at AS DATE) AS day, sender_id AS user_id
+            FROM messages
+            WHERE created_at >= :since AND sender_id IS NOT NULL
+            UNION
+            SELECT CAST(created_at AS DATE) AS day, seller_id AS user_id
+            FROM marketplace_items
+            WHERE created_at >= :since AND seller_id IS NOT NULL
+        ) daily_activity
+        GROUP BY day
+        ORDER BY day ASC
+    """, nativeQuery = true)
+    List<Object[]> countDailyActiveUsers(@Param("since") LocalDateTime since);
+
+    @Query(value = """
+        SELECT COUNT(DISTINCT user_id)
+        FROM (
+            SELECT id AS user_id FROM users WHERE last_login_at >= :since
+            UNION
+            SELECT owner_id AS user_id FROM posts WHERE created_at >= :since AND owner_id IS NOT NULL
+            UNION
+            SELECT user_id AS user_id FROM comments WHERE created_at >= :since AND user_id IS NOT NULL
+            UNION
+            SELECT sender_id AS user_id FROM messages WHERE created_at >= :since AND sender_id IS NOT NULL
+            UNION
+            SELECT seller_id AS user_id FROM marketplace_items WHERE created_at >= :since AND seller_id IS NOT NULL
+        ) recent_activity
+    """, nativeQuery = true)
+    long countActiveUsersSince(@Param("since") LocalDateTime since);
+
     // Tìm kiếm user theo username hoặc fullName (không lộ tìm kiếm theo email riêng tư)
     @Query("SELECT u FROM User u WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :query, '%')) ESCAPE '\\' " +
            "OR LOWER(COALESCE(u.fullName, '')) LIKE LOWER(CONCAT('%', :query, '%')) ESCAPE '\\'")

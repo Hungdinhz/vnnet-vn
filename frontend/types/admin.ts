@@ -102,6 +102,7 @@ export interface AdminMarketplaceItem {
 
 export interface DashboardOverview {
   total_users: number;
+  active_users_24h: number;
   new_users_24h: number;
   new_users_7d: number;
   restricted_users: number;
@@ -114,6 +115,7 @@ export interface DashboardOverview {
 
 export interface DailyGrowthPoint {
   date: string;
+  active_users: number;
   new_users: number;
   new_posts: number;
 }

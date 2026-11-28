@@ -70,14 +70,16 @@ export default function AdminReportsPage() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Hàng đợi Báo cáo Vi phạm</h1>
-          <p className="text-sm text-slate-400">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Hàng đợi Báo cáo Vi phạm
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
             Xử lý tập trung các báo cáo từ cộng đồng — tự động đóng các báo cáo trùng lặp
           </p>
         </div>
         <button
           onClick={loadReports}
-          className="inline-flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-slate-800 cursor-pointer"
+          className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 shadow-2xs cursor-pointer"
         >
           <RefreshCw className="h-3.5 w-3.5" /> Làm mới
         </button>
@@ -90,7 +92,7 @@ export default function AdminReportsPage() {
             setPage(0);
             setStatusFilter(e.target.value);
           }}
-          className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-sm text-slate-200"
+          className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-sm text-slate-700 dark:text-slate-200"
         >
           <option value="">Tất cả trạng thái</option>
           <option value="PENDING">PENDING (Chờ xử lý)</option>
@@ -104,7 +106,7 @@ export default function AdminReportsPage() {
             setPage(0);
             setTargetFilter(e.target.value);
           }}
-          className="rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-sm text-slate-200"
+          className="rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2.5 text-sm text-slate-700 dark:text-slate-200"
         >
           <option value="">Tất cả đối tượng</option>
           <option value="POST">Bài viết (POST)</option>
@@ -117,38 +119,40 @@ export default function AdminReportsPage() {
 
       <div className="space-y-3">
         {loading ? (
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-10 text-center text-slate-500 text-sm">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-12 text-center text-slate-500 dark:text-slate-400 text-sm">
             Đang tải báo cáo...
           </div>
         ) : reports.length === 0 ? (
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/70 p-10 text-center text-slate-500 text-sm">
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-12 text-center text-slate-500 dark:text-slate-400 text-sm">
             Không có báo cáo nào phù hợp bộ lọc.
           </div>
         ) : (
           reports.map((r) => (
             <div
               key={r.id}
-              className="rounded-2xl border border-slate-800 bg-slate-900/70 p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+              className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-5 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4"
             >
               <div className="space-y-1.5 min-w-0">
                 <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-semibold">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 font-semibold">
                     <Flag className="h-3 w-3" /> {r.reason_category}
                   </span>
-                  <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">
+                  <span className="px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono">
                     {r.target_type} #{r.target_id}
                   </span>
-                  <span className="text-slate-400">
-                    Báo cáo bởi <strong>@{r.reporter_username}</strong> ·{' '}
+                  <span className="text-slate-500 dark:text-slate-400">
+                    Báo cáo bởi <strong className="text-slate-800 dark:text-slate-200">@{r.reporter_username}</strong> ·{' '}
                     {new Date(r.created_at).toLocaleString('vi-VN')}
                   </span>
                 </div>
-                <p className="text-sm text-white font-medium break-words">{r.target_preview}</p>
+                <p className="text-sm text-slate-900 dark:text-white font-semibold break-words">
+                  {r.target_preview}
+                </p>
                 {r.description && (
-                  <p className="text-xs text-slate-400">Mô tả: {r.description}</p>
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Mô tả: {r.description}</p>
                 )}
                 {r.action_taken && (
-                  <p className="text-xs text-emerald-400">
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
                     Đã xử lý: {r.action_taken} {r.resolution_note ? `— ${r.resolution_note}` : ''}
                   </p>
                 )}
@@ -162,13 +166,13 @@ export default function AdminReportsPage() {
                       setAction(r.target_type === 'USER' ? 'SUSPEND_USER' : 'HIDE_CONTENT');
                       setNote('');
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-xs cursor-pointer"
                   >
                     <CheckCircle2 className="h-3.5 w-3.5" /> Xử lý
                   </button>
                 </div>
               ) : (
-                <span className="px-2.5 py-1 rounded-full text-xs bg-slate-800 text-slate-400 shrink-0">
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 shrink-0">
                   {r.status}
                 </span>
               )}
@@ -182,17 +186,17 @@ export default function AdminReportsPage() {
           <button
             disabled={page <= 0}
             onClick={() => setPage((p) => p - 1)}
-            className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 disabled:opacity-40 cursor-pointer"
+            className="px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 disabled:opacity-40 cursor-pointer"
           >
             Trước
           </button>
-          <span className="text-slate-400">
+          <span className="text-slate-500 dark:text-slate-400">
             Trang {page + 1} / {totalPages}
           </span>
           <button
             disabled={page + 1 >= totalPages}
             onClick={() => setPage((p) => p + 1)}
-            className="px-3 py-1.5 rounded-lg border border-slate-800 bg-slate-900 disabled:opacity-40 cursor-pointer"
+            className="px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 disabled:opacity-40 cursor-pointer"
           >
             Sau
           </button>
@@ -200,19 +204,23 @@ export default function AdminReportsPage() {
       )}
 
       {resolving && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
           <form
             onSubmit={handleResolve}
-            className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 space-y-4"
+            className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 space-y-4 shadow-2xl"
           >
-            <h3 className="text-lg font-bold text-white">Xử lý báo cáo #{resolving.id}</h3>
-            <p className="text-xs text-slate-400">{resolving.target_preview}</p>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              Xử lý báo cáo #{resolving.id}
+            </h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">{resolving.target_preview}</p>
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Hành động</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                Hành động
+              </label>
               <select
                 value={action}
                 onChange={(e) => setAction(e.target.value)}
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm text-slate-900 dark:text-white"
               >
                 <option value="DISMISS">Bác bỏ báo cáo (Không vi phạm)</option>
                 {resolving.target_type !== 'USER' && (
@@ -229,27 +237,29 @@ export default function AdminReportsPage() {
               </select>
             </div>
             <div>
-              <label className="block text-xs text-slate-400 mb-1">Ghi chú xử lý</label>
+              <label className="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">
+                Ghi chú xử lý
+              </label>
               <textarea
                 rows={3}
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="Ghi chú lý do xử lý (lưu vào Audit Log)..."
-                className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white"
+                className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-sm text-slate-900 dark:text-white"
               />
             </div>
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 pt-2">
               <button
                 type="button"
                 onClick={() => setResolving(null)}
-                className="inline-flex items-center gap-1 px-4 py-2 rounded-lg text-xs bg-slate-800 text-slate-300 cursor-pointer"
+                className="inline-flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 cursor-pointer"
               >
                 <XCircle className="h-3.5 w-3.5" /> Hủy
               </button>
               <button
                 type="submit"
                 disabled={busy}
-                className="inline-flex items-center gap-1 px-4 py-2 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 cursor-pointer"
+                className="inline-flex items-center gap-1 px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white disabled:opacity-50 cursor-pointer"
               >
                 {action.includes('BAN') ? (
                   <Ban className="h-3.5 w-3.5" />

@@ -37,6 +37,7 @@ public class AdminDashboardController {
 
         return DashboardOverviewDto.builder()
                 .totalUsers(userRepository.count())
+                .activeUsers24h(userRepository.countActiveUsersSince(last24h))
                 .newUsers24h(userRepository.countByCreatedAtAfter(last24h))
                 .newUsers7d(userRepository.countByCreatedAtAfter(last7d))
                 .restrictedUsers(restricted)
@@ -55,10 +56,17 @@ public class AdminDashboardController {
         LocalDate startDate = LocalDate.now().minusDays(safeDays - 1L);
         LocalDateTime since = startDate.atStartOfDay();
 
-        Map<String, Long> userMap = new HashMap<>();
+        Map<String, Long> activeUserMap = new HashMap<>();
+        for (Object[] row : userRepository.countDailyActiveUsers(since)) {
+            if (row[0] != null && row[1] != null) {
+                activeUserMap.put(row[0].toString(), ((Number) row[1]).longValue());
+            }
+        }
+
+        Map<String, Long> newUserMap = new HashMap<>();
         for (Object[] row : userRepository.countDailyNewUsers(since)) {
             if (row[0] != null && row[1] != null) {
-                userMap.put(row[0].toString(), ((Number) row[1]).longValue());
+                newUserMap.put(row[0].toString(), ((Number) row[1]).longValue());
             }
         }
 
@@ -74,7 +82,8 @@ public class AdminDashboardController {
             String dayStr = startDate.plusDays(i).toString();
             points.add(DailyGrowthPoint.builder()
                     .date(dayStr)
-                    .newUsers(userMap.getOrDefault(dayStr, 0L))
+                    .activeUsers(activeUserMap.getOrDefault(dayStr, 0L))
+                    .newUsers(newUserMap.getOrDefault(dayStr, 0L))
                     .newPosts(postMap.getOrDefault(dayStr, 0L))
                     .build());
         }

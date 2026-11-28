@@ -42,20 +42,21 @@ export default function AdminAnnouncementsPage() {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Megaphone className="h-6 w-6 text-indigo-400" /> Thông báo Hệ thống
+        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <Megaphone className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+          Thông báo Hệ thống
         </h1>
-        <p className="text-sm text-slate-400">
+        <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
           Gửi thông báo toàn hệ thống (bất đồng bộ) hoặc cảnh cáo trực tiếp tới 1 người dùng cụ thể
         </p>
       </div>
 
       <form
         onSubmit={handleSubmit}
-        className="rounded-2xl border border-slate-800 bg-slate-900/70 p-6 space-y-4"
+        className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 p-6 space-y-4 shadow-xs"
       >
-        <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-xs text-amber-200 flex items-start gap-2.5">
-          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-400" />
+        <div className="rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 p-3.5 text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2.5">
+          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
           <span>
             Mọi thông báo phát đi đều được ghi vĩnh viễn vào <strong>Nhật ký Kiểm toán</strong>.
             Để trống ô User ID nếu muốn phát cho toàn bộ người dùng ACTIVE.
@@ -63,7 +64,7 @@ export default function AdminAnnouncementsPage() {
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1.5">
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
             ID người nhận (tùy chọn — bỏ trống để phát toàn hệ thống)
           </label>
           <input
@@ -72,12 +73,12 @@ export default function AdminAnnouncementsPage() {
             value={targetUserId}
             onChange={(e) => setTargetUserId(e.target.value)}
             placeholder="Ví dụ: 42"
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+            className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1.5">
+          <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
             Nội dung thông báo
           </label>
           <textarea
@@ -86,14 +87,14 @@ export default function AdminAnnouncementsPage() {
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Nhập nội dung thông báo bảo trì, cập nhật chính sách hoặc cảnh cáo..."
-            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+            className="w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 px-3.5 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 focus:outline-none"
           />
         </div>
 
         <button
           type="submit"
           disabled={sending || !message.trim()}
-          className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-5 py-2.5 text-sm font-semibold text-white transition-colors cursor-pointer"
+          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition-colors cursor-pointer"
         >
           <Send className="h-4 w-4" />
           {sending ? 'Đang gửi...' : 'Phát thông báo'}

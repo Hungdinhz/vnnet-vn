@@ -162,6 +162,8 @@ public class AdminModerationDtos {
     public static class DashboardOverviewDto {
         @JsonProperty("total_users")
         private long totalUsers;
+        @JsonProperty("active_users_24h")
+        private long activeUsers24h;
         @JsonProperty("new_users_24h")
         private long newUsers24h;
         @JsonProperty("new_users_7d")
@@ -186,6 +188,8 @@ public class AdminModerationDtos {
     @AllArgsConstructor
     public static class DailyGrowthPoint {
         private String date;
+        @JsonProperty("active_users")
+        private long activeUsers;
         @JsonProperty("new_users")
         private long newUsers;
         @JsonProperty("new_posts")
